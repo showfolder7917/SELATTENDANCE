@@ -32,4 +32,25 @@ export {
   generateRecommendedShiftTemplates
 // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
 } from './shiftTemplateApi'
-
+// 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+export {
+  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+  fetchScheduleBoard,
+  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+  createSchedule,
+  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+  updateSchedule,
+  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+  deleteSchedule,
+  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+  batchAssignSchedules,
+  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+  copyLastWeekSchedules,
+  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+  copyLastMonthSchedules,
+  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+  checkUnassignedSchedules,
+  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+  exportSchedules
+// 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+} from './scheduleApi'

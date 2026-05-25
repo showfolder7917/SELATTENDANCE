@@ -6,6 +6,7 @@ import AttendanceSectionNav from '../../components/attendance/AttendanceSectionN
 import AttendanceSummaryPanel from '../../components/attendance/AttendanceSummaryPanel.vue'
 import DepartmentSection from '../../components/attendance/DepartmentSection.vue'
 import EmployeeSection from '../../components/attendance/EmployeeSection.vue'
+import ScheduleSection from '../../components/attendance/ScheduleSection.vue'
 import ShiftTemplateSection from '../../components/attendance/ShiftTemplateSection.vue'
 import TenantPanel from '../../components/attendance/TenantPanel.vue'
 import WizardSection from '../../components/attendance/WizardSection.vue'
@@ -36,8 +37,21 @@ const {
   submitImport,
   handleExport,
   submitShiftTemplate,
+  loadScheduleBoard,
   generateRecommended,
   removeShiftTemplate,
+  selectScheduleTemplate,
+  applySchedule,
+  removeScheduleItem,
+  openBatchWizard,
+  closeBatchWizard,
+  nextBatchStep,
+  prevBatchStep,
+  confirmBatchWizard,
+  copySchedulesFromLastWeek,
+  copySchedulesFromLastMonth,
+  runUnassignedCheck,
+  handleScheduleExport,
   editWorkplace,
   editDepartment,
   editEmployee,
@@ -51,15 +65,10 @@ const {
 // 主题切换独立于业务工作台状态，避免保存表单时误触发主题重置。
 const { themeId, themeOptions } = useAttendanceTheme()
 
-// 导入文本通过可写 computed 包成 ref 形态，便于子组件直接用 v-model 操作。
-const importCsvTextRef = computed({
-  get() {
-    return state.importCsvText
-  },
-  set(nextValue) {
-    state.importCsvText = nextValue
-  }
-})
+// 导入文本更新入口显式落回工作台状态，避免模板自动解包 ref 后触发无效 prop 警告。
+function updateImportCsvText(nextValue) {
+  state.importCsvText = nextValue
+}
 
 // 左侧导航除了标签，还补上当前模块说明和数量，减少用户在一页里四处找入口。
 const workspaceNavItems = computed(() => {
@@ -69,6 +78,8 @@ const workspaceNavItems = computed(() => {
     department: state.departments.length,
     employee: state.employees.length,
     shift: state.shiftTemplates.length
+    ,
+    schedule: state.scheduleBoard.scheduleItems.length
   }
 
   const moduleHintMap = {
@@ -77,6 +88,8 @@ const workspaceNavItems = computed(() => {
     department: t('sectionDepartmentHint'),
     employee: t('sectionEmployeeHint'),
     shift: t('sectionShiftHint')
+    ,
+    schedule: t('sectionScheduleHint')
   }
 
   return navItems.value.map((item) => ({
@@ -179,12 +192,13 @@ const activeSectionMeta = computed(
             :employee-form="state.employeeForm"
             :mapping-form="state.mappingForm"
             :employee-filters="state.employeeFilters"
-            :import-csv-text-ref="importCsvTextRef"
+            :import-csv-text="state.importCsvText"
             :import-result="state.importResult"
             :t="t"
             :on-submit="submitEmployee"
             :on-reset="resetEmployeeForm"
             :on-import="submitImport"
+            :on-update-import-csv-text="updateImportCsvText"
             :on-export="handleExport"
             :on-bind="submitMapping"
             :on-edit-employee="editEmployee"
@@ -201,6 +215,31 @@ const activeSectionMeta = computed(
             :on-generate="generateRecommended"
             :on-edit="editShiftTemplate"
             :on-delete="removeShiftTemplate"
+          />
+
+          <ScheduleSection
+            :visible="activeSection === 'schedule'"
+            :workplaces="state.workplaces"
+            :departments="state.departments"
+            :schedule-board="state.scheduleBoard"
+            :schedule-filters="state.scheduleFilters"
+            :schedule-form="state.scheduleForm"
+            :batch-wizard="state.batchWizard"
+            :unassigned-items="state.scheduleUnassignedItems"
+            :t="t"
+            :on-refresh="loadScheduleBoard"
+            :on-select-template="selectScheduleTemplate"
+            :on-apply-schedule="applySchedule"
+            :on-delete-schedule="removeScheduleItem"
+            :on-copy-last-week="copySchedulesFromLastWeek"
+            :on-copy-last-month="copySchedulesFromLastMonth"
+            :on-export="handleScheduleExport"
+            :on-check-unassigned="runUnassignedCheck"
+            :on-open-batch-wizard="openBatchWizard"
+            :on-close-batch-wizard="closeBatchWizard"
+            :on-next-batch-step="nextBatchStep"
+            :on-prev-batch-step="prevBatchStep"
+            :on-confirm-batch-wizard="confirmBatchWizard"
           />
         </div>
       </main>

@@ -1,4 +1,4 @@
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { localeOptions, messages } from '../../constants/i18nMessages'
 import {
   // 执行当前业务步骤，推进本行对应的 composable 处理。
@@ -9,6 +9,8 @@ import {
   createEmployee,
   // 执行当前业务步骤，推进本行对应的 composable 处理。
   createShiftTemplate,
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  createSchedule,
   // 执行当前业务步骤，推进本行对应的 composable 处理。
   createWorkplace,
   // 执行当前业务步骤，推进本行对应的 composable 处理。
@@ -24,15 +26,31 @@ import {
   // 执行当前业务步骤，推进本行对应的 composable 处理。
   fetchBootstrap,
   // 执行当前业务步骤，推进本行对应的 composable 处理。
+  fetchScheduleBoard,
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
   generateRecommendedShiftTemplates,
   // 执行当前业务步骤，推进本行对应的 composable 处理。
   importEmployees,
   // 执行当前业务步骤，推进本行对应的 composable 处理。
   saveTenant,
   // 执行当前业务步骤，推进本行对应的 composable 处理。
+  batchAssignSchedules,
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  copyLastMonthSchedules,
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  copyLastWeekSchedules,
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  checkUnassignedSchedules,
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  deleteSchedule,
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  exportSchedules,
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
   updateDepartment,
   // 执行当前业务步骤，推进本行对应的 composable 处理。
   updateEmployee,
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  updateSchedule,
   // 执行当前业务步骤，推进本行对应的 composable 处理。
   updateShiftTemplate,
   // 执行当前业务步骤，推进本行对应的 composable 处理。
@@ -47,7 +65,7 @@ export function useAttendanceWorkbench() {
   const initialSection = new URLSearchParams(window.location.search).get('section')
   // 只接受当前已知模块，避免非法参数把工作台带到不存在的内容区。
   // 声明 allowedSections 状态，保存当前工作台交互过程中需要的前端数据。
-  const allowedSections = ['wizard', 'workplace', 'department', 'employee', 'shift']
+  const allowedSections = ['wizard', 'workplace', 'department', 'employee', 'shift', 'schedule']
   // 语言状态允许通过 URL 参数直接切到日文页，便于中日双语联调和截图验证。
   // 声明 语言 状态，保存当前工作台交互过程中需要的前端数据。
   const locale = ref(new URLSearchParams(window.location.search).get('locale') || 'zh-CN')
@@ -89,6 +107,72 @@ export function useAttendanceWorkbench() {
     employees: [],
     // 维护 班次Templates 字段，供当前前端状态或配置直接使用。
     shiftTemplates: [],
+    // 维护 排班Filters 字段，供当前前端状态或配置直接使用。
+    scheduleFilters: {
+      // 维护 month 字段，供当前前端状态或配置直接使用。
+      month: new Date().toISOString().slice(0, 7),
+      // 维护 事业所Id 字段，供当前前端状态或配置直接使用。
+      workplaceId: '',
+      // 维护 部门Id 字段，供当前前端状态或配置直接使用。
+      departmentId: '',
+      // 维护 员工关键字 字段，供当前前端状态或配置直接使用。
+      employeeKeyword: '',
+      // 维护 onlyUnassigned 字段，供当前前端状态或配置直接使用。
+      onlyUnassigned: false
+    },
+    // 维护 排班看板 字段，供当前前端状态或配置直接使用。
+    scheduleBoard: {
+      // 维护 month 字段，供当前前端状态或配置直接使用。
+      month: new Date().toISOString().slice(0, 7),
+      // 维护 dates 字段，供当前前端状态或配置直接使用。
+      dates: [],
+      // 维护 employeeRows 字段，供当前前端状态或配置直接使用。
+      employeeRows: [],
+      // 维护 scheduleItems 字段，供当前前端状态或配置直接使用。
+      scheduleItems: [],
+      // 维护 班次Templates 字段，供当前前端状态或配置直接使用。
+      shiftTemplates: []
+    },
+    // 维护 排班Form 字段，供当前前端状态或配置直接使用。
+    scheduleForm: {
+      // 维护 selectedTemplateId 字段，供当前前端状态或配置直接使用。
+      selectedTemplateId: null,
+      // 维护 remark 字段，供当前前端状态或配置直接使用。
+      remark: '',
+      // 维护 selectedEmployeeId 字段，供当前前端状态或配置直接使用。
+      selectedEmployeeId: null,
+      // 维护 selectedEmployeeName 字段，供当前前端状态或配置直接使用。
+      selectedEmployeeName: '',
+      // 维护 selectedWorkDate 字段，供当前前端状态或配置直接使用。
+      selectedWorkDate: '',
+      // 维护 selectedScheduleId 字段，供当前前端状态或配置直接使用。
+      selectedScheduleId: null,
+      // 维护 selectedTemplateName 字段，供当前前端状态或配置直接使用。
+      selectedTemplateName: ''
+    },
+    // 维护 批量排班向导 字段，供当前前端状态或配置直接使用。
+    batchWizard: {
+      // 维护 open 字段，供当前前端状态或配置直接使用。
+      open: false,
+      // 维护 step 字段，供当前前端状态或配置直接使用。
+      step: 1,
+      // 维护 员工Ids 字段，供当前前端状态或配置直接使用。
+      employeeIds: [],
+      // 维护 startDate 字段，供当前前端状态或配置直接使用。
+      startDate: '',
+      // 维护 endDate 字段，供当前前端状态或配置直接使用。
+      endDate: '',
+      // 维护 班次模板Id 字段，供当前前端状态或配置直接使用。
+      shiftTemplateId: null,
+      // 维护 skipExisting 字段，供当前前端状态或配置直接使用。
+      skipExisting: false,
+      // 维护 overwriteExisting 字段，供当前前端状态或配置直接使用。
+      overwriteExisting: true,
+      // 维护 remark 字段，供当前前端状态或配置直接使用。
+      remark: ''
+    },
+    // 维护 未排班结果 字段，供当前前端状态或配置直接使用。
+    scheduleUnassignedItems: [],
     // 维护 推荐NextAction 字段，供当前前端状态或配置直接使用。
     recommendedNextAction: '',
     // 维护 员工Filters 字段，供当前前端状态或配置直接使用。
@@ -212,7 +296,9 @@ export function useAttendanceWorkbench() {
     // 执行当前业务步骤，推进本行对应的 composable 处理。
     { key: 'employee', label: t('navEmployee') },
     // 执行当前业务步骤，推进本行对应的 composable 处理。
-    { key: 'shift', label: t('navShift') }
+    { key: 'shift', label: t('navShift') },
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    { key: 'schedule', label: t('navSchedule') }
   // 执行当前业务步骤，推进本行对应的 composable 处理。
   ])
 
@@ -251,10 +337,21 @@ export function useAttendanceWorkbench() {
 
   // 页面挂载时先拉第一阶段 bootstrap 聚合结果，让各子区块共享同一份基线数据。
   // 执行当前业务步骤，推进本行对应的 composable 处理。
-  onMounted(() => {
-    // 执行当前业务步骤，推进本行对应的 composable 处理。
-    loadBootstrap()
+  onMounted(async () => {
+    // 首屏先完成主数据聚合刷新，确保后续排班看板读取时已有事业所、部门和员工基线。
+    await loadBootstrap()
+    // 如果用户是通过深链接直接进入排班模块，需要在首屏补拉一次第二阶段看板，避免页面误判为空。
+    if (activeSection.value === 'schedule') {
+      await loadScheduleBoard()
+    }
   // 执行当前业务步骤，推进本行对应的 composable 处理。
+  })
+
+  // 工作区切到排班模块时立即刷新第二阶段看板，避免用户看到旧月份或空数据。
+  watch(activeSection, (nextSection) => {
+    if (nextSection === 'schedule') {
+      loadScheduleBoard()
+    }
   })
 
   // 执行当前业务步骤，推进本行对应的 composable 处理。
@@ -508,6 +605,194 @@ export function useAttendanceWorkbench() {
   }
 
   // 执行当前业务步骤，推进本行对应的 composable 处理。
+  async function loadScheduleBoard() {
+    // 排班模块读取独立看板时同样拉起 loading，避免月份切换时短暂看到旧格子。
+    loading.value = true
+    try {
+      // 当前筛选条件直接透传给后端，让员工行、日期列和未排班统计共享同一口径。
+      const payload = await fetchScheduleBoard({ ...state.scheduleFilters })
+      // 更新 排班看板 状态，保证工作台界面与本次操作结果同步。
+      state.scheduleBoard = payload
+      // 右侧模板面板默认沿用看板回传模板，保证和当前月份数据同源。
+      if (!state.scheduleForm.selectedTemplateId && payload.shiftTemplates?.[0]) {
+        state.scheduleForm.selectedTemplateId = payload.shiftTemplates[0].id
+      }
+      // 切月或切筛选后清空旧的未排班检查结果，避免把上一个视图的提醒残留到当前页面。
+      state.scheduleUnassignedItems = []
+    } finally {
+      // 看板刷新完成后释放加载态，让页面恢复可交互状态。
+      loading.value = false
+    }
+  }
+
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  function selectScheduleTemplate(template) {
+    // 右侧模板面板的选择结果要落进当前表单，供点击格子时直接复用。
+    state.scheduleForm.selectedTemplateId = template.id
+    // 同步记录模板名称，便于右侧说明区和轻提示直接展示。
+    state.scheduleForm.selectedTemplateName = template.templateName
+  }
+
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  async function applySchedule(row, workDate, existingItem) {
+    // 无论本次是新增还是替换，都先把当前选中的员工和日期写进右侧说明区。
+    Object.assign(state.scheduleForm, {
+      selectedEmployeeId: row.employeeId,
+      selectedEmployeeName: row.employeeName,
+      selectedWorkDate: workDate,
+      selectedScheduleId: existingItem?.id || null,
+      selectedTemplateName: existingItem?.templateName || state.scheduleForm.selectedTemplateName
+    })
+    // 没选模板就先阻断保存，并用轻提示提醒用户先在右侧点选班次。
+    if (!state.scheduleForm.selectedTemplateId) {
+      pushToast(t('scheduleTemplateNeedPick'))
+      return
+    }
+    // 覆盖已有排班前给用户一次明确确认，避免误改整周已排好的班。
+    if (existingItem && !window.confirm(t('scheduleOverwriteConfirm').replace('{current}', existingItem.templateName).replace('{next}', state.scheduleForm.selectedTemplateName || '-'))) {
+      return
+    }
+    // 后端 create 接口本身已兼容同员工同日期覆盖，因此前端只需提交统一保存负载。
+    await createSchedule({
+      employeeId: row.employeeId,
+      workDate,
+      shiftTemplateId: state.scheduleForm.selectedTemplateId,
+      remark: state.scheduleForm.remark
+    })
+    // 统一回显当前选中模板名，让右侧说明区和最新保存结果保持一致。
+    const selectedTemplate = state.scheduleBoard.shiftTemplates.find((item) => item.id === state.scheduleForm.selectedTemplateId)
+    state.scheduleForm.selectedTemplateName = selectedTemplate?.templateName || ''
+    pushToast(existingItem ? t('scheduleToastReplaced') : t('scheduleToastSaved'))
+    await loadScheduleBoard()
+  }
+
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  async function removeScheduleItem(id) {
+    // 单格删除前同样先确认，避免在密集日历里误点清空。
+    if (!window.confirm(t('scheduleDeleteConfirm'))) {
+      return
+    }
+    await deleteSchedule(id)
+    // 删除后清空右侧当前格说明，避免用户还以为该格子有排班。
+    Object.assign(state.scheduleForm, {
+      selectedScheduleId: null,
+      selectedTemplateName: '',
+      selectedWorkDate: '',
+      selectedEmployeeId: null,
+      selectedEmployeeName: ''
+    })
+    pushToast(t('toastDeleted'))
+    await loadScheduleBoard()
+  }
+
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  function openBatchWizard() {
+    // 批量向导默认用当前可见员工和当前月份整月区间，减少用户重复勾选和补日期。
+    Object.assign(state.batchWizard, {
+      open: true,
+      step: 1,
+      employeeIds: state.scheduleBoard.employeeRows.map((item) => item.employeeId),
+      startDate: `${state.scheduleFilters.month}-01`,
+      endDate: state.scheduleBoard.endDate || `${state.scheduleFilters.month}-01`,
+      shiftTemplateId: state.scheduleForm.selectedTemplateId,
+      skipExisting: false,
+      overwriteExisting: true,
+      remark: state.scheduleForm.remark
+    })
+  }
+
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  function closeBatchWizard() {
+    // 关闭批量向导时只收起向导本身，不清空已经选择的右侧模板。
+    state.batchWizard.open = false
+    state.batchWizard.step = 1
+  }
+
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  function nextBatchStep() {
+    // 向导只允许在 1 到 5 步之间前进，避免界面状态越界。
+    state.batchWizard.step = Math.min(5, state.batchWizard.step + 1)
+  }
+
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  function prevBatchStep() {
+    // 向导回退时同样钳住最小步数，保持步骤条和内容区一致。
+    state.batchWizard.step = Math.max(1, state.batchWizard.step - 1)
+  }
+
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  async function confirmBatchWizard() {
+    // 批量提交前给用户最后一次确认，避免带着错误范围一次性覆盖整月。
+    if (!window.confirm(t('scheduleBatchConfirmDialog'))) {
+      return
+    }
+    const payload = {
+      employeeIds: [...state.batchWizard.employeeIds],
+      startDate: state.batchWizard.startDate,
+      endDate: state.batchWizard.endDate,
+      shiftTemplateId: Number(state.batchWizard.shiftTemplateId),
+      skipExisting: state.batchWizard.skipExisting,
+      overwriteExisting: state.batchWizard.overwriteExisting,
+      remark: state.batchWizard.remark
+    }
+    const result = await batchAssignSchedules(payload)
+    pushToast(t('scheduleBatchResultToast').replace('{created}', String(result.createdCount)).replace('{updated}', String(result.updatedCount)).replace('{skipped}', String(result.skippedCount)))
+    closeBatchWizard()
+    await loadScheduleBoard()
+  }
+
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  async function copySchedulesFromLastWeek() {
+    // 复制上周前先明确提示覆盖风险，让用户知道当前是跨周复制动作。
+    if (!window.confirm(t('scheduleCopyWeekConfirm'))) {
+      return
+    }
+    const result = await copyLastWeekSchedules({
+      employeeIds: state.scheduleBoard.employeeRows.map((item) => item.employeeId),
+      startDate: `${state.scheduleFilters.month}-01`,
+      endDate: state.scheduleBoard.endDate || `${state.scheduleFilters.month}-01`,
+      overwriteExisting: true
+    })
+    pushToast(t('scheduleCopyResultToast').replace('{created}', String(result.createdCount)).replace('{updated}', String(result.updatedCount)).replace('{skipped}', String(result.skippedCount)))
+    await loadScheduleBoard()
+  }
+
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  async function copySchedulesFromLastMonth() {
+    // 复制上月逻辑与复制上周同样需要显式确认，避免整月误覆盖。
+    if (!window.confirm(t('scheduleCopyMonthConfirm'))) {
+      return
+    }
+    const result = await copyLastMonthSchedules({
+      employeeIds: state.scheduleBoard.employeeRows.map((item) => item.employeeId),
+      startDate: `${state.scheduleFilters.month}-01`,
+      endDate: state.scheduleBoard.endDate || `${state.scheduleFilters.month}-01`,
+      overwriteExisting: true
+    })
+    pushToast(t('scheduleCopyResultToast').replace('{created}', String(result.createdCount)).replace('{updated}', String(result.updatedCount)).replace('{skipped}', String(result.skippedCount)))
+    await loadScheduleBoard()
+  }
+
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  async function runUnassignedCheck() {
+    // 右侧缺口卡单独读取后端检查结果，让管理员能立即看到仍未排班的人和日期。
+    state.scheduleUnassignedItems = await checkUnassignedSchedules({ ...state.scheduleFilters })
+    pushToast(t('scheduleUnassignedChecked'))
+  }
+
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
+  async function handleScheduleExport() {
+    // 排班导出和员工导出一样走浏览器下载，避免把大段 CSV 文本直接塞到界面里。
+    const payload = await exportSchedules({ ...state.scheduleFilters })
+    const blob = new Blob([payload.content], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = payload.fileName
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }
+
+  // 执行当前业务步骤，推进本行对应的 composable 处理。
   function editWorkplace(item) {
     // 编辑动作把行数据回填到事业所表单，并切换到对应页签。
     // 把来源数据整体回填到当前状态对象，减少逐字段重复赋值。
@@ -758,6 +1043,32 @@ export function useAttendanceWorkbench() {
     submitImport,
     // 执行当前业务步骤，推进本行对应的 composable 处理。
     handleExport,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    loadScheduleBoard,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    selectScheduleTemplate,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    applySchedule,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    removeScheduleItem,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    openBatchWizard,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    closeBatchWizard,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    nextBatchStep,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    prevBatchStep,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    confirmBatchWizard,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    copySchedulesFromLastWeek,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    copySchedulesFromLastMonth,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    runUnassignedCheck,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    handleScheduleExport,
     // 执行当前业务步骤，推进本行对应的 composable 处理。
     submitShiftTemplate,
     // 执行当前业务步骤，推进本行对应的 composable 处理。

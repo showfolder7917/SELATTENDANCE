@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.attendance.schedule.dao.AttendanceScheduleDao">
+
+  <resultMap id="ScheduleItemResultMap" type="com.sp.selfsp.attendance.schedule.domain.out.AttendanceScheduleOut$ScheduleItemOut">
+    <id column="id" property="id"/>
+    <result column="employee_id" property="employeeId"/>
+    <result column="work_date" property="workDate"/>
+    <result column="shift_template_id" property="shiftTemplateId"/>
+    <result column="template_code" property="templateCode"/>
+    <result column="template_name" property="templateName"/>
+    <result column="shift_type" property="shiftType"/>
+    <result column="start_time" property="startTime"/>
+    <result column="end_time" property="endTime"/>
+    <result column="cross_day" property="crossDay"/>
+    <result column="scheduled_break_minutes" property="scheduledBreakMinutes"/>
+    <result column="color" property="color"/>
+    <result column="work_day_type" property="workDayType"/>
+    <result column="status" property="status"/>
+    <result column="locked" property="locked"/>
+    <result column="remark" property="remark"/>
+    <result column="scheduled_start_time" property="scheduledStartTime"/>
+    <result column="scheduled_end_time" property="scheduledEndTime"/>
+  </resultMap>
+
+  <sql id="ScheduleJoinedColumns">
+    s.id, s.employee_id, s.work_date, s.shift_template_id, s.scheduled_start_time, s.scheduled_end_time,
+    s.scheduled_break_minutes, s.work_day_type, s.status, s.locked, s.remark,
+    t.template_code, t.template_name, t.shift_type, t.start_time, t.end_time, t.cross_day, t.color
+  </sql>
+
+  <select id="selectScheduleItems" resultMap="ScheduleItemResultMap">
+    SELECT <include refid="ScheduleJoinedColumns"/>
+    FROM shift_schedule s
+    LEFT JOIN shift_template t ON t.id = s.shift_template_id AND t.tenant_id = s.tenant_id
+    WHERE s.tenant_id = #{tenantId}
+      AND s.work_date BETWEEN #{startDate} AND #{endDate}
+    <if test="employeeIds != null and employeeIds.size() &gt; 0">
+      AND s.employee_id IN
+      <foreach collection="employeeIds" item="employeeId" open="(" separator="," close=")">
+        #{employeeId}
+      </foreach>
+    </if>
+    ORDER BY s.employee_id ASC, s.work_date ASC, s.id ASC
+  </select>
+
+  <select id="selectById" resultMap="ScheduleItemResultMap">
+    SELECT <include refid="ScheduleJoinedColumns"/>
+    FROM shift_schedule s
+    LEFT JOIN shift_template t ON t.id = s.shift_template_id AND t.tenant_id = s.tenant_id
+    WHERE s.tenant_id = #{tenantId}
+      AND s.id = #{id}
+  </select>
+
+  <select id="selectByEmployeeAndDate" resultMap="ScheduleItemResultMap">
+    SELECT <include refid="ScheduleJoinedColumns"/>
+    FROM shift_schedule s
+    LEFT JOIN shift_template t ON t.id = s.shift_template_id AND t.tenant_id = s.tenant_id
+    WHERE s.tenant_id = #{tenantId}
+      AND s.employee_id = #{employeeId}
+      AND s.work_date = #{workDate}
+  </select>
+
+  <insert id="insert">
+    INSERT INTO shift_schedule (
+      tenant_id, employee_id, work_date, shift_template_id, scheduled_start_time, scheduled_end_time,
+      scheduled_break_minutes, work_day_type, status, locked, remark
+    ) VALUES (
+      #{tenantId}, #{employeeId}, #{workDate}, #{shiftTemplateId}, #{scheduledStartTime}, #{scheduledEndTime},
+      #{scheduledBreakMinutes}, #{workDayType}, 'ACTIVE', 0, #{remark}
+    )
+  </insert>
+
+  <update id="updateById">
+    UPDATE shift_schedule
+    SET shift_template_id = #{shiftTemplateId},
+        scheduled_start_time = #{scheduledStartTime},
+        scheduled_end_time = #{scheduledEndTime},
+        scheduled_break_minutes = #{scheduledBreakMinutes},
+        work_day_type = #{workDayType},
+        remark = #{remark},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+
+  <delete id="deleteById">
+    DELETE FROM shift_schedule
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </delete>
+
+  <delete id="deleteRange">
+    DELETE FROM shift_schedule
+    WHERE tenant_id = #{tenantId}
+      AND work_date BETWEEN #{startDate} AND #{endDate}
+    <if test="employeeIds != null and employeeIds.size() &gt; 0">
+      AND employee_id IN
+      <foreach collection="employeeIds" item="employeeId" open="(" separator="," close=")">
+        #{employeeId}
+      </foreach>
+    </if>
+  </delete>
+</mapper>

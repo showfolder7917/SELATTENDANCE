@@ -18,7 +18,7 @@
       (SELECT COUNT(*) FROM employee WHERE tenant_id = #{tenantId}) AS employeeCount,
       (SELECT COUNT(*) FROM employee_work_rule WHERE tenant_id = #{tenantId}) AS workRuleCount,
       (SELECT COUNT(*) FROM employee_external_mapping WHERE tenant_id = #{tenantId} AND status = 'ACTIVE') AS externalMappingCount,
-      (SELECT COUNT(*) FROM shift_template WHERE tenant_id = #{tenantId} AND is_active = 1) AS shiftTemplateCount
+      (SELECT COUNT(*) FROM shift_template WHERE tenant_id = #{tenantId} AND is_active = 1) AS shiftTemplateCount,
+      (SELECT COUNT(*) FROM shift_schedule WHERE tenant_id = #{tenantId} AND status = 'ACTIVE') AS scheduleCount
   </select>
 </mapper>
-

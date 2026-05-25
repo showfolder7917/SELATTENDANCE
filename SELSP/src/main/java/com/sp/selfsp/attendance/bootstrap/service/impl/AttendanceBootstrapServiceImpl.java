@@ -119,10 +119,12 @@ public class AttendanceBootstrapServiceImpl implements AttendanceBootstrapServic
         steps.add(buildStep("shiftTemplate", "wizard.shiftTemplate", countAsInt(counts, "shiftTemplateCount"), "guide.shiftTemplate"));
         // 把当前初始化步骤加入向导列表，供前端按顺序展示完成度。
         steps.add(buildStep("workRule", "wizard.workRule", countAsInt(counts, "workRuleCount"), "guide.workRule"));
-        // 把当前初始化步骤加入向导列表，供前端按顺序展示完成度。
-        steps.add(buildFutureStep("schedule", "wizard.schedule", "guide.schedule"));
-        // 把当前初始化步骤加入向导列表，供前端按顺序展示完成度。
-        steps.add(buildFutureStep("punch", "wizard.punch", "guide.punch"));
+        // 只有当前五个基础准备项都完成后，第二阶段排班入口才真正开放。
+        boolean scheduleReady = isScheduleReady(counts);
+        // 把第二阶段排班步骤加入向导列表，已具备前置条件时直接开放进入。
+        steps.add(buildPhaseGateStep("schedule", "wizard.schedule", countAsInt(counts, "scheduleCount"), "guide.schedule", scheduleReady));
+        // 打卡接收仍依赖第二阶段先准备出排班，因此只有存在排班后才开放。
+        steps.add(buildPhaseGateStep("punch", "wizard.punch", 0, "guide.punch", countAsInt(counts, "scheduleCount") > 0));
         // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         summaryOut.setSteps(steps);
         // 执行当前业务步骤，推进本行对应的 服务impl 处理。
@@ -150,21 +152,26 @@ public class AttendanceBootstrapServiceImpl implements AttendanceBootstrapServic
         return stepOut;
     }
 
-    // 定义 buildFuture步骤 业务动作，负责承接当前模块的处理流程。
-    private AttendanceOut.BootstrapStepOut buildFutureStep(String stepCode, String titleKey, String description) {
+    // 定义 build阶段闸门步骤 业务动作，负责承接当前模块的处理流程。
+    private AttendanceOut.BootstrapStepOut buildPhaseGateStep(String stepCode, String titleKey, int count, String description, boolean ready) {
         // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         AttendanceOut.BootstrapStepOut stepOut = new AttendanceOut.BootstrapStepOut();
-        // 第一阶段后续模块只做锁定提示，不在当前结构里提前冒充已完成。
+        // 后续阶段步骤只有在上游准备完成后才会从锁定态切换到可操作态。
         // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         stepOut.setStepCode(stepCode);
         // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         stepOut.setTitleKey(titleKey);
         // 执行当前业务步骤，推进本行对应的 服务impl 处理。
-        stepOut.setCount(0);
+        stepOut.setCount(count);
         // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         stepOut.setDescription(description);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
-        stepOut.setStatus("LOCKED_NEXT_PHASE");
+        if (!ready) {
+            // 前置条件未满足时仍以锁定态展示，避免用户误以为现在就能操作。
+            stepOut.setStatus("LOCKED_NEXT_PHASE");
+        } else {
+            // 当前阶段入口已开放后，根据排班数量决定是已完成还是需要处理。
+            stepOut.setStatus(count > 0 ? "COMPLETED" : "NEEDS_ACTION");
+        }
         // 返回当前步骤产出的业务结果，继续交给上一层消费。
         return stepOut;
     }
@@ -187,6 +194,10 @@ public class AttendanceBootstrapServiceImpl implements AttendanceBootstrapServic
     private int countAsInt(Map<String, Object> counts, String key) {
         // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         Object value = counts.get(key);
+        // H2 聚合字段别名在 HashMap 中可能被写成全大写，因此这里补一个大小写兜底读取。
+        if (value == null) {
+            value = counts.get(key.toUpperCase());
+        }
         // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (value instanceof Number number) {
             // 返回当前步骤产出的业务结果，继续交给上一层消费。
@@ -195,5 +206,14 @@ public class AttendanceBootstrapServiceImpl implements AttendanceBootstrapServic
         // 返回当前步骤产出的业务结果，继续交给上一层消费。
         return 0;
     }
-}
 
+    // 定义 is排班Ready 业务动作，负责承接当前模块的处理流程。
+    private boolean isScheduleReady(Map<String, Object> counts) {
+        // 第二阶段排班至少需要公司、事业所、员工、班次模板和默认规则都已到位。
+        return countAsInt(counts, "tenantCount") > 0
+            && countAsInt(counts, "workplaceCount") > 0
+            && countAsInt(counts, "employeeCount") > 0
+            && countAsInt(counts, "shiftTemplateCount") > 0
+            && countAsInt(counts, "workRuleCount") > 0;
+    }
+}

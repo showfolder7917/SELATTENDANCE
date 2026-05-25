@@ -11,12 +11,13 @@ defineProps({
   employeeForm: { type: Object, required: true },
   mappingForm: { type: Object, required: true },
   employeeFilters: { type: Object, required: true },
-  importCsvTextRef: { type: Object, required: true },
+  importCsvText: { type: String, required: true },
   importResult: { type: Object, required: false, default: null },
   t: { type: Function, required: true },
   onSubmit: { type: Function, required: true },
   onReset: { type: Function, required: true },
   onImport: { type: Function, required: true },
+  onUpdateImportCsvText: { type: Function, required: true },
   onExport: { type: Function, required: true },
   onBind: { type: Function, required: true },
   onEditEmployee: { type: Function, required: true },
@@ -93,7 +94,7 @@ defineProps({
 
         <div class="seladmin-subsection">
           <div class="seladmin-panel-header"><h3>{{ t('importTitle') }}</h3></div>
-          <textarea v-model="importCsvTextRef.value" :placeholder="t('importPlaceholder')" rows="6" />
+          <textarea :value="importCsvText" :placeholder="t('importPlaceholder')" rows="6" @input="onUpdateImportCsvText($event.target.value)" />
           <div class="seladmin-action-row">
             <button class="seladmin-button seladmin-button-primary" type="button" @click="onImport()">{{ t('importCsv') }}</button>
             <button class="seladmin-button seladmin-button-secondary" type="button" @click="onExport()">{{ t('exportCsv') }}</button>

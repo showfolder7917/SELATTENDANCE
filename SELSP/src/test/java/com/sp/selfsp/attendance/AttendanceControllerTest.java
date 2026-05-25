@@ -47,7 +47,10 @@ public class AttendanceControllerTest {
             .andExpect(jsonPath("$.code").value(0))
             .andExpect(jsonPath("$.data.tenant.tenantName").value("东京第一教室"))
             .andExpect(jsonPath("$.data.steps.length()").value(7))
-            .andExpect(jsonPath("$.data.workplaces.length()").value(2));
+            .andExpect(jsonPath("$.data.workplaces.length()").value(2))
+            .andExpect(jsonPath("$.data.steps[5].stepCode").value("schedule"))
+            .andExpect(jsonPath("$.data.steps[5].status").value("NEEDS_ACTION"))
+            .andExpect(jsonPath("$.data.recommendedNextAction").value("wizard.schedule"));
     }
 
     @Test
@@ -95,11 +98,11 @@ public class AttendanceControllerTest {
 
     @Test
     public void shouldGenerateRecommendedTemplates() throws Exception {
-        // 空模板场景下应一次性补齐文档要求的推荐班次集合。
+        // 当前重置数据里已经有推荐模板，因此接口应表现为幂等并返回空新增列表。
         mockMvc.perform(post("/api/attendance/shift-templates/recommended"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value(0))
-            .andExpect(jsonPath("$.data[0].templateCode").value("EARLY"));
+            .andExpect(jsonPath("$.data.length()").value(0));
         // 生成后模板列表至少应包含 6 个推荐模板。
         mockMvc.perform(get("/api/attendance/shift-templates"))
             .andExpect(status().isOk())
@@ -121,5 +124,84 @@ public class AttendanceControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.externalMappingBound").value(true))
             .andExpect(jsonPath("$.data.externalEmployeeId").value("KOT-90001"));
+    }
+
+    @Test
+    public void shouldCreateScheduleAndReturnBoard() throws Exception {
+        // 第二阶段最小主路径要求管理员点击格子后能马上生成单日排班。
+        Map<String, Object> request = Map.of(
+            "employeeId", 1,
+            "workDate", "2026-06-02",
+            "shiftTemplateId", 1,
+            "remark", "开月首批排班"
+        );
+        mockMvc.perform(post("/api/attendance/schedules")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(0))
+            .andExpect(jsonPath("$.data.employeeId").value(1))
+            .andExpect(jsonPath("$.data.templateCode").value("EARLY"));
+        // 排班看板要返回日期列、员工行和刚保存的班次明细。
+        mockMvc.perform(get("/api/attendance/schedules").param("month", "2026-06"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.month").value("2026-06"))
+            .andExpect(jsonPath("$.data.employeeRows.length()").value(1))
+            .andExpect(jsonPath("$.data.scheduleItems.length()").value(1))
+            .andExpect(jsonPath("$.data.scheduleItems[0].templateName").value("早班"));
+    }
+
+    @Test
+    public void shouldBatchAssignSchedulesAndCheckUnassigned() throws Exception {
+        // 批量排班向导主路径要能一次性给多个日期套模板。
+        Map<String, Object> request = Map.of(
+            "employeeIds", java.util.List.of(1L),
+            "startDate", "2026-06-03",
+            "endDate", "2026-06-05",
+            "shiftTemplateId", 2,
+            "skipExisting", false,
+            "overwriteExisting", true,
+            "remark", "批量晚班"
+        );
+        mockMvc.perform(post("/api/attendance/schedules/batch-assign")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.createdCount").value(3))
+            .andExpect(jsonPath("$.data.updatedCount").value(0));
+        // 未排班检查要把仍有缺口的员工和日期列出来，帮助管理员继续补班。
+        mockMvc.perform(get("/api/attendance/schedules/unassigned-check").param("month", "2026-06"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data[0].employeeNo").value("E0001"))
+            .andExpect(jsonPath("$.data[0].unassignedCount").value(27));
+    }
+
+    @Test
+    public void shouldCopyLastWeekAndExportSchedules() throws Exception {
+        // 先准备上一周排班，验证复制上周动作能把相同班次带到目标周。
+        mockMvc.perform(post("/api/attendance/schedules")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                    "employeeId", 1,
+                    "workDate", "2026-05-25",
+                    "shiftTemplateId", 3,
+                    "remark", "夜班样板"
+                ))))
+            .andExpect(status().isOk());
+        mockMvc.perform(post("/api/attendance/schedules/copy-last-week")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                    "employeeIds", java.util.List.of(1L),
+                    "startDate", "2026-06-01",
+                    "endDate", "2026-06-01",
+                    "overwriteExisting", true
+                ))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.createdCount").value(1));
+        // 导出结果要包含当前月份文件名和已复制的模板名称，供前端下载排班表。
+        mockMvc.perform(get("/api/attendance/schedules/export").param("month", "2026-06"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.fileName").value("attendance_schedule_2026-06.csv"))
+            .andExpect(jsonPath("$.data.content").value(org.hamcrest.Matchers.containsString("夜班")));
     }
 }
