@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.attendance.employee.dao.AttendanceEmployeeDao">
+
+  <resultMap id="EmployeeResultMap" type="com.sp.selfsp.attendance.domain.out.AttendanceOut$EmployeeOut">
+    <id column="id" property="id"/>
+    <result column="employee_no" property="employeeNo"/>
+    <result column="employee_name" property="employeeName"/>
+    <result column="employee_name_kana" property="employeeNameKana"/>
+    <result column="gender" property="gender"/>
+    <result column="employment_type" property="employmentType"/>
+    <result column="hire_date" property="hireDate"/>
+    <result column="resign_date" property="resignDate"/>
+    <result column="email" property="email"/>
+    <result column="phone" property="phone"/>
+    <result column="workplace_id" property="workplaceId"/>
+    <result column="department_id" property="departmentId"/>
+    <result column="workplace_name" property="workplaceName"/>
+    <result column="department_name" property="departmentName"/>
+    <result column="status" property="status"/>
+    <result column="external_mapping_bound" property="externalMappingBound"/>
+    <result column="external_source_system" property="externalSourceSystem"/>
+    <result column="external_employee_id" property="externalEmployeeId"/>
+    <result column="external_employee_no" property="externalEmployeeNo"/>
+  </resultMap>
+
+  <sql id="EmployeeJoinedColumns">
+    e.id, e.employee_no, e.employee_name, e.employee_name_kana, e.gender, e.employment_type,
+    e.hire_date, e.resign_date, e.email, e.phone, e.workplace_id, e.department_id,
+    w.workplace_name, d.department_name, e.status,
+    CASE WHEN m.id IS NULL THEN FALSE ELSE TRUE END AS external_mapping_bound,
+    m.source_system AS external_source_system,
+    m.external_employee_id,
+    m.external_employee_no
+  </sql>
+
+  <select id="selectList" resultMap="EmployeeResultMap">
+    SELECT <include refid="EmployeeJoinedColumns"/>
+    FROM employee e
+    LEFT JOIN workplace w ON w.id = e.workplace_id
+    LEFT JOIN department d ON d.id = e.department_id
+    LEFT JOIN employee_external_mapping m
+      ON m.employee_id = e.id AND m.tenant_id = e.tenant_id AND m.status = 'ACTIVE'
+    WHERE e.tenant_id = #{tenantId}
+    <if test="query != null and query.keyword != null and query.keyword != ''">
+      AND (e.employee_no LIKE CONCAT('%', #{query.keyword}, '%') OR e.employee_name LIKE CONCAT('%', #{query.keyword}, '%'))
+    </if>
+    <if test="query != null and query.departmentId != null">
+      AND e.department_id = #{query.departmentId}
+    </if>
+    <if test="query != null and query.employmentType != null and query.employmentType != ''">
+      AND e.employment_type = #{query.employmentType}
+    </if>
+    <if test="query != null and query.status != null and query.status != ''">
+      AND e.status = #{query.status}
+    </if>
+    ORDER BY e.employee_no ASC, e.id ASC
+  </select>
+
+  <select id="selectById" resultMap="EmployeeResultMap">
+    SELECT <include refid="EmployeeJoinedColumns"/>
+    FROM employee e
+    LEFT JOIN workplace w ON w.id = e.workplace_id
+    LEFT JOIN department d ON d.id = e.department_id
+    LEFT JOIN employee_external_mapping m
+      ON m.employee_id = e.id AND m.tenant_id = e.tenant_id AND m.status = 'ACTIVE'
+    WHERE e.tenant_id = #{tenantId}
+      AND e.id = #{id}
+  </select>
+
+  <select id="selectByEmployeeNo" resultMap="EmployeeResultMap">
+    SELECT <include refid="EmployeeJoinedColumns"/>
+    FROM employee e
+    LEFT JOIN workplace w ON w.id = e.workplace_id
+    LEFT JOIN department d ON d.id = e.department_id
+    LEFT JOIN employee_external_mapping m
+      ON m.employee_id = e.id AND m.tenant_id = e.tenant_id AND m.status = 'ACTIVE'
+    WHERE e.tenant_id = #{tenantId}
+      AND e.employee_no = #{employeeNo}
+  </select>
+
+  <insert id="insert">
+    INSERT INTO employee (
+      tenant_id, workplace_id, department_id, employee_no, employee_name, employee_name_kana, gender,
+      employment_type, hire_date, resign_date, email, phone, status
+    ) VALUES (
+      #{tenantId}, #{in.workplaceId}, #{in.departmentId}, #{in.employeeNo}, #{in.employeeName}, #{in.employeeNameKana}, #{in.gender},
+      #{in.employmentType}, #{in.hireDate}, #{in.resignDate}, #{in.email}, #{in.phone}, #{in.status}
+    )
+  </insert>
+
+  <update id="updateById">
+    UPDATE employee
+    SET workplace_id = #{in.workplaceId},
+        department_id = #{in.departmentId},
+        employee_no = #{in.employeeNo},
+        employee_name = #{in.employeeName},
+        employee_name_kana = #{in.employeeNameKana},
+        gender = #{in.gender},
+        employment_type = #{in.employmentType},
+        hire_date = #{in.hireDate},
+        resign_date = #{in.resignDate},
+        email = #{in.email},
+        phone = #{in.phone},
+        status = #{in.status},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+
+  <delete id="deleteWorkRuleByEmployeeId">
+    DELETE FROM employee_work_rule
+    WHERE tenant_id = #{tenantId}
+      AND employee_id = #{employeeId}
+  </delete>
+
+  <delete id="deleteExternalMappingByEmployeeId">
+    DELETE FROM employee_external_mapping
+    WHERE tenant_id = #{tenantId}
+      AND employee_id = #{employeeId}
+  </delete>
+
+  <delete id="deleteById">
+    DELETE FROM employee
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </delete>
+
+  <select id="countWorkRuleByEmployeeId" resultType="java.lang.Integer">
+    SELECT COUNT(*)
+    FROM employee_work_rule
+    WHERE tenant_id = #{tenantId}
+      AND employee_id = #{employeeId}
+  </select>
+
+  <insert id="insertWorkRule">
+    INSERT INTO employee_work_rule (
+      tenant_id, employee_id, work_rule_type, standard_daily_minutes, standard_weekly_minutes,
+      overtime_enabled, night_work_enabled, holiday_work_enabled, rounding_rule_id,
+      effective_start_date, effective_end_date
+    ) VALUES (
+      #{tenantId}, #{employeeId}, #{workRuleType}, #{dailyMinutes}, #{weeklyMinutes},
+      1, CASE WHEN #{dailyMinutes} &gt;= 480 THEN 1 ELSE 0 END, CASE WHEN #{dailyMinutes} &gt;= 480 THEN 1 ELSE 0 END,
+      NULL, #{effectiveStartDate}, NULL
+    )
+  </insert>
+
+  <update id="updateWorkRule">
+    UPDATE employee_work_rule
+    SET work_rule_type = #{workRuleType},
+        standard_daily_minutes = #{dailyMinutes},
+        standard_weekly_minutes = #{weeklyMinutes},
+        overtime_enabled = 1,
+        night_work_enabled = CASE WHEN #{dailyMinutes} &gt;= 480 THEN 1 ELSE 0 END,
+        holiday_work_enabled = CASE WHEN #{dailyMinutes} &gt;= 480 THEN 1 ELSE 0 END,
+        effective_start_date = #{effectiveStartDate}
+    WHERE tenant_id = #{tenantId}
+      AND employee_id = #{employeeId}
+  </update>
+
+  <select id="countExternalMappingByEmployeeId" resultType="java.lang.Integer">
+    SELECT COUNT(*)
+    FROM employee_external_mapping
+    WHERE tenant_id = #{tenantId}
+      AND employee_id = #{employeeId}
+  </select>
+
+  <insert id="insertExternalMapping">
+    INSERT INTO employee_external_mapping (
+      tenant_id, employee_id, source_system, external_employee_id, external_employee_no, status
+    ) VALUES (
+      #{tenantId}, #{employeeId}, #{in.sourceSystem}, #{in.externalEmployeeId}, #{in.externalEmployeeNo}, #{in.status}
+    )
+  </insert>
+
+  <update id="updateExternalMapping">
+    UPDATE employee_external_mapping
+    SET source_system = #{in.sourceSystem},
+        external_employee_id = #{in.externalEmployeeId},
+        external_employee_no = #{in.externalEmployeeNo},
+        status = #{in.status},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND employee_id = #{employeeId}
+  </update>
+</mapper>
+

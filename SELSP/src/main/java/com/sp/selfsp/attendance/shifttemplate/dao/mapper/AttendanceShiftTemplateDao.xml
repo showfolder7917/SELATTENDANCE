@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.attendance.shifttemplate.dao.AttendanceShiftTemplateDao">
+
+  <resultMap id="ShiftTemplateResultMap" type="com.sp.selfsp.attendance.domain.out.AttendanceOut$ShiftTemplateOut">
+    <id column="id" property="id"/>
+    <result column="template_code" property="templateCode"/>
+    <result column="template_name" property="templateName"/>
+    <result column="shift_type" property="shiftType"/>
+    <result column="start_time" property="startTime"/>
+    <result column="end_time" property="endTime"/>
+    <result column="cross_day" property="crossDay"/>
+    <result column="scheduled_break_minutes" property="scheduledBreakMinutes"/>
+    <result column="color" property="color"/>
+    <result column="active" property="active"/>
+  </resultMap>
+
+  <sql id="ShiftTemplateColumns">
+    id, template_code, template_name, shift_type, start_time, end_time, cross_day,
+    scheduled_break_minutes, color, is_active AS active
+  </sql>
+
+  <select id="selectList" resultMap="ShiftTemplateResultMap">
+    SELECT <include refid="ShiftTemplateColumns"/>
+    FROM shift_template
+    WHERE tenant_id = #{tenantId}
+    ORDER BY template_code ASC, id ASC
+  </select>
+
+  <select id="selectById" resultMap="ShiftTemplateResultMap">
+    SELECT <include refid="ShiftTemplateColumns"/>
+    FROM shift_template
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </select>
+
+  <select id="selectByCode" resultMap="ShiftTemplateResultMap">
+    SELECT <include refid="ShiftTemplateColumns"/>
+    FROM shift_template
+    WHERE tenant_id = #{tenantId}
+      AND template_code = #{templateCode}
+  </select>
+
+  <insert id="insert">
+    INSERT INTO shift_template (
+      tenant_id, template_code, template_name, shift_type, start_time, end_time, cross_day,
+      scheduled_break_minutes, color, is_active
+    ) VALUES (
+      #{tenantId}, #{in.templateCode}, #{in.templateName}, #{in.shiftType}, #{in.startTime}, #{in.endTime},
+      CASE WHEN #{in.crossDay} THEN 1 ELSE 0 END,
+      #{in.scheduledBreakMinutes}, #{in.color},
+      CASE WHEN #{in.active} THEN 1 ELSE 0 END
+    )
+  </insert>
+
+  <update id="updateById">
+    UPDATE shift_template
+    SET template_code = #{in.templateCode},
+        template_name = #{in.templateName},
+        shift_type = #{in.shiftType},
+        start_time = #{in.startTime},
+        end_time = #{in.endTime},
+        cross_day = CASE WHEN #{in.crossDay} THEN 1 ELSE 0 END,
+        scheduled_break_minutes = #{in.scheduledBreakMinutes},
+        color = #{in.color},
+        is_active = CASE WHEN #{in.active} THEN 1 ELSE 0 END,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+
+  <delete id="deleteById">
+    DELETE FROM shift_template
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </delete>
+</mapper>
+

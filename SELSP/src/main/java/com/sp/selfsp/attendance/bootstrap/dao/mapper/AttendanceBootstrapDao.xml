@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  文件名：AttendanceBootstrapDao.xml
+  描述：考勤首页聚合 MyBatis 映射。
+  创建时间：2026-05-25
+  修改时间：2026-05-25
+-->
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.attendance.bootstrap.dao.AttendanceBootstrapDao">
+
+  <select id="selectCounts" resultType="java.util.HashMap">
+    SELECT
+      (SELECT COUNT(*) FROM tenant) AS tenantCount,
+      (SELECT COUNT(*) FROM workplace WHERE tenant_id = #{tenantId} AND status = 'ACTIVE') AS workplaceCount,
+      (SELECT COUNT(*) FROM department WHERE tenant_id = #{tenantId} AND status = 'ACTIVE') AS departmentCount,
+      (SELECT COUNT(*) FROM employee WHERE tenant_id = #{tenantId}) AS employeeCount,
+      (SELECT COUNT(*) FROM employee_work_rule WHERE tenant_id = #{tenantId}) AS workRuleCount,
+      (SELECT COUNT(*) FROM employee_external_mapping WHERE tenant_id = #{tenantId} AND status = 'ACTIVE') AS externalMappingCount,
+      (SELECT COUNT(*) FROM shift_template WHERE tenant_id = #{tenantId} AND is_active = 1) AS shiftTemplateCount
+  </select>
+</mapper>
+

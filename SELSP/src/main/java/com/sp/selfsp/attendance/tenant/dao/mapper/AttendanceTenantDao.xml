@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  文件名：AttendanceTenantDao.xml
+  描述：考勤租户 MyBatis 映射。
+  创建时间：2026-05-25
+  修改时间：2026-05-25
+-->
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.attendance.tenant.dao.AttendanceTenantDao">
+
+  <select id="selectCurrentTenant" resultType="com.sp.selfsp.attendance.domain.out.AttendanceOut$TenantOut">
+    SELECT id, tenant_code, tenant_name, status, contact_name, contact_phone, contact_email, timezone,
+           created_at, updated_at
+    FROM tenant
+    WHERE id = #{id}
+  </select>
+
+  <select id="countById" resultType="java.lang.Integer">
+    SELECT COUNT(*)
+    FROM tenant
+    WHERE id = #{id}
+  </select>
+
+  <insert id="insertCurrentTenant">
+    INSERT INTO tenant (
+      id, tenant_code, tenant_name, status, contact_name, contact_phone, contact_email, timezone
+    ) VALUES (
+      #{id}, #{in.tenantCode}, #{in.tenantName}, 'ACTIVE', #{in.contactName}, #{in.contactPhone}, #{in.contactEmail}, #{in.timezone}
+    )
+  </insert>
+
+  <update id="updateCurrentTenant">
+    UPDATE tenant
+    SET tenant_code = #{in.tenantCode},
+        tenant_name = #{in.tenantName},
+        status = 'ACTIVE',
+        contact_name = #{in.contactName},
+        contact_phone = #{in.contactPhone},
+        contact_email = #{in.contactEmail},
+        timezone = #{in.timezone},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = #{id}
+  </update>
+</mapper>
+

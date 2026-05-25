@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.attendance.department.dao.AttendanceDepartmentDao">
+
+  <resultMap id="DepartmentResultMap" type="com.sp.selfsp.attendance.domain.out.AttendanceOut$DepartmentOut">
+    <id column="id" property="id"/>
+    <result column="workplace_id" property="workplaceId"/>
+    <result column="parent_id" property="parentId"/>
+    <result column="workplace_name" property="workplaceName"/>
+    <result column="department_code" property="departmentCode"/>
+    <result column="department_name" property="departmentName"/>
+    <result column="sort_order" property="sortOrder"/>
+    <result column="status" property="status"/>
+  </resultMap>
+
+  <sql id="DepartmentColumns">
+    d.id, d.workplace_id, d.parent_id, w.workplace_name, d.department_code, d.department_name, d.sort_order, d.status
+  </sql>
+
+  <select id="selectList" resultMap="DepartmentResultMap">
+    SELECT <include refid="DepartmentColumns"/>
+    FROM department d
+    LEFT JOIN workplace w ON w.id = d.workplace_id
+    WHERE d.tenant_id = #{tenantId}
+    ORDER BY d.sort_order ASC, d.id ASC
+  </select>
+
+  <select id="selectById" resultMap="DepartmentResultMap">
+    SELECT <include refid="DepartmentColumns"/>
+    FROM department d
+    LEFT JOIN workplace w ON w.id = d.workplace_id
+    WHERE d.tenant_id = #{tenantId}
+      AND d.id = #{id}
+  </select>
+
+  <select id="selectByCode" resultMap="DepartmentResultMap">
+    SELECT <include refid="DepartmentColumns"/>
+    FROM department d
+    LEFT JOIN workplace w ON w.id = d.workplace_id
+    WHERE d.tenant_id = #{tenantId}
+      AND d.department_code = #{departmentCode}
+  </select>
+
+  <insert id="insert" parameterType="map">
+    INSERT INTO department (
+      tenant_id, workplace_id, parent_id, department_code, department_name, sort_order, status
+    ) VALUES (
+      #{tenantId}, #{in.workplaceId}, #{in.parentId}, #{in.departmentCode}, #{in.departmentName}, #{in.sortOrder}, #{in.status}
+    )
+  </insert>
+
+  <update id="updateById">
+    UPDATE department
+    SET workplace_id = #{in.workplaceId},
+        parent_id = #{in.parentId},
+        department_code = #{in.departmentCode},
+        department_name = #{in.departmentName},
+        sort_order = #{in.sortOrder},
+        status = #{in.status},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+
+  <delete id="deleteById">
+    DELETE FROM department
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </delete>
+
+  <select id="countEmployeesByDepartmentId" resultType="java.lang.Long">
+    SELECT COUNT(*)
+    FROM employee
+    WHERE tenant_id = #{tenantId}
+      AND department_id = #{departmentId}
+  </select>
+</mapper>

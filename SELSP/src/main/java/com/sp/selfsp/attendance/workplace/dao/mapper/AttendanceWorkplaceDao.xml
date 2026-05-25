@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.attendance.workplace.dao.AttendanceWorkplaceDao">
+
+  <resultMap id="WorkplaceResultMap" type="com.sp.selfsp.attendance.domain.out.AttendanceOut$WorkplaceOut">
+    <id column="id" property="id"/>
+    <result column="workplace_code" property="workplaceCode"/>
+    <result column="workplace_name" property="workplaceName"/>
+    <result column="address" property="address"/>
+    <result column="phone" property="phone"/>
+    <result column="status" property="status"/>
+  </resultMap>
+
+  <sql id="WorkplaceColumns">
+    id, workplace_code, workplace_name, address, phone, status
+  </sql>
+
+  <select id="selectList" resultMap="WorkplaceResultMap">
+    SELECT <include refid="WorkplaceColumns"/>
+    FROM workplace
+    WHERE tenant_id = #{tenantId}
+    ORDER BY workplace_code ASC, id ASC
+  </select>
+
+  <select id="selectById" resultMap="WorkplaceResultMap">
+    SELECT <include refid="WorkplaceColumns"/>
+    FROM workplace
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </select>
+
+  <select id="selectByCode" resultMap="WorkplaceResultMap">
+    SELECT <include refid="WorkplaceColumns"/>
+    FROM workplace
+    WHERE tenant_id = #{tenantId}
+      AND workplace_code = #{workplaceCode}
+  </select>
+
+  <insert id="insert" parameterType="map">
+    INSERT INTO workplace (
+      tenant_id, workplace_code, workplace_name, address, phone, status
+    ) VALUES (
+      #{tenantId}, #{in.workplaceCode}, #{in.workplaceName}, #{in.address}, #{in.phone}, #{in.status}
+    )
+  </insert>
+
+  <update id="updateById">
+    UPDATE workplace
+    SET workplace_code = #{in.workplaceCode},
+        workplace_name = #{in.workplaceName},
+        address = #{in.address},
+        phone = #{in.phone},
+        status = #{in.status},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+
+  <delete id="deleteById">
+    DELETE FROM workplace
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </delete>
+
+  <select id="countEmployeesByWorkplaceId" resultType="java.lang.Long">
+    SELECT COUNT(*)
+    FROM employee
+    WHERE tenant_id = #{tenantId}
+      AND workplace_id = #{workplaceId}
+  </select>
+
+  <select id="countDepartmentsByWorkplaceId" resultType="java.lang.Long">
+    SELECT COUNT(*)
+    FROM department
+    WHERE tenant_id = #{tenantId}
+      AND workplace_id = #{workplaceId}
+  </select>
+</mapper>

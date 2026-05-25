@@ -1,0 +1,58 @@
+plugins {
+  id 'org.springframework.boot' version '3.5.0'
+  id 'java'
+  id 'checkstyle'
+}
+
+group = 'com.sp'
+version = '0.0.1-SNAPSHOT'
+
+// 当前本机仅稳定提供 JDK 25，因此工程默认直接使用 25，避免 IDE/Gradle 导入阶段因为找不到 21 而爆红。
+def targetJavaVersion = providers.gradleProperty('javaVersion').map(Integer.&parseInt).getOrElse(25)
+
+java {
+  toolchain {
+    // 默认使用本机已安装的 JDK 25，并保留通过 -PjavaVersion 覆盖版本的能力。
+    languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+  }
+}
+
+springBoot {
+  // 明确应用入口，保证打包和测试都指向统一启动类。
+  mainClass = 'com.sp.selfsp.SelfspApplication'
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  // Web Starter 承接用户 API 的 HTTP 暴露能力。
+  implementation 'org.springframework.boot:spring-boot-starter-web:3.5.0'
+  // JDBC Starter 为 H2 和事务边界提供底层能力。
+  implementation 'org.springframework.boot:spring-boot-starter-jdbc:3.5.0'
+  // MyBatis Starter 负责 DAO 接口与 XML SQL 映射。
+  implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4'
+  // H2 用于本地开发和测试环境快速重建最小数据库。
+  runtimeOnly 'com.h2database:h2:2.3.232'
+  // Spring Boot 测试套件负责 MockMvc 与集成测试。
+  testImplementation 'org.springframework.boot:spring-boot-starter-test:3.5.0'
+}
+
+test {
+  // JUnit 5 是当前工程统一测试入口。
+  useJUnitPlatform()
+}
+
+tasks.named('processResources') {
+  // 把放在 dao/mapper 目录下的 MyBatis XML 一并打进 classpath，避免迁移到 java 目录后运行时找不到映射文件。
+  from('src/main/java') {
+    include '**/dao/mapper/*.xml'
+  }
+}
+
+checkstyle {
+  // 复用现有 SELFSP 代码风格检查规则，避免新工程另起一套规范。
+  toolVersion = '10.3.2'
+  configFile = file('checkstyle.xml')
+}
