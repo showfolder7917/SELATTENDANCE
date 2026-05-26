@@ -104,7 +104,7 @@ const wizardStepLabels = computed(() => [
             <span>{{ t('scheduleKeyword') }}</span>
             <input v-model="scheduleFilters.employeeKeyword" :placeholder="t('scheduleKeywordHint')" />
           </label>
-          <label class="selattendance-inline-check">
+          <label class="selattendance-inline-check selattendance-inline-check-wide">
             <input v-model="scheduleFilters.onlyUnassigned" type="checkbox" />
             <span>{{ t('scheduleOnlyUnassigned') }}</span>
           </label>

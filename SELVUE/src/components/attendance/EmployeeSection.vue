@@ -45,7 +45,12 @@ defineProps({
           <table class="seladmin-table selattendance-wide-table">
             <thead><tr><th>{{ t('employeeNo') }}</th><th>{{ t('employeeName') }}</th><th>{{ t('departmentName') }}</th><th>{{ t('workplace') }}</th><th>{{ t('employmentType') }}</th><th>{{ t('externalEmployeeId') }}</th><th></th></tr></thead>
             <tbody>
-              <tr v-for="item in filteredEmployees" :key="item.id">
+              <tr
+                v-for="item in filteredEmployees"
+                :key="item.id"
+                :class="{ 'selattendance-table-row-active': employeeForm.id === item.id }"
+                @click="onEditEmployee(item)"
+              >
                 <td>{{ item.employeeNo }}</td>
                 <td><div>{{ item.employeeName }}</div><small>{{ item.employeeNameKana }}</small></td>
                 <td>{{ item.departmentName }}</td>
@@ -53,9 +58,9 @@ defineProps({
                 <td>{{ item.employmentType }}</td>
                 <td><span v-if="item.externalMappingBound">{{ item.externalEmployeeId }}</span><span v-else class="seladmin-warning-text">{{ t('bindMapping') }}</span></td>
                 <td class="seladmin-inline-actions">
-                  <button type="button" @click="onEditEmployee(item)">{{ t('save') }}</button>
-                  <button type="button" @click="onEditMapping(item)">{{ t('bindMapping') }}</button>
-                  <button type="button" @click="onDeleteEmployee(item.id)">{{ t('delete') }}</button>
+                  <button type="button" @click.stop="onEditEmployee(item)">{{ t('save') }}</button>
+                  <button type="button" @click.stop="onEditMapping(item)">{{ t('bindMapping') }}</button>
+                  <button type="button" @click.stop="onDeleteEmployee(item.id)">{{ t('delete') }}</button>
                 </td>
               </tr>
             </tbody>

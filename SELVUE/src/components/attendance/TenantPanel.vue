@@ -23,7 +23,8 @@ defineProps({
       <label class="seladmin-field"><span>{{ t('contactEmail') }}</span><input v-model="tenant.contactEmail" /></label>
       <label class="seladmin-field"><span>{{ t('timezone') }}</span><input v-model="tenant.timezone" /></label>
     </div>
-    <button class="seladmin-button seladmin-button-primary" type="button" @click="onSubmit()">{{ t('save') }}</button>
+    <div class="seladmin-action-row">
+      <button class="seladmin-button seladmin-button-primary" type="button" @click="onSubmit()">{{ t('save') }}</button>
+    </div>
   </section>
 </template>
-

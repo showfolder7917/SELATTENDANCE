@@ -24,7 +24,12 @@ defineProps({
           <table class="seladmin-table">
             <thead><tr><th>{{ t('shiftCode') }}</th><th>{{ t('shiftName') }}</th><th>{{ t('shiftType') }}</th><th>{{ t('startTime') }}</th><th>{{ t('endTime') }}</th><th>{{ t('crossDay') }}</th><th></th></tr></thead>
             <tbody>
-              <tr v-for="item in shiftTemplates" :key="item.id">
+              <tr
+                v-for="item in shiftTemplates"
+                :key="item.id"
+                :class="{ 'selattendance-table-row-active': shiftForm.id === item.id }"
+                @click="onEdit(item)"
+              >
                 <td>{{ item.templateCode }}</td>
                 <td>{{ item.templateName }}</td>
                 <td>{{ item.shiftType }}</td>
@@ -32,8 +37,8 @@ defineProps({
                 <td>{{ item.endTime || '-' }}</td>
                 <td>{{ item.crossDay ? 'Y' : 'N' }}</td>
                 <td class="seladmin-inline-actions">
-                  <button type="button" @click="onEdit(item)">{{ t('save') }}</button>
-                  <button type="button" @click="onDelete(item.id)">{{ t('delete') }}</button>
+                  <button type="button" @click.stop="onEdit(item)">{{ t('save') }}</button>
+                  <button type="button" @click.stop="onDelete(item.id)">{{ t('delete') }}</button>
                 </td>
               </tr>
             </tbody>

@@ -6,6 +6,7 @@ import AttendanceSectionNav from '../../components/attendance/AttendanceSectionN
 import AttendanceSummaryPanel from '../../components/attendance/AttendanceSummaryPanel.vue'
 import DepartmentSection from '../../components/attendance/DepartmentSection.vue'
 import EmployeeSection from '../../components/attendance/EmployeeSection.vue'
+import ResizableWorkbenchSplit from '../../components/attendance/ResizableWorkbenchSplit.vue'
 import ScheduleSection from '../../components/attendance/ScheduleSection.vue'
 import ShiftTemplateSection from '../../components/attendance/ShiftTemplateSection.vue'
 import TenantPanel from '../../components/attendance/TenantPanel.vue'
@@ -119,131 +120,154 @@ const activeSectionMeta = computed(
       </div>
     </header>
 
-    <div class="selattendance-workbench">
-      <div class="selattendance-sidebar-stick">
-        <aside class="selattendance-sidebar seladmin-surface">
-          <div class="selattendance-sidebar-header">
-            <p class="seladmin-eyebrow">{{ t('workspaceSidebarTitle') }}</p>
-            <p class="seladmin-copy">{{ t('workspaceSidebarHint') }}</p>
+    <ResizableWorkbenchSplit
+      class="selattendance-workbench selattendance-workbench-shell"
+      storage-key="attendance-shell-split"
+      :default-left-percent="13"
+      :min-left-percent="9"
+      :max-left-percent="22"
+    >
+      <template #left>
+        <div class="selattendance-sidebar-pane">
+          <div class="selattendance-sidebar-stick">
+            <aside class="selattendance-sidebar seladmin-surface">
+              <div class="selattendance-sidebar-header">
+                <p class="seladmin-eyebrow">{{ t('workspaceSidebarTitle') }}</p>
+                <p class="seladmin-copy">{{ t('workspaceSidebarHint') }}</p>
+              </div>
+
+              <AttendanceSectionNav
+                v-model:active-section="activeSection"
+                :nav-items="workspaceNavItems"
+                :active-section="activeSection"
+                :title="t('workspaceSidebarTitle')"
+              />
+
+              <div class="selattendance-sidebar-foot">
+                <span class="selattendance-sidebar-foot-label">{{ t('nextAction') }}</span>
+                <strong>{{ recommendedNextLabel }}</strong>
+              </div>
+            </aside>
           </div>
-
-          <AttendanceSectionNav
-            v-model:active-section="activeSection"
-            :nav-items="workspaceNavItems"
-            :active-section="activeSection"
-            :title="t('workspaceSidebarTitle')"
-          />
-
-          <div class="selattendance-sidebar-foot">
-            <span class="selattendance-sidebar-foot-label">{{ t('nextAction') }}</span>
-            <strong>{{ recommendedNextLabel }}</strong>
-          </div>
-        </aside>
-      </div>
-
-      <main class="selattendance-content">
-        <section class="selattendance-content-header seladmin-surface">
-          <div>
-            <p class="seladmin-eyebrow">{{ t('workspaceStatus') }}</p>
-            <h2>{{ activeSectionMeta.label }}</h2>
-            <p class="seladmin-copy">{{ activeSectionMeta.caption }}</p>
-          </div>
-          <span class="seladmin-chip">{{ activeSectionMeta.badge }}</span>
-        </section>
-
-        <div class="selattendance-content-stack">
-          <template v-if="activeSection === 'wizard'">
-            <div class="selattendance-overview-grid">
-              <AttendanceSummaryPanel :steps="state.steps" :recommended-next-label="recommendedNextLabel" :t="t" />
-              <TenantPanel :tenant="state.tenant" :t="t" :on-submit="submitTenant" />
-            </div>
-            <WizardSection :visible="true" :steps="state.steps" :t="t" />
-          </template>
-
-          <WorkplaceSection
-            :visible="activeSection === 'workplace'"
-            :workplaces="state.workplaces"
-            :workplace-form="state.workplaceForm"
-            :t="t"
-            :on-submit="submitWorkplace"
-            :on-reset="resetWorkplaceForm"
-            :on-edit="editWorkplace"
-            :on-delete="removeWorkplace"
-          />
-
-          <DepartmentSection
-            :visible="activeSection === 'department'"
-            :workplaces="state.workplaces"
-            :departments="state.departments"
-            :department-form="state.departmentForm"
-            :t="t"
-            :on-submit="submitDepartment"
-            :on-reset="resetDepartmentForm"
-            :on-edit="editDepartment"
-            :on-delete="removeDepartment"
-          />
-
-          <EmployeeSection
-            :visible="activeSection === 'employee'"
-            :workplaces="state.workplaces"
-            :departments="state.departments"
-            :employees="state.employees"
-            :filtered-employees="filteredEmployees"
-            :employee-form="state.employeeForm"
-            :mapping-form="state.mappingForm"
-            :employee-filters="state.employeeFilters"
-            :import-csv-text="state.importCsvText"
-            :import-result="state.importResult"
-            :t="t"
-            :on-submit="submitEmployee"
-            :on-reset="resetEmployeeForm"
-            :on-import="submitImport"
-            :on-update-import-csv-text="updateImportCsvText"
-            :on-export="handleExport"
-            :on-bind="submitMapping"
-            :on-edit-employee="editEmployee"
-            :on-edit-mapping="editMapping"
-            :on-delete-employee="removeEmployee"
-          />
-
-          <ShiftTemplateSection
-            :visible="activeSection === 'shift'"
-            :shift-templates="state.shiftTemplates"
-            :shift-form="state.shiftForm"
-            :t="t"
-            :on-submit="submitShiftTemplate"
-            :on-generate="generateRecommended"
-            :on-edit="editShiftTemplate"
-            :on-delete="removeShiftTemplate"
-          />
-
-          <ScheduleSection
-            :visible="activeSection === 'schedule'"
-            :workplaces="state.workplaces"
-            :departments="state.departments"
-            :schedule-board="state.scheduleBoard"
-            :schedule-filters="state.scheduleFilters"
-            :schedule-form="state.scheduleForm"
-            :batch-wizard="state.batchWizard"
-            :unassigned-items="state.scheduleUnassignedItems"
-            :t="t"
-            :on-refresh="loadScheduleBoard"
-            :on-select-template="selectScheduleTemplate"
-            :on-apply-schedule="applySchedule"
-            :on-delete-schedule="removeScheduleItem"
-            :on-copy-last-week="copySchedulesFromLastWeek"
-            :on-copy-last-month="copySchedulesFromLastMonth"
-            :on-export="handleScheduleExport"
-            :on-check-unassigned="runUnassignedCheck"
-            :on-open-batch-wizard="openBatchWizard"
-            :on-close-batch-wizard="closeBatchWizard"
-            :on-next-batch-step="nextBatchStep"
-            :on-prev-batch-step="prevBatchStep"
-            :on-confirm-batch-wizard="confirmBatchWizard"
-          />
         </div>
-      </main>
-    </div>
+      </template>
+
+      <template #right>
+        <main class="selattendance-content">
+          <section class="selattendance-content-header seladmin-surface">
+            <div>
+              <p class="seladmin-eyebrow">{{ t('workspaceStatus') }}</p>
+              <h2>{{ activeSectionMeta.label }}</h2>
+              <p class="seladmin-copy">{{ activeSectionMeta.caption }}</p>
+            </div>
+            <span class="seladmin-chip">{{ activeSectionMeta.badge }}</span>
+          </section>
+
+          <div class="selattendance-content-stack">
+            <template v-if="activeSection === 'wizard'">
+              <ResizableWorkbenchSplit
+                class="selattendance-overview-split"
+                storage-key="attendance-overview-split"
+                :default-left-percent="64"
+                :min-left-percent="42"
+                :max-left-percent="76"
+              >
+                <template #left>
+                  <AttendanceSummaryPanel :steps="state.steps" :recommended-next-label="recommendedNextLabel" :t="t" />
+                </template>
+
+                <template #right>
+                  <TenantPanel :tenant="state.tenant" :t="t" :on-submit="submitTenant" />
+                </template>
+              </ResizableWorkbenchSplit>
+              <WizardSection :visible="true" :steps="state.steps" :t="t" />
+            </template>
+
+            <WorkplaceSection
+              :visible="activeSection === 'workplace'"
+              :workplaces="state.workplaces"
+              :workplace-form="state.workplaceForm"
+              :t="t"
+              :on-submit="submitWorkplace"
+              :on-reset="resetWorkplaceForm"
+              :on-edit="editWorkplace"
+              :on-delete="removeWorkplace"
+            />
+
+            <DepartmentSection
+              :visible="activeSection === 'department'"
+              :workplaces="state.workplaces"
+              :departments="state.departments"
+              :department-form="state.departmentForm"
+              :t="t"
+              :on-submit="submitDepartment"
+              :on-reset="resetDepartmentForm"
+              :on-edit="editDepartment"
+              :on-delete="removeDepartment"
+            />
+
+            <EmployeeSection
+              :visible="activeSection === 'employee'"
+              :workplaces="state.workplaces"
+              :departments="state.departments"
+              :employees="state.employees"
+              :filtered-employees="filteredEmployees"
+              :employee-form="state.employeeForm"
+              :mapping-form="state.mappingForm"
+              :employee-filters="state.employeeFilters"
+              :import-csv-text="state.importCsvText"
+              :import-result="state.importResult"
+              :t="t"
+              :on-submit="submitEmployee"
+              :on-reset="resetEmployeeForm"
+              :on-import="submitImport"
+              :on-update-import-csv-text="updateImportCsvText"
+              :on-export="handleExport"
+              :on-bind="submitMapping"
+              :on-edit-employee="editEmployee"
+              :on-edit-mapping="editMapping"
+              :on-delete-employee="removeEmployee"
+            />
+
+            <ShiftTemplateSection
+              :visible="activeSection === 'shift'"
+              :shift-templates="state.shiftTemplates"
+              :shift-form="state.shiftForm"
+              :t="t"
+              :on-submit="submitShiftTemplate"
+              :on-generate="generateRecommended"
+              :on-edit="editShiftTemplate"
+              :on-delete="removeShiftTemplate"
+            />
+
+            <ScheduleSection
+              :visible="activeSection === 'schedule'"
+              :workplaces="state.workplaces"
+              :departments="state.departments"
+              :schedule-board="state.scheduleBoard"
+              :schedule-filters="state.scheduleFilters"
+              :schedule-form="state.scheduleForm"
+              :batch-wizard="state.batchWizard"
+              :unassigned-items="state.scheduleUnassignedItems"
+              :t="t"
+              :on-refresh="loadScheduleBoard"
+              :on-select-template="selectScheduleTemplate"
+              :on-apply-schedule="applySchedule"
+              :on-delete-schedule="removeScheduleItem"
+              :on-copy-last-week="copySchedulesFromLastWeek"
+              :on-copy-last-month="copySchedulesFromLastMonth"
+              :on-export="handleScheduleExport"
+              :on-check-unassigned="runUnassignedCheck"
+              :on-open-batch-wizard="openBatchWizard"
+              :on-close-batch-wizard="closeBatchWizard"
+              :on-next-batch-step="nextBatchStep"
+              :on-prev-batch-step="prevBatchStep"
+              :on-confirm-batch-wizard="confirmBatchWizard"
+            />
+          </div>
+        </main>
+      </template>
+    </ResizableWorkbenchSplit>
 
     <div v-if="toast" class="seladmin-toast seladmin-surface">{{ toast }}</div>
     <div v-if="loading" class="seladmin-loading">{{ t('loading') }}</div>

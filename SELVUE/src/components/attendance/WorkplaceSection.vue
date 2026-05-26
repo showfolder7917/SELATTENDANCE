@@ -24,15 +24,20 @@ defineProps({
           <table class="seladmin-table">
             <thead><tr><th>{{ t('workplaceCode') }}</th><th>{{ t('workplaceName') }}</th><th>{{ t('address') }}</th><th>{{ t('phone') }}</th><th>{{ t('status') }}</th><th></th></tr></thead>
             <tbody>
-              <tr v-for="item in workplaces" :key="item.id">
+              <tr
+                v-for="item in workplaces"
+                :key="item.id"
+                :class="{ 'selattendance-table-row-active': workplaceForm.id === item.id }"
+                @click="onEdit(item)"
+              >
                 <td>{{ item.workplaceCode }}</td>
                 <td>{{ item.workplaceName }}</td>
                 <td>{{ item.address }}</td>
                 <td>{{ item.phone }}</td>
                 <td>{{ item.status }}</td>
                 <td class="seladmin-inline-actions">
-                  <button type="button" @click="onEdit(item)">{{ t('save') }}</button>
-                  <button type="button" @click="onDelete(item.id)">{{ t('delete') }}</button>
+                  <button type="button" @click.stop="onEdit(item)">{{ t('save') }}</button>
+                  <button type="button" @click.stop="onDelete(item.id)">{{ t('delete') }}</button>
                 </td>
               </tr>
             </tbody>
