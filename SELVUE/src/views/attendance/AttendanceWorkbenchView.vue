@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import LanguageSwitch from '../../components/LanguageSwitch.vue'
 import ThemeSwitch from '../../components/ThemeSwitch.vue'
 import AttendanceSectionNav from '../../components/attendance/AttendanceSectionNav.vue'
@@ -26,6 +26,8 @@ const {
   t,
   navItems,
   recommendedNextLabel,
+  filteredDepartments,
+  currentDepartmentWorkplaceName,
   filteredEmployees,
   submitTenant,
   submitWorkplace,
@@ -54,12 +56,16 @@ const {
   runUnassignedCheck,
   handleScheduleExport,
   editWorkplace,
+  openWorkplaceDepartments,
   editDepartment,
+  openDepartmentEmployees,
+  openDepartmentSchedule,
   editEmployee,
   editMapping,
   editShiftTemplate,
   resetWorkplaceForm,
   resetDepartmentForm,
+  clearDepartmentWorkplaceFilter,
   resetEmployeeForm
 } = useAttendanceWorkbench()
 
@@ -104,6 +110,100 @@ const workspaceNavItems = computed(() => {
 const activeSectionMeta = computed(
   () => workspaceNavItems.value.find((item) => item.key === activeSection.value) || workspaceNavItems.value[0]
 )
+
+// 删除确认框在页面层统一维护开关、文案和待执行动作，避免每个模块各自造一套弹窗状态。
+const deleteDialog = ref({
+  open: false,
+  title: '',
+  message: '',
+  confirmLabel: '',
+  onConfirm: null
+})
+
+// 统一关闭删除确认框，并清空挂在弹框里的旧动作，避免误触发上一条删除请求。
+function closeDeleteDialog() {
+  deleteDialog.value = {
+    open: false,
+    title: '',
+    message: '',
+    confirmLabel: '',
+    onConfirm: null
+  }
+}
+
+// 删除文案在页面层统一拼接，保证三套主题下看到的是同一套确认语义。
+function openDeleteDialog(targetLabel, targetName, onConfirm) {
+  const namedMessage = t('confirmDeleteMessageNamed')
+    .replace('{target}', targetLabel)
+    .replace('{name}', targetName)
+  const unnamedMessage = t('confirmDeleteMessageUnnamed').replace('{target}', targetLabel)
+  deleteDialog.value = {
+    open: true,
+    title: t('confirmDeleteTitle'),
+    message: targetName ? namedMessage : unnamedMessage,
+    confirmLabel: t('confirmDeleteAction'),
+    onConfirm
+  }
+}
+
+// 点击确认后先收起弹框，再执行真正删除动作，避免删除请求期间弹框还停留在页面上。
+async function confirmDeleteDialog() {
+  const pendingAction = deleteDialog.value.onConfirm
+  closeDeleteDialog()
+  if (pendingAction) {
+    await pendingAction()
+  }
+}
+
+// 事业所删除文案优先展示名称，其次回退编码，避免用户只看到无意义主键。
+function requestWorkplaceDelete(id) {
+  const item = state.workplaces.find((entry) => entry.id === id)
+  openDeleteDialog(
+    t('workplaceTitle'),
+    item?.workplaceName || item?.workplaceCode || '',
+    () => removeWorkplace(id)
+  )
+}
+
+// 部门删除沿用同一弹框能力，只替换目标模块标签和展示名称。
+function requestDepartmentDelete(id) {
+  const item = state.departments.find((entry) => entry.id === id)
+  openDeleteDialog(
+    t('departmentTitle'),
+    item?.departmentName || item?.departmentCode || '',
+    () => removeDepartment(id)
+  )
+}
+
+// 员工删除确认优先展示员工姓名，避免在同一编号体系下误删到其他人。
+function requestEmployeeDelete(id) {
+  const item = state.employees.find((entry) => entry.id === id)
+  openDeleteDialog(
+    t('employeeTitle'),
+    item?.employeeName || item?.employeeNo || '',
+    () => removeEmployee(id)
+  )
+}
+
+// 班次模板删除同样在页面层先确认，再把真正删除动作透传给 composable。
+function requestShiftTemplateDelete(id) {
+  const item = state.shiftTemplates.find((entry) => entry.id === id)
+  openDeleteDialog(
+    t('shiftTitle'),
+    item?.templateName || item?.templateCode || '',
+    () => removeShiftTemplate(id)
+  )
+}
+
+// 排班删除需要把员工和日期拼成当前格标签，帮助用户确认自己要清掉的是哪一天哪位员工。
+function requestScheduleDelete(id) {
+  const item = state.scheduleBoard.scheduleItems.find((entry) => entry.id === id)
+  const targetName = [
+    item?.employeeName || state.scheduleForm.selectedEmployeeName || '',
+    item?.workDate || state.scheduleForm.selectedWorkDate || ''
+  ].filter(Boolean).join(' / ')
+  openDeleteDialog(t('scheduleTitle'), targetName, () => removeScheduleItem(id))
+}
 </script>
 
 <template>
@@ -191,19 +291,25 @@ const activeSectionMeta = computed(
               :on-submit="submitWorkplace"
               :on-reset="resetWorkplaceForm"
               :on-edit="editWorkplace"
-              :on-delete="removeWorkplace"
+              :on-open-departments="openWorkplaceDepartments"
+              :on-delete="requestWorkplaceDelete"
             />
 
             <DepartmentSection
               :visible="activeSection === 'department'"
               :workplaces="state.workplaces"
               :departments="state.departments"
+              :filtered-departments="filteredDepartments"
               :department-form="state.departmentForm"
+              :current-workplace-name="currentDepartmentWorkplaceName"
               :t="t"
               :on-submit="submitDepartment"
               :on-reset="resetDepartmentForm"
               :on-edit="editDepartment"
-              :on-delete="removeDepartment"
+              :on-clear-workplace-filter="clearDepartmentWorkplaceFilter"
+              :on-open-employees="openDepartmentEmployees"
+              :on-open-schedule="openDepartmentSchedule"
+              :on-delete="requestDepartmentDelete"
             />
 
             <EmployeeSection
@@ -226,7 +332,7 @@ const activeSectionMeta = computed(
               :on-bind="submitMapping"
               :on-edit-employee="editEmployee"
               :on-edit-mapping="editMapping"
-              :on-delete-employee="removeEmployee"
+              :on-delete-employee="requestEmployeeDelete"
             />
 
             <ShiftTemplateSection
@@ -237,7 +343,7 @@ const activeSectionMeta = computed(
               :on-submit="submitShiftTemplate"
               :on-generate="generateRecommended"
               :on-edit="editShiftTemplate"
-              :on-delete="removeShiftTemplate"
+              :on-delete="requestShiftTemplateDelete"
             />
 
             <ScheduleSection
@@ -253,7 +359,7 @@ const activeSectionMeta = computed(
               :on-refresh="loadScheduleBoard"
               :on-select-template="selectScheduleTemplate"
               :on-apply-schedule="applySchedule"
-              :on-delete-schedule="removeScheduleItem"
+              :on-delete-schedule="requestScheduleDelete"
               :on-copy-last-week="copySchedulesFromLastWeek"
               :on-copy-last-month="copySchedulesFromLastMonth"
               :on-export="handleScheduleExport"
@@ -270,6 +376,26 @@ const activeSectionMeta = computed(
     </ResizableWorkbenchSplit>
 
     <div v-if="toast" class="seladmin-toast seladmin-surface">{{ toast }}</div>
+    <div v-if="deleteDialog.open" class="selattendance-confirm-overlay" @click.self="closeDeleteDialog">
+      <section
+        class="selattendance-confirm-dialog seladmin-surface"
+        role="alertdialog"
+        aria-modal="true"
+        :aria-label="deleteDialog.title"
+      >
+        <p class="seladmin-eyebrow">{{ deleteDialog.title }}</p>
+        <h3>{{ deleteDialog.title }}</h3>
+        <p class="seladmin-copy">{{ deleteDialog.message }}</p>
+        <div class="selattendance-confirm-actions">
+          <button type="button" class="seladmin-button seladmin-button-secondary" @click="closeDeleteDialog">
+            {{ t('cancel') }}
+          </button>
+          <button type="button" class="seladmin-button selattendance-confirm-danger" @click="confirmDeleteDialog">
+            {{ deleteDialog.confirmLabel }}
+          </button>
+        </div>
+      </section>
+    </div>
     <div v-if="loading" class="seladmin-loading">{{ t('loading') }}</div>
   </div>
 </template>

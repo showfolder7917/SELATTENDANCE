@@ -257,6 +257,28 @@ body {
   margin-bottom: 18px;
 }
 
+.selattendance-context-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(112, 141, 194, 0.24);
+  border-radius: 14px;
+  background: rgba(31, 42, 63, 0.72);
+}
+
+.selattendance-context-strip span {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--seladmin-text-muted, rgba(255, 255, 255, 0.76));
+}
+
+.selattendance-context-strip button {
+  flex: 0 0 auto;
+}
+
 .selattendance-data-panel .seladmin-table th,
 .selattendance-data-panel .seladmin-table td {
   white-space: nowrap;
@@ -350,6 +372,17 @@ body {
   background: rgba(190, 210, 236, 0.98);
 }
 
+[data-selattendance-theme='liquid-glass'] .selattendance-context-strip {
+  border-color: rgba(170, 190, 225, 0.46);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(232, 241, 252, 0.58) 100%),
+    rgba(227, 237, 249, 0.64);
+}
+
+[data-selattendance-theme='liquid-glass'] .selattendance-context-strip span {
+  color: rgba(84, 96, 122, 0.92);
+}
+
 [data-selattendance-theme='liquid-glass'] .selattendance-data-panel .seladmin-table td small {
   color: rgba(96, 109, 136, 0.82);
 }
@@ -396,6 +429,73 @@ body {
 
 .selattendance-content-stack > * {
   min-width: 0;
+}
+
+.selattendance-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(7, 12, 20, 0.56);
+  backdrop-filter: blur(10px);
+}
+
+.selattendance-confirm-dialog {
+  width: min(100%, 460px);
+  display: grid;
+  gap: 12px;
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px solid var(--seladmin-border, rgba(255, 255, 255, 0.14));
+  box-shadow: 0 28px 80px rgba(4, 8, 18, 0.36);
+}
+
+.selattendance-confirm-dialog h3 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.selattendance-confirm-dialog .seladmin-copy {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.selattendance-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.selattendance-confirm-danger {
+  background: linear-gradient(135deg, rgba(218, 88, 111, 0.96), rgba(246, 123, 110, 0.96));
+  color: #fff;
+  box-shadow: 0 18px 28px rgba(161, 52, 84, 0.22);
+}
+
+.selattendance-confirm-danger:hover {
+  filter: saturate(1.04) brightness(1.02);
+}
+
+[data-selattendance-theme='liquid-glass'] .selattendance-confirm-overlay {
+  background: rgba(196, 209, 230, 0.28);
+}
+
+[data-selattendance-theme='liquid-glass'] .selattendance-confirm-dialog {
+  border-color: rgba(177, 193, 226, 0.52);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(240, 246, 255, 0.76) 100%),
+    rgba(230, 238, 250, 0.8);
+  box-shadow:
+    0 24px 72px rgba(117, 138, 177, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.74);
+}
+
+[data-selattendance-theme='liquid-glass'] .selattendance-confirm-danger {
+  box-shadow: 0 18px 28px rgba(206, 120, 131, 0.18);
 }
 
 .selattendance-schedule-toolbar {
@@ -578,12 +678,6 @@ body {
     rgba(255, 255, 255, 0.03);
 }
 
-.selattendance-schedule-cell.filled {
-  background:
-    linear-gradient(180deg, rgba(82, 141, 255, 0.14), rgba(255, 255, 255, 0.03)),
-    rgba(255, 255, 255, 0.03);
-}
-
 .selattendance-schedule-cell.selected {
   box-shadow: inset 0 0 0 2px rgba(103, 174, 255, 0.88);
 }
@@ -613,8 +707,24 @@ body {
   border-radius: 999px;
   background: color-mix(in srgb, var(--selattendance-tag-color) 22%, white 6%);
   color: #fff;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
+}
+
+.selattendance-schedule-timeblock {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+
+.selattendance-schedule-timeblock small {
+  line-height: 1.22;
+}
+
+.selattendance-schedule-time-separator {
+  min-height: 12px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .selattendance-schedule-side {

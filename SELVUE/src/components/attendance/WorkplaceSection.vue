@@ -10,6 +10,7 @@ defineProps({
   onSubmit: { type: Function, required: true },
   onReset: { type: Function, required: true },
   onEdit: { type: Function, required: true },
+  onOpenDepartments: { type: Function, required: true },
   onDelete: { type: Function, required: true }
 })
 </script>
@@ -37,6 +38,7 @@ defineProps({
                 <td>{{ item.status }}</td>
                 <td class="seladmin-inline-actions">
                   <button type="button" @click.stop="onEdit(item)">{{ t('save') }}</button>
+                  <button type="button" @click.stop="onOpenDepartments(item)">{{ t('jumpDepartment') }}</button>
                   <button type="button" @click.stop="onDelete(item.id)">{{ t('delete') }}</button>
                 </td>
               </tr>

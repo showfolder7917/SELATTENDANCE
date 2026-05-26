@@ -91,6 +91,26 @@ export const messages = {
     create: '新增',
     // 维护 删除 字段，供当前前端状态或配置直接使用。
     delete: '删除',
+    // 维护 进入部门 字段，供当前前端状态或配置直接使用。
+    jumpDepartment: '进入部门',
+    // 维护 查看员工 字段，供当前前端状态或配置直接使用。
+    jumpEmployee: '查看员工',
+    // 维护 查看排班 字段，供当前前端状态或配置直接使用。
+    jumpSchedule: '查看排班',
+    // 维护 当前事业所筛选 字段，供当前前端状态或配置直接使用。
+    currentWorkplaceFilter: '当前事业所：{name}',
+    // 维护 查看全部部门 字段，供当前前端状态或配置直接使用。
+    showAllDepartments: '查看全部部门',
+    // 维护 取消 字段，供当前前端状态或配置直接使用。
+    cancel: '取消',
+    // 维护 确认删除标题 字段，供当前前端状态或配置直接使用。
+    confirmDeleteTitle: '确认删除',
+    // 维护 确认删除动作 字段，供当前前端状态或配置直接使用。
+    confirmDeleteAction: '确认删除',
+    // 维护 具名删除确认文案 字段，供当前前端状态或配置直接使用。
+    confirmDeleteMessageNamed: '确定删除{target}「{name}」吗？此操作不可撤销。',
+    // 维护 泛化删除确认文案 字段，供当前前端状态或配置直接使用。
+    confirmDeleteMessageUnnamed: '确定删除当前{target}吗？此操作不可撤销。',
     // 维护 导入Csv 字段，供当前前端状态或配置直接使用。
     importCsv: '导入 CSV',
     // 维护 导出Csv 字段，供当前前端状态或配置直接使用。
@@ -403,6 +423,26 @@ export const messages = {
     create: '追加',
     // 维护 删除 字段，供当前前端状态或配置直接使用。
     delete: '削除',
+    // 维护 进入部门 字段，供当前前端状态或配置直接使用。
+    jumpDepartment: '部署へ',
+    // 维护 查看员工 字段，供当前前端状态或配置直接使用。
+    jumpEmployee: '社員へ',
+    // 维护 查看排班 字段，供当前前端状态或配置直接使用。
+    jumpSchedule: 'シフトへ',
+    // 维护 当前事业所筛选 字段，供当前前端状态或配置直接使用。
+    currentWorkplaceFilter: '現在の事業所：{name}',
+    // 维护 查看全部部门 字段，供当前前端状态或配置直接使用。
+    showAllDepartments: '全部署を表示',
+    // 维护 取消 字段，供当前前端状态或配置直接使用。
+    cancel: 'キャンセル',
+    // 维护 确认删除标题 字段，供当前前端状态或配置直接使用。
+    confirmDeleteTitle: '削除確認',
+    // 维护 确认删除动作 字段，供当前前端状态或配置直接使用。
+    confirmDeleteAction: '削除する',
+    // 维护 具名删除确认文案 字段，供当前前端状态或配置直接使用。
+    confirmDeleteMessageNamed: '{target}「{name}」を削除しますか？この操作は取り消せません。',
+    // 维护 泛化删除确认文案 字段，供当前前端状态或配置直接使用。
+    confirmDeleteMessageUnnamed: '現在の{target}を削除しますか？この操作は取り消せません。',
     // 维护 导入Csv 字段，供当前前端状态或配置直接使用。
     importCsv: 'CSV 取込',
     // 维护 导出Csv 字段，供当前前端状态或配置直接使用。

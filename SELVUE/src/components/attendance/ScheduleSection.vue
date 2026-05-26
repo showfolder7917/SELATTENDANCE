@@ -164,7 +164,11 @@ const wizardStepLabels = computed(() => [
                     <span class="selattendance-schedule-tag" :style="{ '--selattendance-tag-color': getCellItem(row.employeeId, date).color || 'var(--seladmin-accent, #4f7cff)' }">
                       {{ getCellItem(row.employeeId, date).templateName }}
                     </span>
-                    <small>{{ getCellItem(row.employeeId, date).startTime || t('scheduleRestLabel') }}<template v-if="getCellItem(row.employeeId, date).endTime"> - {{ getCellItem(row.employeeId, date).endTime }}</template></small>
+                    <div class="selattendance-schedule-timeblock">
+                      <small>{{ getCellItem(row.employeeId, date).startTime || t('scheduleRestLabel') }}</small>
+                      <small v-if="getCellItem(row.employeeId, date).endTime" class="selattendance-schedule-time-separator">-</small>
+                      <small v-if="getCellItem(row.employeeId, date).endTime">{{ getCellItem(row.employeeId, date).endTime }}</small>
+                    </div>
                   </template>
                   <template v-else>
                     <strong>{{ t('scheduleUnassignedShort') }}</strong>

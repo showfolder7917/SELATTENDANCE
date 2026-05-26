@@ -103,6 +103,11 @@ export function useAttendanceWorkbench() {
     workplaces: [],
     // 维护 departments 字段，供当前前端状态或配置直接使用。
     departments: [],
+    // 维护 部门Filters 字段，供当前前端状态或配置直接使用。
+    departmentFilters: {
+      // 维护 事业所Id 字段，供当前前端状态或配置直接使用。
+      workplaceId: ''
+    },
     // 维护 employees 字段，供当前前端状态或配置直接使用。
     employees: [],
     // 维护 班次Templates 字段，供当前前端状态或配置直接使用。
@@ -335,6 +340,32 @@ export function useAttendanceWorkbench() {
     })
   )
 
+  // 部门列表支持按当前事业所上下文收口，进入部门模块时直接只看该事业所下的部门。
+  // 声明 filteredDepartments 状态，保存当前工作台交互过程中需要的前端数据。
+  const filteredDepartments = computed(() =>
+    // 更新 departments.filter((item) 状态，保证工作台界面与本次操作结果同步。
+    state.departments.filter((item) => {
+      // 当前没有事业所上下文时返回全部部门，避免普通入口被意外收窄。
+      const matchWorkplace =
+        !state.departmentFilters.workplaceId || String(item.workplaceId) === String(state.departmentFilters.workplaceId)
+      // 返回当前步骤产出的业务结果，继续交给上一层消费。
+      return matchWorkplace
+    })
+  )
+
+  // 右上角标题和部门列表筛选提示都需要当前事业所名称，统一从主数据里反查避免重复保存名称副本。
+  // 声明 currentDepartmentWorkplaceName 状态，保存当前工作台交互过程中需要的前端数据。
+  const currentDepartmentWorkplaceName = computed(() => {
+    // 没有事业所筛选时不显示上下文提示，保持普通部门管理视图简洁。
+    if (!state.departmentFilters.workplaceId) {
+      return ''
+    }
+    // 根据当前筛选主键回查事业所名称，保证提示和最新主数据一致。
+    const workplace = state.workplaces.find((item) => String(item.id) === String(state.departmentFilters.workplaceId))
+    // 返回当前步骤产出的业务结果，继续交给上一层消费。
+    return workplace?.workplaceName || ''
+  })
+
   // 页面挂载时先拉第一阶段 bootstrap 聚合结果，让各子区块共享同一份基线数据。
   // 执行当前业务步骤，推进本行对应的 composable 处理。
   onMounted(async () => {
@@ -393,6 +424,33 @@ export function useAttendanceWorkbench() {
       if (!state.employeeForm.departmentId && state.departments[0]) {
         // 更新 员工Form.departmentId 状态，保证工作台界面与本次操作结果同步。
         state.employeeForm.departmentId = state.departments[0].id
+      }
+      // 删除或刷新主数据后，如果当前事业所筛选已不存在，就主动回退到全部部门视图。
+      if (
+        state.departmentFilters.workplaceId &&
+        !state.workplaces.some((item) => String(item.id) === String(state.departmentFilters.workplaceId))
+      ) {
+        state.departmentFilters.workplaceId = ''
+      }
+      // 员工筛选若指向了已被删除的部门，也要及时清空，避免列表被卡在空视图。
+      if (
+        state.employeeFilters.departmentId &&
+        !state.departments.some((item) => String(item.id) === String(state.employeeFilters.departmentId))
+      ) {
+        state.employeeFilters.departmentId = ''
+      }
+      // 排班筛选同样要随主数据刷新自愈，避免看板继续挂在失效的事业所或部门上。
+      if (
+        state.scheduleFilters.workplaceId &&
+        !state.workplaces.some((item) => String(item.id) === String(state.scheduleFilters.workplaceId))
+      ) {
+        state.scheduleFilters.workplaceId = ''
+      }
+      if (
+        state.scheduleFilters.departmentId &&
+        !state.departments.some((item) => String(item.id) === String(state.scheduleFilters.departmentId))
+      ) {
+        state.scheduleFilters.departmentId = ''
       }
     // 执行当前业务步骤，推进本行对应的 composable 处理。
     } finally {
@@ -668,10 +726,7 @@ export function useAttendanceWorkbench() {
 
   // 执行当前业务步骤，推进本行对应的 composable 处理。
   async function removeScheduleItem(id) {
-    // 单格删除前同样先确认，避免在密集日历里误点清空。
-    if (!window.confirm(t('scheduleDeleteConfirm'))) {
-      return
-    }
+    // 这里仅承接真正删除动作，页面层会先弹主题化确认框，避免继续走浏览器原生 confirm。
     await deleteSchedule(id)
     // 删除后清空右侧当前格说明，避免用户还以为该格子有排班。
     Object.assign(state.scheduleForm, {
@@ -810,6 +865,47 @@ export function useAttendanceWorkbench() {
     activeSection.value = 'department'
   }
 
+  // 从事业所管理进入部门管理时，直接把部门列表收口到当前事业所，减少用户二次筛选。
+  function openWorkplaceDepartments(item) {
+    // 更新 部门Filters.workplaceId 状态，保证工作台界面与本次操作结果同步。
+    state.departmentFilters.workplaceId = String(item.id)
+    // 新增部门时默认沿用当前事业所，避免跳过去后还要重新指定归属。
+    state.departmentForm.workplaceId = item.id
+    // 切换当前工作区页签，让界面定位到目标业务模块。
+    activeSection.value = 'department'
+  }
+
+  // 部门管理可以继续往下钻到员工管理，并自动只看当前部门员工。
+  function openDepartmentEmployees(item) {
+    // 清掉旧关键字和状态条件，只保留当前部门上下文，确保用户看到的是完整部门员工清单。
+    state.employeeFilters.keyword = ''
+    state.employeeFilters.departmentId = String(item.id)
+    state.employeeFilters.employmentType = ''
+    state.employeeFilters.status = ''
+    // 新增员工时默认继承当前部门和事业所，避免再次手动选择归属。
+    state.employeeForm.workplaceId = item.workplaceId
+    state.employeeForm.departmentId = item.id
+    // 切换当前工作区页签，让界面定位到目标业务模块。
+    activeSection.value = 'employee'
+  }
+
+  // 同一个部门上下文还要能直接进入排班管理，避免用户先切页再重新选部门。
+  async function openDepartmentSchedule(item) {
+    // 进入前先记录当前页签，只有已经停留在排班模块时才需要手动刷新，避免和 watch 触发双重请求。
+    const wasScheduleSection = activeSection.value === 'schedule'
+    // 排班看板只保留当前部门上下文，其他自由检索条件先清空，确保第一次进入就看到完整部门排班。
+    state.scheduleFilters.workplaceId = String(item.workplaceId)
+    state.scheduleFilters.departmentId = String(item.id)
+    state.scheduleFilters.employeeKeyword = ''
+    state.scheduleFilters.onlyUnassigned = false
+    // 切换当前工作区页签，让界面定位到目标业务模块。
+    activeSection.value = 'schedule'
+    // 如果用户本来就在排班模块，需要主动刷新一次看板，立即把新上下文打到页面上。
+    if (wasScheduleSection) {
+      await loadScheduleBoard()
+    }
+  }
+
   // 执行当前业务步骤，推进本行对应的 composable 处理。
   function editEmployee(item) {
     // 员工编辑时只回填当前第一阶段实际维护的字段。
@@ -909,6 +1005,12 @@ export function useAttendanceWorkbench() {
       status: 'ACTIVE'
     // 执行当前业务步骤，推进本行对应的 composable 处理。
     })
+  }
+
+  // 查看全部部门时只清掉事业所上下文，不打断当前部门编辑表单。
+  function clearDepartmentWorkplaceFilter() {
+    // 更新 部门Filters.workplaceId 状态，保证工作台界面与本次操作结果同步。
+    state.departmentFilters.workplaceId = ''
   }
 
   // 执行当前业务步骤，推进本行对应的 composable 处理。
@@ -1020,6 +1122,10 @@ export function useAttendanceWorkbench() {
     // 执行当前业务步骤，推进本行对应的 composable 处理。
     recommendedNextLabel,
     // 执行当前业务步骤，推进本行对应的 composable 处理。
+    filteredDepartments,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    currentDepartmentWorkplaceName,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
     filteredEmployees,
     // 执行当前业务步骤，推进本行对应的 composable 处理。
     loadBootstrap,
@@ -1078,7 +1184,13 @@ export function useAttendanceWorkbench() {
     // 执行当前业务步骤，推进本行对应的 composable 处理。
     editWorkplace,
     // 执行当前业务步骤，推进本行对应的 composable 处理。
+    openWorkplaceDepartments,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
     editDepartment,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    openDepartmentEmployees,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    openDepartmentSchedule,
     // 执行当前业务步骤，推进本行对应的 composable 处理。
     editEmployee,
     // 执行当前业务步骤，推进本行对应的 composable 处理。
@@ -1089,6 +1201,8 @@ export function useAttendanceWorkbench() {
     resetWorkplaceForm,
     // 执行当前业务步骤，推进本行对应的 composable 处理。
     resetDepartmentForm,
+    // 执行当前业务步骤，推进本行对应的 composable 处理。
+    clearDepartmentWorkplaceFilter,
     // 执行当前业务步骤，推进本行对应的 composable 处理。
     resetEmployeeForm,
     // 执行当前业务步骤，推进本行对应的 composable 处理。

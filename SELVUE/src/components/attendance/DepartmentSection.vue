@@ -6,11 +6,16 @@ defineProps({
   visible: { type: Boolean, required: true },
   workplaces: { type: Array, required: true },
   departments: { type: Array, required: true },
+  filteredDepartments: { type: Array, required: true },
   departmentForm: { type: Object, required: true },
+  currentWorkplaceName: { type: String, required: false, default: '' },
   t: { type: Function, required: true },
   onSubmit: { type: Function, required: true },
   onReset: { type: Function, required: true },
   onEdit: { type: Function, required: true },
+  onClearWorkplaceFilter: { type: Function, required: true },
+  onOpenEmployees: { type: Function, required: true },
+  onOpenSchedule: { type: Function, required: true },
   onDelete: { type: Function, required: true }
 })
 </script>
@@ -20,13 +25,17 @@ defineProps({
     <template #left>
       <article class="seladmin-panel seladmin-surface selattendance-data-panel">
         <div class="seladmin-panel-header"><h2>{{ t('departmentTitle') }}</h2></div>
+        <div v-if="currentWorkplaceName" class="selattendance-context-strip">
+          <span>{{ t('currentWorkplaceFilter').replace('{name}', currentWorkplaceName) }}</span>
+          <button type="button" @click="onClearWorkplaceFilter()">{{ t('showAllDepartments') }}</button>
+        </div>
         <EmptyGuide v-if="!departments.length" :title="t('departmentTitle')" :description="t('emptyDepartment')" />
         <div v-else class="selattendance-table-shell">
           <table class="seladmin-table">
             <thead><tr><th>{{ t('departmentCode') }}</th><th>{{ t('departmentName') }}</th><th>{{ t('workplace') }}</th><th>{{ t('sortOrder') }}</th><th></th></tr></thead>
             <tbody>
               <tr
-                v-for="item in departments"
+                v-for="item in filteredDepartments"
                 :key="item.id"
                 :class="{ 'selattendance-table-row-active': departmentForm.id === item.id }"
                 @click="onEdit(item)"
@@ -37,6 +46,8 @@ defineProps({
                 <td>{{ item.sortOrder }}</td>
                 <td class="seladmin-inline-actions">
                   <button type="button" @click.stop="onEdit(item)">{{ t('save') }}</button>
+                  <button type="button" @click.stop="onOpenEmployees(item)">{{ t('jumpEmployee') }}</button>
+                  <button type="button" @click.stop="onOpenSchedule(item)">{{ t('jumpSchedule') }}</button>
                   <button type="button" @click.stop="onDelete(item.id)">{{ t('delete') }}</button>
                 </td>
               </tr>
