@@ -57,10 +57,12 @@ defineProps({
                 <td>{{ item.workplaceName }}</td>
                 <td>{{ item.employmentType }}</td>
                 <td><span v-if="item.externalMappingBound">{{ item.externalEmployeeId }}</span><span v-else class="seladmin-warning-text">{{ t('bindMapping') }}</span></td>
-                <td class="seladmin-inline-actions">
-                  <button type="button" @click.stop="onEditEmployee(item)">{{ t('save') }}</button>
-                  <button type="button" @click.stop="onEditMapping(item)">{{ t('bindMapping') }}</button>
-                  <button type="button" @click.stop="onDeleteEmployee(item.id)">{{ t('delete') }}</button>
+                <td>
+                  <div class="seladmin-inline-actions">
+                    <button type="button" @click.stop="onEditEmployee(item)">{{ t('save') }}</button>
+                    <button type="button" @click.stop="onEditMapping(item)">{{ t('bindMapping') }}</button>
+                    <button type="button" @click.stop="onDeleteEmployee(item.id)">{{ t('delete') }}</button>
+                  </div>
                 </td>
               </tr>
             </tbody>

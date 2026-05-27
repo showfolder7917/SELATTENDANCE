@@ -6,6 +6,23 @@ const wrapSuccess = (data) => ({
   data
 })
 
+// 为浏览器测试提供统一默认状态工厂，保证不同 e2e 都能在稳定初始数据上叠加各自夹具。
+const createDefaultState = () => ({
+  tenant: {
+    tenantCode: 'TENANT_DEMO',
+    tenantName: 'Tokyo School',
+    contactName: 'Initial Owner',
+    contactPhone: '03-0000-0000',
+    contactEmail: 'owner@example.com',
+    timezone: 'Asia/Tokyo'
+  },
+  workplaces: [],
+  departments: [],
+  employees: [],
+  shiftTemplates: [],
+  schedules: []
+})
+
 // 把浏览器请求体按 JSON 解析成对象，供内存态 mock 后端读取表单提交内容。
 const readJsonBody = async (request) => {
   const bodyText = request.postData() || '{}'
@@ -123,8 +140,78 @@ const filterEmployeesForSchedule = ({ employees, filters }) =>
     return true
   })
 
+// 为员工表格视觉回归准备一组高低不一、映射状态不一的数据，专门放大“边框线未对齐”这类布局问题。
+export const createEmployeeTableLayoutFixture = () => ({
+  workplaces: [
+    { id: 11, workplaceCode: 'WK001', workplaceName: '东京本部', address: '', phone: '', status: 'ACTIVE' },
+    { id: 12, workplaceCode: 'WK002', workplaceName: '横滨教室', address: '', phone: '', status: 'ACTIVE' }
+  ],
+  departments: [
+    { id: 21, workplaceId: 11, departmentCode: 'DEP001', departmentName: '教学部', sortOrder: 10, status: 'ACTIVE' },
+    { id: 22, workplaceId: 12, departmentCode: 'DEP002', departmentName: '横滨运营组', sortOrder: 20, status: 'ACTIVE' }
+  ],
+  employees: [
+    {
+      id: 31,
+      employeeNo: 'E0001',
+      employeeName: '山田太郎',
+      employeeNameKana: 'ヤマダタロウ',
+      employmentType: 'FULL_TIME',
+      hireDate: '2026-05-01',
+      workplaceId: 11,
+      departmentId: 21,
+      status: 'ACTIVE',
+      externalEmployeeId: 'KOT-90001',
+      externalEmployeeNo: 'CARD-90001',
+      externalSourceSystem: 'KING_OF_TIME'
+    },
+    {
+      id: 32,
+      employeeNo: 'E0002',
+      employeeName: '佐藤花子',
+      employeeNameKana: 'サトウハナコ',
+      employmentType: 'PART_TIME',
+      hireDate: '2026-05-02',
+      workplaceId: 11,
+      departmentId: 21,
+      status: 'ACTIVE',
+      externalEmployeeId: 'KOT-90002',
+      externalEmployeeNo: 'CARD-90002',
+      externalSourceSystem: 'KING_OF_TIME'
+    },
+    {
+      id: 33,
+      employeeNo: 'E0003',
+      employeeName: '铃木一郎',
+      employeeNameKana: 'スズキイチロウ',
+      employmentType: 'CONTRACT',
+      hireDate: '2026-05-03',
+      workplaceId: 12,
+      departmentId: 22,
+      status: 'ACTIVE',
+      externalEmployeeId: 'TOT-30003',
+      externalEmployeeNo: 'CARD-30003',
+      externalSourceSystem: 'TIME_ON_TIME'
+    },
+    {
+      id: 34,
+      employeeNo: 'E0004',
+      employeeName: '高桥美咲',
+      employeeNameKana: 'タカハシミサキ',
+      employmentType: 'ARBEIT',
+      hireDate: '2026-05-04',
+      workplaceId: 12,
+      departmentId: 22,
+      status: 'ACTIVE',
+      externalEmployeeId: '',
+      externalEmployeeNo: '',
+      externalSourceSystem: ''
+    }
+  ]
+})
+
 // 注册整套 attendance mock API，并把关键请求次数暴露给 e2e 断言，便于验证导出和检查动作真的发生过。
-export const registerMockAttendanceApi = async (page) => {
+export const registerMockAttendanceApi = async (page, options = {}) => {
   // 各模块各自维护独立主键序列，模拟真实后端多表自增 ID 的行为，避免跨模块记录互相覆盖。
   const allocWorkplaceId = createIdAllocator(11)
   const allocDepartmentId = createIdAllocator(21)
@@ -133,20 +220,10 @@ export const registerMockAttendanceApi = async (page) => {
   const allocScheduleId = createIdAllocator(51)
 
   // 这里保存整条考勤业务链在浏览器测试期间的共享后端状态，所有 GET/POST/PUT/DELETE 都直接读写它。
+  // 允许每条 e2e 在默认状态上叠加自己的主数据夹具，从而复用同一套 mock API 但验证不同布局和业务场景。
   const state = {
-    tenant: {
-      tenantCode: 'TENANT_DEMO',
-      tenantName: 'Tokyo School',
-      contactName: 'Initial Owner',
-      contactPhone: '03-0000-0000',
-      contactEmail: 'owner@example.com',
-      timezone: 'Asia/Tokyo'
-    },
-    workplaces: [],
-    departments: [],
-    employees: [],
-    shiftTemplates: [],
-    schedules: []
+    ...createDefaultState(),
+    ...(options.stateOverrides || {})
   }
 
   // 通过请求计数器确认导出和未排班检查这些“没有稳定页面落点”的动作确实打到了接口层。
