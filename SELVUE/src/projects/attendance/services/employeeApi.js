@@ -1,4 +1,4 @@
-import { requestJson } from '../request'
+import { requestJson } from '../../../shared/services/request'
 
 // 导出 新增员工 前端服务动作，供页面调用后端接口。
 export const createEmployee = (payload) =>
@@ -27,4 +27,3 @@ export const importEmployees = (payload) =>
 
 // 导出 导出Employees 前端服务动作，供页面调用后端接口。
 export const exportEmployees = () => requestJson('/api/attendance/employees/export')
-

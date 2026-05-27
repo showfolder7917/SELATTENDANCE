@@ -1,5 +1,5 @@
 <script setup>
-import EmptyGuide from '../EmptyGuide.vue'
+import EmptyGuide from '../../../shared/components/EmptyGuide.vue'
 import ResizableWorkbenchSplit from './ResizableWorkbenchSplit.vue'
 
 defineProps({

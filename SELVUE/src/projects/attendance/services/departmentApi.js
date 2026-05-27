@@ -1,4 +1,4 @@
-import { requestJson } from '../request'
+import { requestJson } from '../../../shared/services/request'
 
 // 导出 新增部门 前端服务动作，供页面调用后端接口。
 export const createDepartment = (payload) =>
@@ -14,4 +14,3 @@ export const updateDepartment = (id, payload) =>
 export const deleteDepartment = (id) =>
   // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   requestJson(`/api/attendance/departments/${id}`, { method: 'DELETE' })
-

@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import EmptyGuide from '../EmptyGuide.vue'
+import EmptyGuide from '../../../shared/components/EmptyGuide.vue'
 import ResizableWorkbenchSplit from './ResizableWorkbenchSplit.vue'
 
 const props = defineProps({

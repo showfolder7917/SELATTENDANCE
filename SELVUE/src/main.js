@@ -1,10 +1,7 @@
-// 创建 Vue 应用实例，作为 SELATTENDANCE 第一阶段工作台的正式入口。
+// 宿主入口只负责启动项目壳，避免根层继续硬编码 attendance 模块的样式和页面装配。
 import { createApp } from 'vue'
-// 全局样式统一承接液态玻璃主题、布局和组件视觉。
-import './style.css'
-// 根组件只负责挂载考勤第一阶段工作台。
+// 根壳统一接管子工程选择与降级空态，具体业务模块在自己的注册文件里声明资源。
 import App from './App.vue'
 
-// 把应用挂到根节点，完成页面启动。
-// 执行当前业务步骤，推进本行对应的 general 处理。
+// 挂载宿主应用，让 src/projects 下被发现到的业务模块按注册信息接入页面。
 createApp(App).mount('#app')

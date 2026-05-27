@@ -1,4 +1,4 @@
-import { requestJson } from '../request'
+import { requestJson } from '../../../shared/services/request'
 
 // 把筛选对象转成查询串，保证排班看板、未排班检查和导出共用同一套过滤口径。
 const buildScheduleQuery = (params = {}) => {

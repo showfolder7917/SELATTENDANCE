@@ -1,5 +1,5 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { localeOptions, messages } from '../../constants/i18nMessages'
+import { localeOptions, messages } from '../constants/i18nMessages'
 import {
   // 执行当前业务步骤，推进本行对应的 composable 处理。
   bindExternalMapping,
@@ -56,7 +56,7 @@ import {
   // 执行当前业务步骤，推进本行对应的 composable 处理。
   updateWorkplace
 // 执行当前业务步骤，推进本行对应的 composable 处理。
-} from '../../services/attendance'
+} from '../services'
 
 // 执行当前业务步骤，推进本行对应的 composable 处理。
 export function useAttendanceWorkbench() {

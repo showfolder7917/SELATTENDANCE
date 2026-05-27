@@ -1,8 +1,8 @@
 import { computed, ref, watch } from 'vue'
-import { attendanceThemeOptions, defaultAttendanceTheme } from '../../constants/themeOptions'
-import adminWorkbenchThemeCss from '../../theme-presets/admin-workbench-dark.css?inline'
-import attendanceGlassThemeCss from '../../theme-presets/attendance-glass-dark.css?inline'
-import liquidGlassThemeCss from '../../theme-presets/liquid-glass.css?inline'
+import { attendanceThemeOptions, defaultAttendanceTheme } from '../constants/themeOptions'
+import adminWorkbenchThemeCss from '../theme-presets/admin-workbench-dark.css?inline'
+import attendanceGlassThemeCss from '../theme-presets/attendance-glass-dark.css?inline'
+import liquidGlassThemeCss from '../theme-presets/liquid-glass.css?inline'
 
 // 固定样式节点 id，确保主题切换时始终只维护同一个主题容器。
 // 声明 主题STYLESHEETID 状态，保存当前工作台交互过程中需要的前端数据。
