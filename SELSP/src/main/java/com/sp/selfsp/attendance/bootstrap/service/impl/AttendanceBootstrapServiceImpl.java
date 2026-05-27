@@ -1,21 +1,14 @@
 /*
- * 文件名：AttendanceBootstrapServiceImpl.java
- * 描述：考勤首页聚合服务实现。
- * 创建时间：2026-05-25
- * 修改时间：2026-05-25
+ * AttendanceBootstrapServiceImpl.java
+ * 轻量首页壳服务实现。
  */
 package com.sp.selfsp.attendance.bootstrap.service.impl;
 
 import com.sp.selfsp.attendance.bootstrap.dao.AttendanceBootstrapDao;
 import com.sp.selfsp.attendance.bootstrap.service.AttendanceBootstrapService;
 import com.sp.selfsp.attendance.common.AttendanceTenantContext;
-import com.sp.selfsp.attendance.department.dao.AttendanceDepartmentDao;
-import com.sp.selfsp.attendance.domain.in.AttendanceIn;
 import com.sp.selfsp.attendance.domain.out.AttendanceOut;
-import com.sp.selfsp.attendance.employee.dao.AttendanceEmployeeDao;
-import com.sp.selfsp.attendance.shifttemplate.dao.AttendanceShiftTemplateDao;
-import com.sp.selfsp.attendance.tenant.dao.AttendanceTenantDao;
-import com.sp.selfsp.attendance.workplace.dao.AttendanceWorkplaceDao;
+import com.sp.selfsp.attendance.tenant.service.AttendanceTenantService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,193 +16,139 @@ import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 /**
- * 考勤首页聚合服务实现。
+ * 轻量首页壳服务实现。
  */
-// 把当前类注册为服务实现，负责承接业务编排。
 @Service
-// 定义 考勤初始化聚合服务Impl，承接当前文件对应的业务职责。
 public class AttendanceBootstrapServiceImpl implements AttendanceBootstrapService {
 
-    // 声明 考勤初始化聚合数据访问 字段，用来保存当前业务状态或依赖。
+    // 读取首页壳统计计数，供步骤卡片和下一动作判断复用。
     private final AttendanceBootstrapDao attendanceBootstrapDao;
-    // 声明 考勤租户数据访问 字段，用来保存当前业务状态或依赖。
-    private final AttendanceTenantDao attendanceTenantDao;
-    // 声明 考勤事业所数据访问 字段，用来保存当前业务状态或依赖。
-    private final AttendanceWorkplaceDao attendanceWorkplaceDao;
-    // 声明 考勤部门数据访问 字段，用来保存当前业务状态或依赖。
-    private final AttendanceDepartmentDao attendanceDepartmentDao;
-    // 声明 考勤员工数据访问 字段，用来保存当前业务状态或依赖。
-    private final AttendanceEmployeeDao attendanceEmployeeDao;
-    // 声明 考勤班次模板数据访问 字段，用来保存当前业务状态或依赖。
-    private final AttendanceShiftTemplateDao attendanceShiftTemplateDao;
+    // 读取当前租户资料，供首页壳和租户面板初始化保持同源。
+    private final AttendanceTenantService attendanceTenantService;
 
-    /**
-     * 构造考勤首页聚合服务实现。
-     *
-     * @param attendanceBootstrapDao 首页统计数据访问接口
-     * @param attendanceTenantDao 租户数据访问接口
-     * @param attendanceWorkplaceDao 事业所数据访问接口
-     * @param attendanceDepartmentDao 部门数据访问接口
-     * @param attendanceEmployeeDao 员工数据访问接口
-     * @param attendanceShiftTemplateDao 班次模板数据访问接口
-     */
-    // 定义 考勤初始化聚合服务Impl 业务动作，负责承接当前模块的处理流程。
+    // 注入首页壳统计 DAO 和租户服务，避免 bootstrap 直接侵入多个子域 DAO。
     public AttendanceBootstrapServiceImpl(
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         AttendanceBootstrapDao attendanceBootstrapDao,
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
-        AttendanceTenantDao attendanceTenantDao,
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
-        AttendanceWorkplaceDao attendanceWorkplaceDao,
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
-        AttendanceDepartmentDao attendanceDepartmentDao,
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
-        AttendanceEmployeeDao attendanceEmployeeDao,
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
-        AttendanceShiftTemplateDao attendanceShiftTemplateDao
-    // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        AttendanceTenantService attendanceTenantService
     ) {
-        // 把外部传入结果写入 考勤初始化聚合数据访问 字段，供后续流程继续使用。
+        // 保存首页壳统计 DAO，供步骤计数和阶段门禁判断复用。
         this.attendanceBootstrapDao = attendanceBootstrapDao;
-        // 把外部传入结果写入 考勤租户数据访问 字段，供后续流程继续使用。
-        this.attendanceTenantDao = attendanceTenantDao;
-        // 把外部传入结果写入 考勤事业所数据访问 字段，供后续流程继续使用。
-        this.attendanceWorkplaceDao = attendanceWorkplaceDao;
-        // 把外部传入结果写入 考勤部门数据访问 字段，供后续流程继续使用。
-        this.attendanceDepartmentDao = attendanceDepartmentDao;
-        // 把外部传入结果写入 考勤员工数据访问 字段，供后续流程继续使用。
-        this.attendanceEmployeeDao = attendanceEmployeeDao;
-        // 把外部传入结果写入 考勤班次模板数据访问 字段，供后续流程继续使用。
-        this.attendanceShiftTemplateDao = attendanceShiftTemplateDao;
+        // 保存租户服务，供首页壳直接读取当前租户资料。
+        this.attendanceTenantService = attendanceTenantService;
     }
 
-    /**
-     * 读取首页聚合概览。
-     *
-     * @return 首页聚合结果
-     */
-    // 显式声明当前方法在覆写上层约定，实现当前业务契约。
+    // 返回轻量首页壳数据，只保留租户摘要、步骤状态和推荐下一动作。
     @Override
-    // 对外返回 初始化聚合汇总，供上下游继续读取当前业务字段。
     public AttendanceOut.BootstrapSummaryOut getBootstrapSummary() {
-        // 首页聚合只负责组装多个子模块的只读结果，不承接写逻辑。
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 读取默认租户下的首页壳计数，供步骤状态和推荐动作统一判断。
         Map<String, Object> counts = attendanceBootstrapDao.selectCounts(AttendanceTenantContext.DEFAULT_TENANT_ID);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 初始化首页壳返回对象，承载轻量初始化所需字段。
         AttendanceOut.BootstrapSummaryOut summaryOut = new AttendanceOut.BootstrapSummaryOut();
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
-        summaryOut.setTenant(attendanceTenantDao.selectCurrentTenant(AttendanceTenantContext.DEFAULT_TENANT_ID));
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
-        summaryOut.setWorkplaces(attendanceWorkplaceDao.selectList(AttendanceTenantContext.DEFAULT_TENANT_ID));
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
-        summaryOut.setDepartments(attendanceDepartmentDao.selectList(AttendanceTenantContext.DEFAULT_TENANT_ID));
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
-        summaryOut.setEmployees(attendanceEmployeeDao.selectList(AttendanceTenantContext.DEFAULT_TENANT_ID, new AttendanceIn.EmployeeQueryIn()));
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
-        summaryOut.setShiftTemplates(attendanceShiftTemplateDao.selectList(AttendanceTenantContext.DEFAULT_TENANT_ID));
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 回填当前租户资料，供首页租户面板直接渲染。
+        summaryOut.setTenant(attendanceTenantService.getCurrentTenant());
+        // 初始化首页步骤集合，后续按阶段顺序构建壳层引导。
         List<AttendanceOut.BootstrapStepOut> steps = new ArrayList<>();
-        // 把当前初始化步骤加入向导列表，供前端按顺序展示完成度。
+        // 构建租户初始化步骤，提示是否已建立当前租户基础资料。
         steps.add(buildStep("tenant", "wizard.tenant", countAsInt(counts, "tenantCount"), "guide.tenant"));
-        // 把当前初始化步骤加入向导列表，供前端按顺序展示完成度。
+        // 构建场所初始化步骤，提示是否已建立工作场所主数据。
         steps.add(buildStep("workplace", "wizard.workplace", countAsInt(counts, "workplaceCount"), "guide.workplace"));
-        // 把当前初始化步骤加入向导列表，供前端按顺序展示完成度。
+        // 构建员工初始化步骤，提示是否已建立员工主数据。
         steps.add(buildStep("employee", "wizard.employee", countAsInt(counts, "employeeCount"), "guide.employee"));
-        // 把当前初始化步骤加入向导列表，供前端按顺序展示完成度。
+        // 构建班次模板步骤，提示是否已建立可排班模板。
         steps.add(buildStep("shiftTemplate", "wizard.shiftTemplate", countAsInt(counts, "shiftTemplateCount"), "guide.shiftTemplate"));
-        // 把当前初始化步骤加入向导列表，供前端按顺序展示完成度。
+        // 构建工时规则步骤，提示是否已补齐排班前置规则数据。
         steps.add(buildStep("workRule", "wizard.workRule", countAsInt(counts, "workRuleCount"), "guide.workRule"));
-        // 只有当前五个基础准备项都完成后，第二阶段排班入口才真正开放。
+        // 计算排班阶段是否满足门禁条件，避免前置主数据缺失时误导进入排班。
         boolean scheduleReady = isScheduleReady(counts);
-        // 把第二阶段排班步骤加入向导列表，已具备前置条件时直接开放进入。
+        // 构建排班步骤，并根据门禁状态决定显示可操作还是锁定。
         steps.add(buildPhaseGateStep("schedule", "wizard.schedule", countAsInt(counts, "scheduleCount"), "guide.schedule", scheduleReady));
-        // 打卡接收仍依赖第二阶段先准备出排班，因此只有存在排班后才开放。
+        // 构建打卡阶段门禁步骤，仅在已存在排班数据时开放下一阶段。
         steps.add(buildPhaseGateStep("punch", "wizard.punch", 0, "guide.punch", countAsInt(counts, "scheduleCount") > 0));
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 把步骤列表回填到首页壳结果，供前端工作台导航和向导复用。
         summaryOut.setSteps(steps);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 计算推荐下一动作，供首页侧边栏直接提示当前最该完成的步骤。
         summaryOut.setRecommendedNextAction(resolveRecommendedNextAction(steps));
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // 返回轻量首页壳结果，避免再携带各 section 的大列表数据。
         return summaryOut;
     }
 
-    // 定义 build步骤 业务动作，负责承接当前模块的处理流程。
+    // 构建普通步骤状态，供首页壳展示基础主数据是否已完成初始化。
     private AttendanceOut.BootstrapStepOut buildStep(String stepCode, String titleKey, int count, String description) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 初始化步骤结果对象，承载步骤码、标题、计数和状态。
         AttendanceOut.BootstrapStepOut stepOut = new AttendanceOut.BootstrapStepOut();
-        // 首页向导通过步骤编码和字典键让前端知道当前应该优先处理什么。
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 写入步骤编码，供前端定位到对应 section。
         stepOut.setStepCode(stepCode);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 写入步骤标题 key，供前端按当前语言环境翻译显示。
         stepOut.setTitleKey(titleKey);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 写入步骤计数，供前端展示已完成量级。
         stepOut.setCount(count);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 写入步骤说明 key，供工作台展示引导文案。
         stepOut.setDescription(description);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 根据计数判断步骤是否已具备基础完成状态。
         stepOut.setStatus(count > 0 ? "COMPLETED" : "NEEDS_ACTION");
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // 返回普通步骤结果，供首页壳汇总。
         return stepOut;
     }
 
-    // 定义 build阶段闸门步骤 业务动作，负责承接当前模块的处理流程。
+    // 构建带阶段门禁的步骤状态，供排班和后续阶段按前置条件解锁。
     private AttendanceOut.BootstrapStepOut buildPhaseGateStep(String stepCode, String titleKey, int count, String description, boolean ready) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 初始化带门禁步骤结果对象，承载阶段步骤的展示状态。
         AttendanceOut.BootstrapStepOut stepOut = new AttendanceOut.BootstrapStepOut();
-        // 后续阶段步骤只有在上游准备完成后才会从锁定态切换到可操作态。
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 写入步骤编码，供前端把门禁步骤映射到对应区块。
         stepOut.setStepCode(stepCode);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 写入步骤标题 key，供前端多语言显示阶段名称。
         stepOut.setTitleKey(titleKey);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 写入步骤计数，供前端展示当前阶段已有记录数量。
         stepOut.setCount(count);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 写入步骤说明 key，供前端展示阶段说明文案。
         stepOut.setDescription(description);
+        // 前置条件不满足时直接锁定阶段，避免误导用户进入下一阶段。
         if (!ready) {
-            // 前置条件未满足时仍以锁定态展示，避免用户误以为现在就能操作。
+            // 标记为下一阶段锁定状态，供前端展示为不可操作。
             stepOut.setStatus("LOCKED_NEXT_PHASE");
         } else {
-            // 当前阶段入口已开放后，根据排班数量决定是已完成还是需要处理。
+            // 已解锁阶段再按是否已有数据判断为已完成或待处理。
             stepOut.setStatus(count > 0 ? "COMPLETED" : "NEEDS_ACTION");
         }
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // 返回门禁步骤结果，供首页壳汇总。
         return stepOut;
     }
 
-    // 定义 resolve推荐NextAction 业务动作，负责承接当前模块的处理流程。
+    // 解析推荐下一动作，优先返回第一个仍待处理的步骤标题 key。
     private String resolveRecommendedNextAction(List<AttendanceOut.BootstrapStepOut> steps) {
-        // 遍历当前业务集合，逐条完成对应的数据处理动作。
+        // 顺序扫描步骤列表，保持推荐动作与首页壳步骤顺序一致。
         for (AttendanceOut.BootstrapStepOut step : steps) {
-            // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
+            // 找到第一个待处理步骤时立即返回，作为工作台当前主引导。
             if (Objects.equals("NEEDS_ACTION", step.getStatus())) {
-                // 返回当前步骤产出的业务结果，继续交给上一层消费。
+                // 返回对应标题 key，供前端直接翻译成推荐动作文案。
                 return step.getTitleKey();
             }
         }
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // 全部基础步骤已完成时默认指向排班步骤，作为后续操作入口。
         return "wizard.schedule";
     }
 
-    // 定义 数量AsInt 业务动作，负责承接当前模块的处理流程。
+    // 安全读取计数字段，兼容不同数据库驱动返回的 key 大小写差异。
     private int countAsInt(Map<String, Object> counts, String key) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 先按原始 key 读取统计值，适配常规 MyBatis 返回结果。
         Object value = counts.get(key);
-        // H2 聚合字段别名在 HashMap 中可能被写成全大写，因此这里补一个大小写兜底读取。
+        // 原始 key 未命中时再尝试大写 key，兼容 H2 等驱动行为差异。
         if (value == null) {
+            // 使用大写 key 再读一次，避免测试环境与生产环境统计口径不一致。
             value = counts.get(key.toUpperCase());
         }
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
+        // 命中数值类型时转换成 int，供步骤状态判断和展示复用。
         if (value instanceof Number number) {
-            // 返回当前步骤产出的业务结果，继续交给上一层消费。
+            // 返回标准 int 计数，供后续步骤统一计算状态。
             return number.intValue();
         }
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // 未命中或类型异常时按 0 处理，避免首页壳初始化报错。
         return 0;
     }
 
-    // 定义 is排班Ready 业务动作，负责承接当前模块的处理流程。
+    // 判断排班阶段是否已满足前置主数据条件。
     private boolean isScheduleReady(Map<String, Object> counts) {
-        // 第二阶段排班至少需要公司、事业所、员工、班次模板和默认规则都已到位。
+        // 只有租户、场所、员工、班次模板和工时规则都齐备时才开放排班阶段。
         return countAsInt(counts, "tenantCount") > 0
             && countAsInt(counts, "workplaceCount") > 0
             && countAsInt(counts, "employeeCount") > 0

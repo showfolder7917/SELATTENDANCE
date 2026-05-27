@@ -2,6 +2,7 @@ plugins {
   id 'org.springframework.boot' version '3.5.0'
   id 'java'
   id 'checkstyle'
+  id 'jacoco'
 }
 
 group = 'com.sp'
@@ -42,6 +43,24 @@ dependencies {
 test {
   // JUnit 5 是当前工程统一测试入口。
   useJUnitPlatform()
+}
+
+jacoco {
+  // 固定 JaCoCo 版本，确保本地和 CI 产出的覆盖率报告一致。
+  toolVersion = '0.8.13'
+}
+
+jacocoTestReport {
+  // 覆盖率报告必须基于最新测试结果生成，避免读取旧的执行数据。
+  dependsOn test
+  reports {
+    // 打开 XML 报告，供后续接入 CI 质量门禁或外部覆盖率平台使用。
+    xml.required = true
+    // 打开 HTML 报告，方便本地按包和按类查看 attendance 覆盖情况。
+    html.required = true
+    // 关闭 CSV 报告，当前阶段不需要额外的表格格式产物。
+    csv.required = false
+  }
 }
 
 tasks.named('processResources') {

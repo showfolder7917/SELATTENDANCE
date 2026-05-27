@@ -1,21 +1,20 @@
 import { requestJson } from '../../../shared/services/request'
 
-// 导出 新增班次模板 前端服务动作，供页面调用后端接口。
+// 读取班次模板列表，供班次区块和排班区块共享可选模板数据。
+export const listShiftTemplates = () => requestJson('/api/attendance/shift-templates')
+
+// 新增班次模板，供班次区块登记新的排班模板。
 export const createShiftTemplate = (payload) =>
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   requestJson('/api/attendance/shift-templates', { method: 'POST', body: JSON.stringify(payload) })
 
-// 导出 更新班次模板 前端服务动作，供页面调用后端接口。
+// 更新班次模板，供班次区块维护既有模板资料。
 export const updateShiftTemplate = (id, payload) =>
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   requestJson(`/api/attendance/shift-templates/${id}`, { method: 'PUT', body: JSON.stringify(payload) })
 
-// 导出 删除班次模板 前端服务动作，供页面调用后端接口。
+// 删除班次模板，供班次区块移除不再使用的模板。
 export const deleteShiftTemplate = (id) =>
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   requestJson(`/api/attendance/shift-templates/${id}`, { method: 'DELETE' })
 
-// 导出 生成推荐班次Templates 前端服务动作，供页面调用后端接口。
+// 生成推荐班次模板，供班次区块快速建立初始模板集合。
 export const generateRecommendedShiftTemplates = () =>
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   requestJson('/api/attendance/shift-templates/recommended', { method: 'POST' })

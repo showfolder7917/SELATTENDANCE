@@ -1,0 +1,162 @@
+// 这里集中定义 workbench 的初始状态工厂，供壳层和各 section 模块共享同一份业务模型。
+
+// 统一生成当前月份字符串，供排班筛选和排班看板默认定位到当月。
+const currentMonth = () => new Date().toISOString().slice(0, 7)
+
+// 生成空租户对象，供首页租户面板在轻量壳返回前先有稳定结构。
+export const createEmptyTenant = () => ({
+  tenantCode: '',
+  tenantName: '',
+  contactName: '',
+  contactPhone: '',
+  contactEmail: '',
+  timezone: 'Asia/Tokyo'
+})
+
+// 生成 section 级加载状态，供多接口并发场景下按区块显示局部加载状态。
+export const createSectionLoaders = () => ({
+  workplace: false,
+  department: false,
+  employee: false,
+  shift: false,
+  schedule: false
+})
+
+// 生成 section 级错误状态，供某个区块失败时只影响本区块而不是整页。
+export const createSectionErrors = () => ({
+  workplace: '',
+  department: '',
+  employee: '',
+  shift: '',
+  schedule: ''
+})
+
+// 生成 section 加载完成标记，供按需懒加载时避免重复首刷同一区块。
+export const createSectionStates = () => ({
+  workplace: false,
+  department: false,
+  employee: false,
+  shift: false,
+  schedule: false
+})
+
+// 生成轻量首页壳状态，承载租户摘要、步骤计数和推荐动作。
+export const createBootstrapShell = () => ({
+  tenantSummary: createEmptyTenant(),
+  sectionCounters: {
+    workplace: 0,
+    department: 0,
+    employee: 0,
+    shift: 0,
+    schedule: 0
+  },
+  sectionStates: createSectionStates(),
+  recommendedNextAction: 'wizard.schedule'
+})
+
+// 生成工作台主状态，继续沿用原页面消费的数据结构，降低视图改造范围。
+export const createWorkbenchState = () => ({
+  bootstrapShell: createBootstrapShell(),
+  sectionLoaders: createSectionLoaders(),
+  sectionErrors: createSectionErrors(),
+  tenant: createEmptyTenant(),
+  steps: [],
+  workplaces: [],
+  departments: [],
+  departmentFilters: {
+    workplaceId: ''
+  },
+  employees: [],
+  shiftTemplates: [],
+  scheduleFilters: {
+    month: currentMonth(),
+    workplaceId: '',
+    departmentId: '',
+    employeeKeyword: '',
+    onlyUnassigned: false
+  },
+  scheduleBoard: {
+    month: currentMonth(),
+    dates: [],
+    employeeRows: [],
+    scheduleItems: [],
+    shiftTemplates: [],
+    endDate: ''
+  },
+  scheduleForm: {
+    selectedTemplateId: null,
+    remark: '',
+    selectedEmployeeId: null,
+    selectedEmployeeName: '',
+    selectedWorkDate: '',
+    selectedScheduleId: null,
+    selectedTemplateName: ''
+  },
+  batchWizard: {
+    open: false,
+    step: 1,
+    employeeIds: [],
+    startDate: '',
+    endDate: '',
+    shiftTemplateId: null,
+    skipExisting: false,
+    overwriteExisting: true,
+    remark: ''
+  },
+  scheduleUnassignedItems: [],
+  recommendedNextAction: '',
+  employeeFilters: {
+    keyword: '',
+    departmentId: '',
+    employmentType: '',
+    status: ''
+  },
+  workplaceForm: {
+    id: null,
+    workplaceCode: '',
+    workplaceName: '',
+    address: '',
+    phone: '',
+    status: 'ACTIVE'
+  },
+  departmentForm: {
+    id: null,
+    workplaceId: '',
+    departmentCode: '',
+    departmentName: '',
+    sortOrder: 0,
+    status: 'ACTIVE'
+  },
+  employeeForm: {
+    id: null,
+    employeeNo: '',
+    employeeName: '',
+    employeeNameKana: '',
+    employmentType: 'FULL_TIME',
+    hireDate: '',
+    workplaceId: '',
+    departmentId: '',
+    status: 'ACTIVE'
+  },
+  mappingForm: {
+    employeeId: null,
+    sourceSystem: 'KING_OF_TIME',
+    externalEmployeeId: '',
+    externalEmployeeNo: '',
+    status: 'ACTIVE'
+  },
+  shiftForm: {
+    id: null,
+    templateCode: '',
+    templateName: '',
+    shiftType: 'WORK',
+    startTime: '09:00:00',
+    endTime: '18:00:00',
+    crossDay: false,
+    scheduledBreakMinutes: 60,
+    color: 'BLUE',
+    active: true
+  },
+  importCsvText: '',
+  importResult: null
+})

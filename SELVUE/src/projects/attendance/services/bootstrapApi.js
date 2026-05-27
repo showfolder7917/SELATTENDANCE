@@ -1,8 +1,11 @@
 import { requestJson } from '../../../shared/services/request'
 
-// 导出 读取初始化聚合 前端服务动作，供页面调用后端接口。
+// 读取轻量首页壳数据，只拿租户摘要、步骤状态和推荐动作。
 export const fetchBootstrap = () => requestJson('/api/attendance/bootstrap')
-// 导出 保存租户 前端服务动作，供页面调用后端接口。
+
+// 独立读取当前租户资料，供租户面板和后续局部刷新复用。
+export const fetchCurrentTenant = () => requestJson('/api/attendance/tenant/current')
+
+// 保存当前租户资料，供首页租户面板回写基础主数据。
 export const saveTenant = (payload) =>
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   requestJson('/api/attendance/tenant/current', { method: 'PUT', body: JSON.stringify(payload) })

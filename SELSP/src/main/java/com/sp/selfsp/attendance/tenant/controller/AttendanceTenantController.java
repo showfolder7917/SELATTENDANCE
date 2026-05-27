@@ -1,8 +1,6 @@
 /*
- * 文件名：AttendanceTenantController.java
- * 描述：考勤租户控制器。
- * 创建时间：2026-05-25
- * 修改时间：2026-05-25
+ * AttendanceTenantController.java
+ * 租户控制器。
  */
 package com.sp.selfsp.attendance.tenant.controller;
 
@@ -10,41 +8,39 @@ import com.sp.selfsp.attendance.domain.in.AttendanceIn;
 import com.sp.selfsp.attendance.domain.out.AttendanceOut;
 import com.sp.selfsp.attendance.tenant.service.AttendanceTenantService;
 import com.sp.selfsp.common.util.CommonResponse;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 考勤租户控制器。
+ * 租户控制器。
  */
-// 把当前类注册为 Spring REST 控制器，负责对外暴露考勤接口。
 @RestController
-// 给当前控制器绑定统一接口前缀，便于前端按模块访问。
 @RequestMapping("/api/attendance/tenant")
-// 定义 考勤租户控制器，承接当前文件对应的业务职责。
 public class AttendanceTenantController {
 
-    // 声明 考勤租户服务 字段，用来保存当前业务状态或依赖。
+    // 处理当前租户读写请求，供轻量首页壳和租户面板共用。
     private final AttendanceTenantService attendanceTenantService;
 
-    // 定义 考勤租户控制器 接口入口，负责接收前端请求并转发到业务服务。
+    // 注入租户服务，统一承接当前租户读取和保存用例。
     public AttendanceTenantController(AttendanceTenantService attendanceTenantService) {
-        // 把外部传入结果写入 考勤租户服务 字段，供后续流程继续使用。
+        // 保存租户服务引用，供当前控制器全部接口复用。
         this.attendanceTenantService = attendanceTenantService;
     }
 
-    /**
-     * 保存当前租户资料。
-     *
-     * @param saveIn 保存入参
-     * @return 通用响应
-     */
-    // 把当前方法暴露为更新接口，供前端保存修改结果。
+    // 提供当前租户读取接口，供轻量 bootstrap 之外的独立租户初始化直接调用。
+    @GetMapping("/current")
+    public CommonResponse<AttendanceOut.TenantOut> getCurrentTenant() {
+        // 直接返回当前租户资料，避免前端为了租户表单再走重聚合接口。
+        return CommonResponse.success(attendanceTenantService.getCurrentTenant());
+    }
+
+    // 提供当前租户保存接口，供首页租户面板回写基础主数据。
     @PutMapping("/current")
-    // 定义 保存租户 接口入口，负责接收前端请求并转发到业务服务。
     public CommonResponse<AttendanceOut.TenantOut> saveTenant(@RequestBody AttendanceIn.TenantSaveIn saveIn) {
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // 返回保存后的最新租户资料，保证前端面板与数据库状态一致。
         return CommonResponse.success(attendanceTenantService.saveTenant(saveIn));
     }
 }

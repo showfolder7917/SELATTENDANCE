@@ -1,56 +1,41 @@
-// 执行当前业务步骤，推进本行对应的 frontend服务 处理。
-export { fetchBootstrap, saveTenant } from './bootstrapApi'
-// 执行当前业务步骤，推进本行对应的 frontend服务 处理。
-export { createWorkplace, updateWorkplace, deleteWorkplace } from './workplaceApi'
-// 执行当前业务步骤，推进本行对应的 frontend服务 处理。
-export { createDepartment, updateDepartment, deleteDepartment } from './departmentApi'
-// 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+// 暴露轻量首页壳和租户独立接口，供工作台壳层初始化复用。
+export { fetchBootstrap, fetchCurrentTenant, saveTenant } from './bootstrapApi'
+
+// 暴露场所读写接口，供场所区块和依赖场所的其他区块复用。
+export { listWorkplaces, createWorkplace, updateWorkplace, deleteWorkplace } from './workplaceApi'
+
+// 暴露部门读写接口，供部门区块和员工/排班筛选复用。
+export { listDepartments, createDepartment, updateDepartment, deleteDepartment } from './departmentApi'
+
+// 暴露员工读写接口，供员工区块和映射/导入导出功能复用。
 export {
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+  listEmployees,
   createEmployee,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   updateEmployee,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   deleteEmployee,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   bindExternalMapping,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   importEmployees,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   exportEmployees
-// 执行当前业务步骤，推进本行对应的 frontend服务 处理。
 } from './employeeApi'
-// 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+
+// 暴露班次模板读写接口，供班次区块和排班模板选择复用。
 export {
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+  listShiftTemplates,
   createShiftTemplate,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   updateShiftTemplate,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   deleteShiftTemplate,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   generateRecommendedShiftTemplates
-// 执行当前业务步骤，推进本行对应的 frontend服务 处理。
 } from './shiftTemplateApi'
-// 执行当前业务步骤，推进本行对应的 frontend服务 处理。
+
+// 暴露排班接口，供排班区块独立加载和批量操作复用。
 export {
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   fetchScheduleBoard,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   createSchedule,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   updateSchedule,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   deleteSchedule,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   batchAssignSchedules,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   copyLastWeekSchedules,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   copyLastMonthSchedules,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   checkUnassignedSchedules,
-  // 执行当前业务步骤，推进本行对应的 frontend服务 处理。
   exportSchedules
-// 执行当前业务步骤，推进本行对应的 frontend服务 处理。
 } from './scheduleApi'
