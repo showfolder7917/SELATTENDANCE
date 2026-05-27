@@ -225,6 +225,56 @@ export const messages = {
     scheduleExport: '导出排班表',
     // 维护 排班员工列 字段，供当前前端状态或配置直接使用。
     scheduleEmployeeColumn: '员工 / 缺口',
+    // 维护 星期日 字段，供当前前端状态或配置直接使用。
+    weekdaySun: '周日',
+    // 维护 星期一 字段，供当前前端状态或配置直接使用。
+    weekdayMon: '周一',
+    // 维护 星期二 字段，供当前前端状态或配置直接使用。
+    weekdayTue: '周二',
+    // 维护 星期三 字段，供当前前端状态或配置直接使用。
+    weekdayWed: '周三',
+    // 维护 星期四 字段，供当前前端状态或配置直接使用。
+    weekdayThu: '周四',
+    // 维护 星期五 字段，供当前前端状态或配置直接使用。
+    weekdayFri: '周五',
+    // 维护 星期六 字段，供当前前端状态或配置直接使用。
+    weekdaySat: '周六',
+    // 维护 元日 字段，供当前前端状态或配置直接使用。
+    holidayNewYear: '元日',
+    // 维护 成人之日 字段，供当前前端状态或配置直接使用。
+    holidayComingOfAgeDay: '成人之日',
+    // 维护 建国纪念日 字段，供当前前端状态或配置直接使用。
+    holidayNationalFoundationDay: '建国纪念日',
+    // 维护 天皇诞生日 字段，供当前前端状态或配置直接使用。
+    holidayEmperorBirthday: '天皇诞生日',
+    // 维护 春分之日 字段，供当前前端状态或配置直接使用。
+    holidayVernalEquinox: '春分之日',
+    // 维护 昭和之日 字段，供当前前端状态或配置直接使用。
+    holidayShowaDay: '昭和之日',
+    // 维护 宪法纪念日 字段，供当前前端状态或配置直接使用。
+    holidayConstitutionMemorialDay: '宪法纪念日',
+    // 维护 绿之日 字段，供当前前端状态或配置直接使用。
+    holidayGreeneryDay: '绿之日',
+    // 维护 儿童之日 字段，供当前前端状态或配置直接使用。
+    holidayChildrensDay: '儿童之日',
+    // 维护 海之日 字段，供当前前端状态或配置直接使用。
+    holidayMarineDay: '海之日',
+    // 维护 山之日 字段，供当前前端状态或配置直接使用。
+    holidayMountainDay: '山之日',
+    // 维护 敬老之日 字段，供当前前端状态或配置直接使用。
+    holidayRespectForTheAgedDay: '敬老之日',
+    // 维护 秋分之日 字段，供当前前端状态或配置直接使用。
+    holidayAutumnalEquinox: '秋分之日',
+    // 维护 体育之日 字段，供当前前端状态或配置直接使用。
+    holidaySportsDay: '体育之日',
+    // 维护 文化之日 字段，供当前前端状态或配置直接使用。
+    holidayCultureDay: '文化之日',
+    // 维护 勤劳感谢之日 字段，供当前前端状态或配置直接使用。
+    holidayLaborThanksgivingDay: '勤劳感谢之日',
+    // 维护 振替休日 字段，供当前前端状态或配置直接使用。
+    holidaySubstitute: '振替休日',
+    // 维护 国民之休日 字段，供当前前端状态或配置直接使用。
+    holidayCitizensHoliday: '国民之休日',
     // 维护 未排班数量 字段，供当前前端状态或配置直接使用。
     scheduleUnassignedCount: '未排班 {count} 天',
     // 维护 未排班短文案 字段，供当前前端状态或配置直接使用。
@@ -541,6 +591,31 @@ export const messages = {
     scheduleCheckUnassigned: '未配置チェック',
     scheduleExport: 'シフト表を出力',
     scheduleEmployeeColumn: '社員 / 未配置',
+    weekdaySun: '日',
+    weekdayMon: '月',
+    weekdayTue: '火',
+    weekdayWed: '水',
+    weekdayThu: '木',
+    weekdayFri: '金',
+    weekdaySat: '土',
+    holidayNewYear: '元日',
+    holidayComingOfAgeDay: '成人の日',
+    holidayNationalFoundationDay: '建国記念の日',
+    holidayEmperorBirthday: '天皇誕生日',
+    holidayVernalEquinox: '春分の日',
+    holidayShowaDay: '昭和の日',
+    holidayConstitutionMemorialDay: '憲法記念日',
+    holidayGreeneryDay: 'みどりの日',
+    holidayChildrensDay: 'こどもの日',
+    holidayMarineDay: '海の日',
+    holidayMountainDay: '山の日',
+    holidayRespectForTheAgedDay: '敬老の日',
+    holidayAutumnalEquinox: '秋分の日',
+    holidaySportsDay: 'スポーツの日',
+    holidayCultureDay: '文化の日',
+    holidayLaborThanksgivingDay: '勤労感謝の日',
+    holidaySubstitute: '振替休日',
+    holidayCitizensHoliday: '国民の休日',
     scheduleUnassignedCount: '未配置 {count} 日',
     scheduleUnassignedShort: '未配置',
     scheduleCellGuide: 'ここを押して配置',

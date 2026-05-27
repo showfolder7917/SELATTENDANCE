@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import EmptyGuide from '../../../shared/components/EmptyGuide.vue'
 import ResizableWorkbenchSplit from './ResizableWorkbenchSplit.vue'
+import { getJapanCalendarMeta } from '../../../utils/japanHolidayCalendar'
 
 const props = defineProps({
   visible: { type: Boolean, required: true },
@@ -40,6 +41,28 @@ const scheduleIndex = computed(() => {
 // 右侧模板面板需要知道当前已选模板对象，方便显示颜色、时间和说明。
 const selectedTemplate = computed(() =>
   (props.scheduleBoard.shiftTemplates || []).find((item) => item.id === props.scheduleForm.selectedTemplateId) || null
+)
+
+// 排班表头需要把日期扩展成“月日 + 星期 + 红日子名”，统一在这里把元信息算好。
+const dateHeadItems = computed(() =>
+  (props.scheduleBoard.dates || []).map((dateText) => {
+    // 先读取当前日期在日本日历语境下的星期与节假日状态，供表头着色和文案显示。
+    const calendarMeta = getJapanCalendarMeta(dateText)
+    // 星期标签仍走当前页面语言字典，保证中日切换时表头文案同步变化。
+    const weekdayKeyMap = ['weekdaySun', 'weekdayMon', 'weekdayTue', 'weekdayWed', 'weekdayThu', 'weekdayFri', 'weekdaySat']
+    // 节日名称在有 holidayKey 时再从字典里取，普通日期保持空字符串避免多余占位。
+    const holidayLabel = calendarMeta.holidayKey ? props.t(calendarMeta.holidayKey) : ''
+    // 返回表头渲染需要的完整对象，避免模板里重复计算同一批日期状态。
+    return {
+      dateText,
+      dateLabel: dateText.slice(5),
+      weekdayLabel: props.t(weekdayKeyMap[calendarMeta.weekday]),
+      holidayLabel,
+      isSaturday: calendarMeta.isSaturday,
+      isSunday: calendarMeta.isSunday,
+      isHoliday: calendarMeta.isHoliday
+    }
+  })
 )
 
 // 批量向导的预览说明由当前可见员工数、日期范围和模板共同决定。
@@ -129,8 +152,19 @@ const wizardStepLabels = computed(() => [
             <thead>
               <tr>
                 <th class="selattendance-sticky-column selattendance-employee-head">{{ t('scheduleEmployeeColumn') }}</th>
-                <th v-for="date in scheduleBoard.dates" :key="date" class="selattendance-date-head">
-                  <span>{{ date.slice(5) }}</span>
+                <th
+                  v-for="item in dateHeadItems"
+                  :key="item.dateText"
+                  class="selattendance-date-head"
+                  :class="{
+                    saturday: item.isSaturday && !item.isHoliday,
+                    sunday: item.isSunday && !item.isHoliday,
+                    holiday: item.isHoliday
+                  }"
+                >
+                  <span class="selattendance-date-chip">{{ item.dateLabel }}</span>
+                  <small class="selattendance-date-weekday">{{ item.weekdayLabel }}</small>
+                  <small v-if="item.holidayLabel" class="selattendance-date-holiday">{{ item.holidayLabel }}</small>
                 </th>
               </tr>
             </thead>

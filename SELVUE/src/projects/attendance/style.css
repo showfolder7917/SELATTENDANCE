@@ -595,12 +595,13 @@ body {
 
 .selattendance-date-head {
   min-width: 98px;
+  padding: 10px 8px;
   text-align: center;
   font-size: 13px;
   color: var(--seladmin-text-muted, rgba(255, 255, 255, 0.74));
 }
 
-.selattendance-date-head span {
+.selattendance-date-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -608,6 +609,68 @@ body {
   min-height: 34px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
+}
+
+.selattendance-date-head .selattendance-date-weekday,
+.selattendance-date-head .selattendance-date-holiday {
+  display: block;
+  margin-top: 6px;
+  line-height: 1.25;
+}
+
+.selattendance-date-head .selattendance-date-weekday {
+  color: inherit;
+  font-size: 12px;
+}
+
+.selattendance-date-head .selattendance-date-holiday {
+  min-height: 28px;
+  color: rgba(255, 201, 201, 0.96);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.selattendance-date-head.saturday {
+  color: #89b9ff;
+}
+
+.selattendance-date-head.sunday {
+  color: #ffb4bf;
+}
+
+.selattendance-date-head.holiday {
+  color: #ff9aa7;
+}
+
+.selattendance-date-head.saturday .selattendance-date-chip {
+  background: rgba(74, 128, 220, 0.22);
+}
+
+.selattendance-date-head.sunday .selattendance-date-chip,
+.selattendance-date-head.holiday .selattendance-date-chip {
+  background: rgba(184, 74, 110, 0.22);
+}
+
+[data-selattendance-theme='liquid-glass'] .selattendance-date-head {
+  color: rgba(101, 111, 131, 0.9);
+}
+
+[data-selattendance-theme='liquid-glass'] .selattendance-date-chip {
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74);
+}
+
+[data-selattendance-theme='liquid-glass'] .selattendance-date-head.saturday {
+  color: rgba(75, 123, 210, 0.96);
+}
+
+[data-selattendance-theme='liquid-glass'] .selattendance-date-head.sunday,
+[data-selattendance-theme='liquid-glass'] .selattendance-date-head.holiday {
+  color: rgba(206, 86, 112, 0.96);
+}
+
+[data-selattendance-theme='liquid-glass'] .selattendance-date-head .selattendance-date-holiday {
+  color: rgba(202, 90, 108, 0.94);
 }
 
 .selattendance-employee-cell {

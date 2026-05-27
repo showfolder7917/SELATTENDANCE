@@ -1,8 +1,8 @@
 // 引入 Vue 挂载工具和 memory 页面根组件，验证最小插件工程装上后可以真实渲染。
 import { mount } from '@vue/test-utils'
-import MemoryWorkbenchView from '../../../src/projects/memory/views/MemoryWorkbenchView.vue'
+import { MemoryWorkbenchView } from '@tests-memory'
 
-describe('memory workbench view', () => {
+describe('memory integration workspace view', () => {
   // 测试 memory 骨架页面渲染，保证最小插件工程的说明面板和检查项都能显示。
   it('renders the pluggable memory workspace shell', () => {
     const wrapper = mount(MemoryWorkbenchView)

@@ -1,10 +1,10 @@
 // 引入 Vue 挂载工具和宿主根组件，验证宿主切换器会按项目注册表切换实际工程。
 import { defineComponent, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
-import App from '../../../src/App.vue'
+import { HostApp } from '@tests-host'
 
 // 模拟宿主注册表，避免集成测试被真实工程内部复杂依赖放大，只专注宿主切换行为。
-vi.mock('../../../src/projects', () => {
+vi.mock('@/projects', () => {
   // 用最小虚拟工程组件代表 attendance 页面，验证宿主能渲染当前激活工程。
   const AttendanceStub = defineComponent({
     name: 'AttendanceStub',
@@ -33,10 +33,10 @@ vi.mock('../../../src/projects', () => {
   }
 })
 
-describe('host project app', () => {
+describe('host integration project shell app', () => {
   // 测试宿主切换器和工程切换，保证项目宿主不会把某个业务工程写死到根层。
   it('renders the active project and switches to another project from the selector', async () => {
-    const wrapper = mount(App)
+    const wrapper = mount(HostApp)
 
     expect(wrapper.text()).toContain('Project')
     expect(wrapper.find('[data-testid="attendance-view"]').exists()).toBe(true)
