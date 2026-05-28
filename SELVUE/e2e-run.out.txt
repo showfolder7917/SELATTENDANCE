@@ -1,0 +1,11 @@
+
+> selattendance-vue@0.0.0 test:e2e
+> playwright test
+
+
+Running 4 tests using 1 worker
+
+  ok 1 [chromium] › test\attendance\e2e\attendance-full-flow.e2e.test.js:7:3 › attendance e2e full flow › runs the attendance business flow from tenant setup to batch scheduling (5.5s)
+  ok 2 [chromium] › test\attendance\e2e\attendance-workbench.e2e.test.js:6:3 › attendance e2e workbench shell › renders the attendance workbench shell with mocked bootstrap data (1.2s)
+  ok 3 [chromium] › test\attendance\e2e\employee-table-layout-regression.e2e.test.js:7:3 › attendance e2e employee table layout regression › keeps employee rows aligned between data columns and action column (1.9s)
+  ok 4 [chromium] › test\host\e2e\project-switcher.e2e.test.js:6:3 › host e2e project switcher › switches from attendance to memory through the host selector (1.1s)

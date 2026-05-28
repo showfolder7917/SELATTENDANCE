@@ -9,17 +9,17 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   // 先注册 Vue 插件，保持现有页面编译链不变。
   plugins: [vue()],
-  // 为源码主入口和测试侧公开入口定义稳定 alias，让测试依赖停留在 tests 层而不是混进业务源码目录。
+  // 为源码主入口和测试侧公开入口定义稳定 alias，让测试依赖停留在 test 层而不是混进业务源码目录。
   resolve: {
     alias: {
       // 通用源码 alias 供测试和业务代码共享，避免反复书写长相对路径。
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      // 考勤测试侧入口只暴露允许测试依赖的公开面，后续 src 内部目录调整时只需维护 tests 侧出口。
-      '@tests-attendance': fileURLToPath(new URL('./tests/attendance/index.js', import.meta.url)),
+      // 考勤测试侧入口只暴露允许测试依赖的公开面，后续 src 内部目录调整时只需维护 test 侧出口。
+      '@tests-attendance': fileURLToPath(new URL('./test/attendance/index.js', import.meta.url)),
       // host 测试侧入口统一收口宿主壳和工程注册表的公开测试面。
-      '@tests-host': fileURLToPath(new URL('./tests/host/index.js', import.meta.url)),
+      '@tests-host': fileURLToPath(new URL('./test/host/index.js', import.meta.url)),
       // memory 测试侧入口统一收口最小插件工程的公开测试面。
-      '@tests-memory': fileURLToPath(new URL('./tests/memory/index.js', import.meta.url)),
+      '@tests-memory': fileURLToPath(new URL('./test/memory/index.js', import.meta.url)),
       // 共享基础服务 alias 供 API 封装测试 mock request 桥接时直接引用统一入口。
       '@shared': fileURLToPath(new URL('./src/shared', import.meta.url))
     }
@@ -32,10 +32,10 @@ export default defineConfig({
     globals: true,
     // 让 Vue 单文件组件测试在每个用例后自动清理挂载痕迹，避免跨用例污染。
     clearMocks: true,
-    // 把前端测试根目录固定到 tests，避免误扫 src 下业务文件。
-    include: ['tests/**/*.test.js'],
+    // 把前端测试根目录固定到 test，避免误扫 src 下业务文件。
+    include: ['test/**/*.test.js'],
     // 真实浏览器 e2e 统一交给 Playwright 执行，避免被 Vitest 误扫后把浏览器用例当成 jsdom 测试。
-    exclude: ['tests/**/*.e2e.test.js'],
+    exclude: ['test/**/*.e2e.test.js'],
     // 覆盖率统计只聚焦当前已经纳入自动化验证的宿主、memory 和 attendance 核心状态/服务边界。
     coverage: {
       // 使用 V8 原生覆盖率，兼容当前 Vite + Vue 编译链而不再引入额外 babel 管道。
