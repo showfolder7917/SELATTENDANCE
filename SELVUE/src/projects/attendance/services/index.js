@@ -51,3 +51,11 @@ export {
   ignorePunchLog,
   reprocessPunchLog
 } from './punchApi'
+
+// 暴露第四阶段日次接口，供日次结果区块独立加载、详情查看和重算复用。
+export {
+  listDailyResults,
+  getDailyDetail,
+  recalculateDaily,
+  recalculateDailyRange
+} from './dailyApi'

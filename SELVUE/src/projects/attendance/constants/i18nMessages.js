@@ -12,9 +12,9 @@ export const messages = {
   // 执行当前业务步骤，推进本行对应的 constants 处理。
   'zh-CN': {
     // 维护 appTitle 字段，供当前前端状态或配置直接使用。
-    appTitle: '考勤系统第二阶段工作台',
+    appTitle: '考勤系统第四阶段工作台',
     // 维护 appSubtitle 字段，供当前前端状态或配置直接使用。
-    appSubtitle: '基础资料、班次模板与第二阶段排班在一个页面连续完成。',
+    appSubtitle: '基础资料、排班、打卡与第四阶段日次计算在一个页面连续完成。',
     // 维护 liveTag 字段，供当前前端状态或配置直接使用。
     liveTag: '中日双语 / 一键启动',
     // 维护 主题Switch 字段，供当前前端状态或配置直接使用。
@@ -47,6 +47,8 @@ export const messages = {
     navSchedule: '排班管理',
     // 维护 导航打卡 字段，供当前前端状态或配置直接使用。
     navPunch: '打卡记录',
+    // 维护 导航日次 字段，供当前前端状态或配置直接使用。
+    navDaily: '日次结果',
     // 维护 workspaceSidebarTitle 字段，供当前前端状态或配置直接使用。
     workspaceSidebarTitle: '功能导航',
     // 维护 workspaceSidebarHint 字段，供当前前端状态或配置直接使用。
@@ -67,10 +69,12 @@ export const messages = {
     sectionScheduleHint: '像填日历一样完成第二阶段排班，并立即检查未排班缺口。',
     // 维护 section打卡Hint 字段，供当前前端状态或配置直接使用。
     sectionPunchHint: '第三阶段开始接收真实打卡事实，并处理未匹配、失败和忽略记录。',
+    // 维护 section日次Hint 字段，供当前前端状态或配置直接使用。
+    sectionDailyHint: '第四阶段开始把排班和打卡计算成每日结果，并集中处理异常。',
     // 维护 wizardTitle 字段，供当前前端状态或配置直接使用。
     wizardTitle: '初始化向导',
     // 维护 wizardHint 字段，供当前前端状态或配置直接使用。
-    wizardHint: '基础资料已经用于第二阶段排班；当前仍不进入打卡导入、日次月次计算和审批闭环。',
+    wizardHint: '基础资料、排班和打卡已经接通；当前已进入第四阶段日次计算，审批和月结仍未开始。',
     // 维护 nextAction 字段，供当前前端状态或配置直接使用。
     nextAction: '推荐下一步',
     // 维护 phaseLocked 字段，供当前前端状态或配置直接使用。
@@ -91,6 +95,8 @@ export const messages = {
     scheduleTitle: '排班管理',
     // 维护 打卡Title 字段，供当前前端状态或配置直接使用。
     punchTitle: '打卡记录',
+    // 维护 日次Title 字段，供当前前端状态或配置直接使用。
+    dailyTitle: '日次结果',
     // 维护 保存 字段，供当前前端状态或配置直接使用。
     save: '保存',
     // 维护 新增 字段，供当前前端状态或配置直接使用。
@@ -149,8 +155,12 @@ export const messages = {
     departmentCode: '部门编码',
     // 维护 部门名称 字段，供当前前端状态或配置直接使用。
     departmentName: '部门名称',
+    // 维护 全部部门 字段，供当前前端状态或配置直接使用。
+    allDepartments: '全部部门',
     // 维护 事业所 字段，供当前前端状态或配置直接使用。
     workplace: '事业所',
+    // 维护 全部事业所 字段，供当前前端状态或配置直接使用。
+    allWorkplaces: '全部事业所',
     // 维护 sortOrder 字段，供当前前端状态或配置直接使用。
     sortOrder: '排序号',
     // 维护 员工No 字段，供当前前端状态或配置直接使用。
@@ -415,6 +425,53 @@ export const messages = {
     punchToastBound: '未匹配记录已绑定到员工',
     punchToastIgnored: '当前打卡记录已忽略',
     punchToastReprocessed: '当前打卡记录已重新处理',
+    dailyLead: '把排班与有效打卡组合起来，先产出每日结论，再把异常集中交给管理员处理。',
+    dailyRefresh: '刷新日次',
+    dailyRecalculateRange: '按当前筛选重算',
+    dailyDateFrom: '开始日期',
+    dailyDateTo: '结束日期',
+    dailyEmployeeKeywordHint: '输入员工编号或姓名',
+    dailyExceptionOnly: '只看异常',
+    dailyStatusAll: '全部状态',
+    dailySummaryNormal: '正常',
+    dailySummaryLate: '迟到/早退',
+    dailySummaryMissing: '缺卡',
+    dailySummaryAbsence: '缺勤',
+    dailyPageSize: '每页条数',
+    dailyPrevPage: '上一页',
+    dailyNextPage: '下一页',
+    dailyPaginationSummary: '共 {total} 条',
+    dailyPaginationCurrent: '第 {page} / {totalPages} 页',
+    dailyWorkDate: '工作日',
+    dailyScheduleLabel: '计划班次',
+    dailyActualClockIn: '实际上班',
+    dailyActualClockOut: '实际下班',
+    dailyDetailTitle: '当前日次详情',
+    dailyDetailHint: '当前查看 {date} 的排班、打卡、异常和计算过程。',
+    dailyRecalculateOne: '重算当天',
+    dailyScheduleSnapshot: '排班快照',
+    dailyPunchSnapshot: '打卡快照',
+    dailyExceptionList: '异常列表',
+    dailyCalcSteps: '计算过程',
+    dailyNoSelection: '请先从左侧列表选择一条日次结果。',
+    dailyNoPunches: '当天没有有效打卡。',
+    dailyNoExceptions: '当前日次没有异常。',
+    dailyNoCalcSteps: '当前没有可展示的计算步骤。',
+    dailyActualWorkMinutes: '实际工时分钟',
+    dailyLateMinutes: '迟到分钟',
+    dailyEarlyLeaveMinutes: '早退分钟',
+    dailyStatusNormal: '正常',
+    dailyStatusLate: '迟到',
+    dailyStatusEarlyLeave: '早退',
+    dailyStatusMissingClockIn: '缺上班卡',
+    dailyStatusMissingClockOut: '缺下班卡',
+    dailyStatusAbsence: '缺勤',
+    dailyStatusNoSchedule: '无排班打卡',
+    dailyStatusHolidayWork: '休日出勤',
+    dailyExceptionLevelWarn: '提醒',
+    dailyExceptionLevelError: '错误',
+    dailyToastRecalculated: '当前日次已重算',
+    dailyToastRangeRecalculated: '当前筛选范围已重算',
     // 执行当前业务步骤，推进本行对应的 constants 处理。
     'guide.tenant': '完成公司/教室信息后，初始化向导才能进入组织资料建设。',
     // 执行当前业务步骤，推进本行对应的 constants 处理。
@@ -461,9 +518,9 @@ export const messages = {
   // 执行当前业务步骤，推进本行对应的 constants 处理。
   'ja-JP': {
     // 维护 appTitle 字段，供当前前端状态或配置直接使用。
-    appTitle: '勤怠システム Phase 2',
+    appTitle: '勤怠システム Phase 4',
     // 维护 appSubtitle 字段，供当前前端状态或配置直接使用。
-    appSubtitle: '基本マスタ、シフトテンプレート、Phase 2 のシフト作成を一画面で連続して管理します。',
+    appSubtitle: '基本マスタ、シフト、打刻、Phase 4 の日次計算を一画面で連続して管理します。',
     // 维护 liveTag 字段，供当前前端状态或配置直接使用。
     liveTag: '中国語 / 日本語 / ワンクリック起動',
     // 维护 主题Switch 字段，供当前前端状态或配置直接使用。
@@ -496,6 +553,8 @@ export const messages = {
     navSchedule: 'シフト作成',
     // 维护 导航打卡 字段，供当前前端状态或配置直接使用。
     navPunch: '打刻記録',
+    // 维护 导航日次 字段，供当前前端状态或配置直接使用。
+    navDaily: '日次結果',
     // 维护 workspaceSidebarTitle 字段，供当前前端状态或配置直接使用。
     workspaceSidebarTitle: '機能ナビ',
     // 维护 workspaceSidebarHint 字段，供当前前端状态或配置直接使用。
@@ -516,10 +575,12 @@ export const messages = {
     sectionScheduleHint: 'カレンダー感覚でシフトを並べ、未配置の穴をすぐ確認できます。',
     // 维护 section打卡Hint 字段，供当前前端状态或配置直接使用。
     sectionPunchHint: 'Phase 3 で実打刻ログを受け取り、未紐付け・失敗・無視データを整理します。',
+    // 维护 section日次Hint 字段，供当前前端状态或配置直接使用。
+    sectionDailyHint: 'Phase 4 でシフトと打刻を日次結果へ計算し、異常をまとめて処理します。',
     // 维护 wizardTitle 字段，供当前前端状态或配置直接使用。
     wizardTitle: '初期化ウィザード',
     // 维护 wizardHint 字段，供当前前端状态或配置直接使用。
-    wizardHint: '基本マスタは Phase 2 のシフト作成で利用し、打刻取込・日次月次計算・申請承認はまだ対象外です。',
+    wizardHint: '基本マスタ、シフト、打刻は接続済みで、現在は Phase 4 の日次計算へ進んでいます。申請承認と月次締めはまだ対象外です。',
     // 维护 nextAction 字段，供当前前端状态或配置直接使用。
     nextAction: '次の推奨アクション',
     // 维护 phaseLocked 字段，供当前前端状态或配置直接使用。
@@ -540,6 +601,8 @@ export const messages = {
     scheduleTitle: 'シフト作成',
     // 维护 打卡Title 字段，供当前前端状态或配置直接使用。
     punchTitle: '打刻記録',
+    // 维护 日次Title 字段，供当前前端状态或配置直接使用。
+    dailyTitle: '日次結果',
     // 维护 保存 字段，供当前前端状态或配置直接使用。
     save: '保存',
     // 维护 新增 字段，供当前前端状态或配置直接使用。
@@ -598,8 +661,12 @@ export const messages = {
     departmentCode: '部署コード',
     // 维护 部门名称 字段，供当前前端状态或配置直接使用。
     departmentName: '部署名',
+    // 维护 全部部门 字段，供当前前端状态或配置直接使用。
+    allDepartments: '全部署',
     // 维护 事业所 字段，供当前前端状态或配置直接使用。
     workplace: '事業所',
+    // 维护 全部事业所 字段，供当前前端状态或配置直接使用。
+    allWorkplaces: '全事業所',
     // 维护 sortOrder 字段，供当前前端状态或配置直接使用。
     sortOrder: '表示順',
     // 维护 员工No 字段，供当前前端状态或配置直接使用。
@@ -796,6 +863,53 @@ export const messages = {
     punchToastBound: '未紐付け記録を社員へ紐付けました',
     punchToastIgnored: '現在の打刻記録を無視しました',
     punchToastReprocessed: '現在の打刻記録を再処理しました',
+    dailyLead: 'シフトと有効打刻を組み合わせて、まず日次結論を作り、異常を管理者へ集約します。',
+    dailyRefresh: '日次更新',
+    dailyRecalculateRange: '現在の絞込で再計算',
+    dailyDateFrom: '開始日',
+    dailyDateTo: '終了日',
+    dailyEmployeeKeywordHint: '社員番号または氏名で検索',
+    dailyExceptionOnly: '異常のみ表示',
+    dailyStatusAll: '全状態',
+    dailySummaryNormal: '正常',
+    dailySummaryLate: '遅刻 / 早退',
+    dailySummaryMissing: '打刻不足',
+    dailySummaryAbsence: '欠勤',
+    dailyPageSize: '1ページ件数',
+    dailyPrevPage: '前へ',
+    dailyNextPage: '次へ',
+    dailyPaginationSummary: '合計 {total} 件',
+    dailyPaginationCurrent: '{page} / {totalPages} ページ',
+    dailyWorkDate: '勤務日',
+    dailyScheduleLabel: '予定シフト',
+    dailyActualClockIn: '実上番',
+    dailyActualClockOut: '実下番',
+    dailyDetailTitle: '現在の日次詳細',
+    dailyDetailHint: '{date} のシフト、打刻、異常、計算過程を確認します。',
+    dailyRecalculateOne: '当日を再計算',
+    dailyScheduleSnapshot: 'シフトスナップショット',
+    dailyPunchSnapshot: '打刻スナップショット',
+    dailyExceptionList: '異常一覧',
+    dailyCalcSteps: '計算過程',
+    dailyNoSelection: '左側の日次一覧から 1 件選択してください。',
+    dailyNoPunches: '当日に有効打刻はありません。',
+    dailyNoExceptions: '現在の日次に異常はありません。',
+    dailyNoCalcSteps: '表示できる計算ステップはありません。',
+    dailyActualWorkMinutes: '実働分',
+    dailyLateMinutes: '遅刻分',
+    dailyEarlyLeaveMinutes: '早退分',
+    dailyStatusNormal: '正常',
+    dailyStatusLate: '遅刻',
+    dailyStatusEarlyLeave: '早退',
+    dailyStatusMissingClockIn: '出勤打刻不足',
+    dailyStatusMissingClockOut: '退勤打刻不足',
+    dailyStatusAbsence: '欠勤',
+    dailyStatusNoSchedule: '無シフト打刻',
+    dailyStatusHolidayWork: '休日出勤',
+    dailyExceptionLevelWarn: '注意',
+    dailyExceptionLevelError: 'エラー',
+    dailyToastRecalculated: '現在の日次を再計算しました',
+    dailyToastRangeRecalculated: '現在の絞込範囲を再計算しました',
     // 执行当前业务步骤，推进本行对应的 constants 处理。
     'guide.tenant': '会社 / 教室情報を登録すると組織マスタ準備に進めます。',
     // 执行当前业务步骤，推进本行对应的 constants 处理。

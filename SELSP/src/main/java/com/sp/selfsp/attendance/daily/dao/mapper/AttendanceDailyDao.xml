@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.attendance.daily.dao.AttendanceDailyDao">
+
+  <resultMap id="DailyItemResultMap" type="com.sp.selfsp.attendance.daily.domain.out.AttendanceDailyOut$DailyItemOut">
+    <id column="id" property="id"/>
+    <result column="employee_id" property="employeeId"/>
+    <result column="employee_no" property="employeeNo"/>
+    <result column="employee_name" property="employeeName"/>
+    <result column="department_name" property="departmentName"/>
+    <result column="workplace_name" property="workplaceName"/>
+    <result column="work_date" property="workDate"/>
+    <result column="schedule_label" property="scheduleLabel"/>
+    <result column="actual_clock_in" property="actualClockIn"/>
+    <result column="actual_clock_out" property="actualClockOut"/>
+    <result column="actual_break_minutes" property="actualBreakMinutes"/>
+    <result column="actual_work_minutes" property="actualWorkMinutes"/>
+    <result column="late_minutes" property="lateMinutes"/>
+    <result column="early_leave_minutes" property="earlyLeaveMinutes"/>
+    <result column="status" property="status"/>
+    <result column="exception_flag" property="exceptionFlag"/>
+  </resultMap>
+
+  <resultMap id="DailyDetailResultMap" type="com.sp.selfsp.attendance.daily.domain.out.AttendanceDailyOut$DailyDetailOut" extends="DailyItemResultMap"/>
+
+  <resultMap id="ScheduleSnapshotResultMap" type="com.sp.selfsp.attendance.daily.domain.out.AttendanceDailyOut$ScheduleSnapshotOut">
+    <id column="shift_schedule_id" property="shiftScheduleId"/>
+    <result column="label" property="label"/>
+    <result column="start_time" property="startTime"/>
+    <result column="end_time" property="endTime"/>
+    <result column="break_minutes" property="breakMinutes"/>
+    <result column="work_day_type" property="workDayType"/>
+  </resultMap>
+
+  <resultMap id="PunchSnapshotResultMap" type="com.sp.selfsp.attendance.daily.domain.out.AttendanceDailyOut$PunchSnapshotOut">
+    <id column="id" property="id"/>
+    <result column="punch_time" property="punchTime"/>
+    <result column="punch_type" property="punchType"/>
+    <result column="source_system" property="sourceSystem"/>
+    <result column="device_name" property="deviceName"/>
+  </resultMap>
+
+  <resultMap id="ExceptionResultMap" type="com.sp.selfsp.attendance.daily.domain.out.AttendanceDailyOut$ExceptionOut">
+    <result column="exception_type" property="exceptionType"/>
+    <result column="exception_level" property="exceptionLevel"/>
+    <result column="message" property="message"/>
+    <result column="suggested_action" property="suggestedAction"/>
+  </resultMap>
+
+  <resultMap id="CalcStepResultMap" type="com.sp.selfsp.attendance.daily.domain.out.AttendanceDailyOut$CalcStepOut">
+    <result column="step_name" property="stepName"/>
+    <result column="step_message" property="stepMessage"/>
+  </resultMap>
+
+  <sql id="DailyWhere">
+    d.tenant_id = #{tenantId}
+    <if test="query != null and query.startDate != null and query.startDate != ''">
+      AND d.work_date &gt;= CAST(#{query.startDate} AS DATE)
+    </if>
+    <if test="query != null and query.endDate != null and query.endDate != ''">
+      AND d.work_date &lt;= CAST(#{query.endDate} AS DATE)
+    </if>
+    <if test="query != null and query.workplaceId != null">
+      AND e.workplace_id = #{query.workplaceId}
+    </if>
+    <if test="query != null and query.departmentId != null">
+      AND e.department_id = #{query.departmentId}
+    </if>
+    <if test="query != null and query.employeeKeyword != null and query.employeeKeyword != ''">
+      AND (
+        e.employee_no LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+        OR e.employee_name LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+      )
+    </if>
+    <if test="query != null and query.status != null and query.status != ''">
+      AND d.status = #{query.status}
+    </if>
+    <if test="query != null and query.exceptionOnly != null and query.exceptionOnly">
+      AND d.exception_flag = 1
+    </if>
+  </sql>
+
+  <select id="selectCalculationTargets" resultType="java.util.HashMap">
+    SELECT DISTINCT target.employeeId AS employeeId, target.workDate AS workDate
+    FROM (
+      SELECT s.employee_id AS employeeId, s.work_date AS workDate
+      FROM shift_schedule s
+      INNER JOIN employee e ON e.id = s.employee_id AND e.tenant_id = s.tenant_id
+      WHERE s.tenant_id = #{tenantId}
+        <if test="query != null and query.startDate != null and query.startDate != ''">
+          AND s.work_date &gt;= CAST(#{query.startDate} AS DATE)
+        </if>
+        <if test="query != null and query.endDate != null and query.endDate != ''">
+          AND s.work_date &lt;= CAST(#{query.endDate} AS DATE)
+        </if>
+        <if test="query != null and query.workplaceId != null">
+          AND e.workplace_id = #{query.workplaceId}
+        </if>
+        <if test="query != null and query.departmentId != null">
+          AND e.department_id = #{query.departmentId}
+        </if>
+        <if test="query != null and query.employeeKeyword != null and query.employeeKeyword != ''">
+          AND (
+            e.employee_no LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+            OR e.employee_name LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+          )
+        </if>
+      UNION
+      SELECT p.employee_id AS employeeId, CAST(p.punch_time AS DATE) AS workDate
+      FROM punch_raw_log p
+      INNER JOIN employee e ON e.id = p.employee_id AND e.tenant_id = p.tenant_id
+      WHERE p.tenant_id = #{tenantId}
+        AND p.process_status = 'PROCESSED'
+        AND p.employee_id IS NOT NULL
+        <if test="query != null and query.startDate != null and query.startDate != ''">
+          AND CAST(p.punch_time AS DATE) &gt;= CAST(#{query.startDate} AS DATE)
+        </if>
+        <if test="query != null and query.endDate != null and query.endDate != ''">
+          AND CAST(p.punch_time AS DATE) &lt;= CAST(#{query.endDate} AS DATE)
+        </if>
+        <if test="query != null and query.workplaceId != null">
+          AND e.workplace_id = #{query.workplaceId}
+        </if>
+        <if test="query != null and query.departmentId != null">
+          AND e.department_id = #{query.departmentId}
+        </if>
+        <if test="query != null and query.employeeKeyword != null and query.employeeKeyword != ''">
+          AND (
+            e.employee_no LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+            OR e.employee_name LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+          )
+        </if>
+    ) target
+    ORDER BY target.workDate, target.employeeId
+  </select>
+
+  <select id="selectScheduleSnapshot" resultMap="ScheduleSnapshotResultMap">
+    SELECT
+      s.id AS shift_schedule_id,
+      CONCAT(st.template_name, ' ', st.start_time, '-', st.end_time) AS label,
+      s.scheduled_start_time AS start_time,
+      s.scheduled_end_time AS end_time,
+      s.scheduled_break_minutes AS break_minutes,
+      s.work_day_type AS work_day_type
+    FROM shift_schedule s
+    LEFT JOIN shift_template st ON st.id = s.shift_template_id AND st.tenant_id = s.tenant_id
+    WHERE s.tenant_id = #{tenantId}
+      AND s.employee_id = #{employeeId}
+      AND s.work_date = #{workDate}
+  </select>
+
+  <select id="selectProcessedPunches" resultMap="PunchSnapshotResultMap">
+    SELECT id, punch_time, punch_type, source_system, device_name
+    FROM punch_raw_log
+    WHERE tenant_id = #{tenantId}
+      AND employee_id = #{employeeId}
+      AND process_status = 'PROCESSED'
+      AND CAST(punch_time AS DATE) = #{workDate}
+    ORDER BY punch_time ASC, id ASC
+  </select>
+
+  <select id="selectDailyIdentity" resultType="java.util.HashMap">
+    SELECT id, employee_id, work_date
+    FROM attendance_daily
+    WHERE tenant_id = #{tenantId}
+      AND employee_id = #{employeeId}
+      AND work_date = #{workDate}
+  </select>
+
+  <insert id="mergeDaily">
+    MERGE INTO attendance_daily (
+      tenant_id, employee_id, work_date, shift_schedule_id, work_day_type,
+      scheduled_start_time, scheduled_end_time, scheduled_break_minutes, scheduled_work_minutes,
+      actual_clock_in, actual_clock_out, actual_break_minutes, actual_work_minutes,
+      late_minutes, early_leave_minutes, absence_minutes,
+      normal_work_minutes, overtime_minutes, legal_overtime_minutes, night_work_minutes, holiday_work_minutes,
+      status, approval_status, exception_flag, locked,
+      calculated_at, calc_version, calc_message, created_at, updated_at
+    ) KEY (tenant_id, employee_id, work_date)
+    VALUES (
+      #{tenantId}, #{employeeId}, #{workDate}, #{shiftScheduleId}, #{workDayType},
+      #{scheduledStartTime}, #{scheduledEndTime}, #{scheduledBreakMinutes}, #{scheduledWorkMinutes},
+      #{actualClockIn}, #{actualClockOut}, #{actualBreakMinutes}, #{actualWorkMinutes},
+      #{lateMinutes}, #{earlyLeaveMinutes}, #{absenceMinutes},
+      #{normalWorkMinutes}, #{overtimeMinutes}, #{legalOvertimeMinutes}, #{nightWorkMinutes}, #{holidayWorkMinutes},
+      #{status}, #{approvalStatus}, #{exceptionFlag}, #{locked},
+      #{calculatedAt}, #{calcVersion}, #{calcMessage}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+    )
+  </insert>
+
+  <delete id="deleteExceptionsByDailyId">
+    DELETE FROM attendance_exception
+    WHERE tenant_id = #{tenantId}
+      AND attendance_daily_id = #{attendanceDailyId}
+  </delete>
+
+  <insert id="insertException">
+    INSERT INTO attendance_exception (
+      tenant_id, employee_id, work_date, attendance_daily_id,
+      exception_type, exception_level, status, message, suggested_action, created_at, updated_at
+    ) VALUES (
+      #{tenantId}, #{employeeId}, #{workDate}, #{attendanceDailyId},
+      #{exceptionType}, #{exceptionLevel}, #{status}, #{message}, #{suggestedAction}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+    )
+  </insert>
+
+  <delete id="deleteCalcLogsByEmployeeDate">
+    DELETE FROM attendance_calc_log
+    WHERE tenant_id = #{tenantId}
+      AND employee_id = #{employeeId}
+      AND work_date = #{workDate}
+  </delete>
+
+  <insert id="insertCalcLog">
+    INSERT INTO attendance_calc_log (
+      tenant_id, employee_id, work_date, attendance_daily_id,
+      trigger_type, trigger_ref_id, calc_status, step_name, step_message, payload_json, created_at
+    ) VALUES (
+      #{tenantId}, #{employeeId}, #{workDate}, #{attendanceDailyId},
+      #{triggerType}, #{triggerRefId}, #{calcStatus}, #{stepName}, #{stepMessage}, #{payloadJson}, CURRENT_TIMESTAMP
+    )
+  </insert>
+
+  <select id="selectDailyList" resultMap="DailyItemResultMap">
+    SELECT
+      d.id, d.employee_id, e.employee_no, e.employee_name, dept.department_name, wp.workplace_name,
+      d.work_date,
+      CONCAT(COALESCE(st.template_name, '未排班'), CASE WHEN st.start_time IS NULL THEN '' ELSE CONCAT(' ', st.start_time, '-', st.end_time) END) AS schedule_label,
+      d.actual_clock_in, d.actual_clock_out, d.actual_break_minutes, d.actual_work_minutes,
+      d.late_minutes, d.early_leave_minutes, d.status, d.exception_flag
+    FROM attendance_daily d
+    INNER JOIN employee e ON e.id = d.employee_id AND e.tenant_id = d.tenant_id
+    LEFT JOIN department dept ON dept.id = e.department_id AND dept.tenant_id = e.tenant_id
+    LEFT JOIN workplace wp ON wp.id = e.workplace_id AND wp.tenant_id = e.tenant_id
+    LEFT JOIN shift_schedule ss ON ss.id = d.shift_schedule_id AND ss.tenant_id = d.tenant_id
+    LEFT JOIN shift_template st ON st.id = ss.shift_template_id AND st.tenant_id = d.tenant_id
+    WHERE <include refid="DailyWhere"/>
+    ORDER BY d.work_date DESC, e.employee_no ASC
+    LIMIT #{pageSize} OFFSET #{offset}
+  </select>
+
+  <select id="countDailyList" resultType="java.lang.Integer">
+    SELECT COUNT(*)
+    FROM attendance_daily d
+    INNER JOIN employee e ON e.id = d.employee_id AND e.tenant_id = d.tenant_id
+    WHERE <include refid="DailyWhere"/>
+  </select>
+
+  <select id="countDailySummary" resultType="java.util.HashMap">
+    SELECT d.status AS status, COUNT(*) AS totalCount
+    FROM attendance_daily d
+    INNER JOIN employee e ON e.id = d.employee_id AND e.tenant_id = d.tenant_id
+    WHERE <include refid="DailyWhere"/>
+    GROUP BY d.status
+  </select>
+
+  <select id="selectDailyDetailById" resultMap="DailyDetailResultMap">
+    SELECT
+      d.id, d.employee_id, e.employee_no, e.employee_name, dept.department_name, wp.workplace_name,
+      d.work_date,
+      CONCAT(COALESCE(st.template_name, '未排班'), CASE WHEN st.start_time IS NULL THEN '' ELSE CONCAT(' ', st.start_time, '-', st.end_time) END) AS schedule_label,
+      d.actual_clock_in, d.actual_clock_out, d.actual_break_minutes, d.actual_work_minutes,
+      d.late_minutes, d.early_leave_minutes, d.status, d.exception_flag
+    FROM attendance_daily d
+    INNER JOIN employee e ON e.id = d.employee_id AND e.tenant_id = d.tenant_id
+    LEFT JOIN department dept ON dept.id = e.department_id AND dept.tenant_id = e.tenant_id
+    LEFT JOIN workplace wp ON wp.id = e.workplace_id AND wp.tenant_id = e.tenant_id
+    LEFT JOIN shift_schedule ss ON ss.id = d.shift_schedule_id AND ss.tenant_id = d.tenant_id
+    LEFT JOIN shift_template st ON st.id = ss.shift_template_id AND st.tenant_id = d.tenant_id
+    WHERE d.tenant_id = #{tenantId}
+      AND d.id = #{id}
+  </select>
+
+  <select id="selectExceptionsByDailyId" resultMap="ExceptionResultMap">
+    SELECT exception_type, exception_level, message, suggested_action
+    FROM attendance_exception
+    WHERE tenant_id = #{tenantId}
+      AND attendance_daily_id = #{attendanceDailyId}
+    ORDER BY id ASC
+  </select>
+
+  <select id="selectCalcStepsByEmployeeDate" resultMap="CalcStepResultMap">
+    SELECT step_name, step_message
+    FROM attendance_calc_log
+    WHERE tenant_id = #{tenantId}
+      AND employee_id = #{employeeId}
+      AND work_date = #{workDate}
+    ORDER BY id ASC
+  </select>
+</mapper>

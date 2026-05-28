@@ -60,6 +60,33 @@ VALUES
   (5, 1, 'REST', '公休', 'REST', NULL, NULL, 0, 0, 'GRAY', 1),
   (6, 1, 'PAID_LEAVE', '有給', 'PAID_LEAVE', NULL, NULL, 0, 0, 'GREEN', 1);
 
+MERGE INTO shift_schedule (
+    id, tenant_id, employee_id, work_date, shift_template_id, scheduled_start_time, scheduled_end_time,
+    scheduled_break_minutes, work_day_type, status, locked, remark, created_by, updated_by
+)
+KEY (id)
+VALUES
+  (3001, 1, 1, DATE '2026-05-01', 1, TIMESTAMP '2026-05-01 09:00:00', TIMESTAMP '2026-05-01 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3002, 1, 1, DATE '2026-05-02', 1, TIMESTAMP '2026-05-02 09:00:00', TIMESTAMP '2026-05-02 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3003, 1, 1, DATE '2026-05-03', 1, TIMESTAMP '2026-05-03 09:00:00', TIMESTAMP '2026-05-03 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3004, 1, 1, DATE '2026-05-04', 1, TIMESTAMP '2026-05-04 09:00:00', TIMESTAMP '2026-05-04 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3005, 1, 1, DATE '2026-05-05', 1, TIMESTAMP '2026-05-05 09:00:00', TIMESTAMP '2026-05-05 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3006, 1, 1, DATE '2026-05-06', 1, TIMESTAMP '2026-05-06 09:00:00', TIMESTAMP '2026-05-06 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3007, 1, 1, DATE '2026-05-07', 1, TIMESTAMP '2026-05-07 09:00:00', TIMESTAMP '2026-05-07 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3008, 1, 1, DATE '2026-05-08', 1, TIMESTAMP '2026-05-08 09:00:00', TIMESTAMP '2026-05-08 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3009, 1, 1, DATE '2026-05-09', 1, TIMESTAMP '2026-05-09 09:00:00', TIMESTAMP '2026-05-09 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3010, 1, 1, DATE '2026-05-10', 1, TIMESTAMP '2026-05-10 09:00:00', TIMESTAMP '2026-05-10 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3011, 1, 1, DATE '2026-05-11', 1, TIMESTAMP '2026-05-11 09:00:00', TIMESTAMP '2026-05-11 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3012, 1, 1, DATE '2026-05-12', 1, TIMESTAMP '2026-05-12 09:00:00', TIMESTAMP '2026-05-12 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3013, 1, 1, DATE '2026-05-13', 1, TIMESTAMP '2026-05-13 09:00:00', TIMESTAMP '2026-05-13 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3014, 1, 1, DATE '2026-05-14', 1, TIMESTAMP '2026-05-14 09:00:00', TIMESTAMP '2026-05-14 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3015, 1, 1, DATE '2026-05-15', 1, TIMESTAMP '2026-05-15 09:00:00', TIMESTAMP '2026-05-15 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3016, 1, 1, DATE '2026-05-16', 1, TIMESTAMP '2026-05-16 09:00:00', TIMESTAMP '2026-05-16 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3017, 1, 1, DATE '2026-05-17', 1, TIMESTAMP '2026-05-17 09:00:00', TIMESTAMP '2026-05-17 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '日次計算用サンプル', 1, 1),
+  (3019, 1, 1, DATE '2026-05-19', 1, TIMESTAMP '2026-05-19 09:00:00', TIMESTAMP '2026-05-19 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '缺勤样本', 1, 1),
+  (3020, 1, 1, DATE '2026-05-20', 1, TIMESTAMP '2026-05-20 09:00:00', TIMESTAMP '2026-05-20 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '缺勤样本', 1, 1),
+  (3021, 1, 1, DATE '2026-05-21', 1, TIMESTAMP '2026-05-21 09:00:00', TIMESTAMP '2026-05-21 18:00:00', 60, 'WORKDAY', 'ACTIVE', 0, '缺勤样本', 1, 1);
+
 MERGE INTO punch_source_config (
     id, tenant_id, source_system, config_name, api_base_url, api_key, api_secret, webhook_secret, enabled, config_json
 )
@@ -134,4 +161,7 @@ VALUES
   (2051, 1, NULL, 'EXT-UNKNOWN-051', 'CSV_IMPORT', 'seed-evt-0051', TIMESTAMP '2026-05-15 08:57:00', 'CLOCK_OUT', 'gate-04', '東京本部端末2', '{"row":51,"memo":"runtime-seed"}', 2, 'UNMATCHED', '未找到对应员工映射', NULL),
   (2052, 1, 1, 'KOT-90001', 'CSV_IMPORT', 'seed-evt-0052', TIMESTAMP '2026-05-16 09:04:00', 'CLOCK_IN', 'gate-01', '東京本部端末1', '{"row":52,"memo":"runtime-seed"}', 2, 'IGNORED', NULL, '管理者が確認済みのため除外'),
   (2053, 1, 1, 'KOT-90001', 'CSV_IMPORT', 'seed-evt-0053', TIMESTAMP '2026-05-17 10:11:00', 'CLOCK_OUT', 'gate-02', '東京本部端末2', '{"row":53,"memo":"runtime-seed"}', 2, 'PROCESSED', NULL, NULL),
-  (2054, 1, 1, 'KOT-90001', 'CSV_IMPORT', 'seed-evt-0054', TIMESTAMP '2026-05-18 08:18:00', 'CLOCK_IN', 'gate-03', '東京本部端末1', '{"row":54,"memo":"runtime-seed"}', 2, 'PROCESSED', NULL, NULL);
+  (2054, 1, 1, 'KOT-90001', 'CSV_IMPORT', 'seed-evt-0054', TIMESTAMP '2026-05-18 08:18:00', 'CLOCK_IN', 'gate-03', '東京本部端末1', '{"row":54,"memo":"runtime-seed"}', 2, 'PROCESSED', NULL, NULL),
+  (2055, 1, 1, 'KOT-90001', 'WEBHOOK', 'seed-evt-0055', TIMESTAMP '2026-05-02 18:05:00', 'CLOCK_OUT', 'gate-05', '東京補助端末', '{"row":55,"memo":"daily-runtime-seed"}', 2, 'PROCESSED', NULL, NULL),
+  (2056, 1, 1, 'KOT-90001', 'WEBHOOK', 'seed-evt-0056', TIMESTAMP '2026-05-04 17:30:00', 'CLOCK_OUT', 'gate-05', '東京補助端末', '{"row":56,"memo":"daily-runtime-seed"}', 2, 'PROCESSED', NULL, NULL),
+  (2057, 1, 1, 'KOT-90001', 'WEBHOOK', 'seed-evt-0057', TIMESTAMP '2026-05-06 18:02:00', 'CLOCK_OUT', 'gate-05', '東京補助端末', '{"row":57,"memo":"daily-runtime-seed"}', 2, 'PROCESSED', NULL, NULL);

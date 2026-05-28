@@ -89,4 +89,6 @@ export const syncShellCounters = (state) => {
   state.bootstrapShell.sectionCounters.schedule = state.scheduleBoard.scheduleItems.length
   // 用打卡总记录数回填第三阶段打卡计数，供导航徽标和工作台状态展示。
   state.bootstrapShell.sectionCounters.punch = state.punchLogList.total
+  // 用日次总记录数回填第四阶段日次计数，供导航徽标和工作台状态展示。
+  state.bootstrapShell.sectionCounters.daily = state.dailyList.total
 }

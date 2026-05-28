@@ -22,13 +22,15 @@ import { createShiftSection } from './shiftSection'
 import { createScheduleSection } from './scheduleSection'
 // 打卡区块模块负责第三阶段原始打卡记录、补录和导入处理。
 import { createPunchSection } from './punchSection'
+// 日次区块模块负责第四阶段日次结果、详情和重算处理。
+import { createDailySection } from './dailySection'
 
 // 统一暴露工作台 composable，保持页面视图仍从一个入口拿状态和动作。
 export function useAttendanceWorkbench() {
   // 先从 URL 中读取初始 section，支持直接带 section 参数进入某个区块。
   const initialSection = new URLSearchParams(window.location.search).get('section')
   // 限定可用区块集合，避免 URL 传入未知值污染工作台状态。
-  const allowedSections = ['wizard', 'workplace', 'department', 'employee', 'shift', 'schedule', 'punch']
+  const allowedSections = ['wizard', 'workplace', 'department', 'employee', 'shift', 'schedule', 'punch', 'daily']
   // 从 URL 中读取当前语言，没有时回退到中文环境。
   const locale = ref(new URLSearchParams(window.location.search).get('locale') || 'zh-CN')
   // 用 section 参数或默认向导区块作为工作台当前激活区块。
@@ -65,7 +67,8 @@ export function useAttendanceWorkbench() {
     { key: 'employee', label: t('navEmployee') },
     { key: 'shift', label: t('navShift') },
     { key: 'schedule', label: t('navSchedule') },
-    { key: 'punch', label: t('navPunch') }
+    { key: 'punch', label: t('navPunch') },
+    { key: 'daily', label: t('navDaily') }
   ])
 
   // 继续提供推荐下一动作文案，优先使用轻量壳给出的推荐动作。
@@ -267,6 +270,16 @@ export function useAttendanceWorkbench() {
     refreshShell
   })
 
+  // 组装第四阶段日次区块动作，供工作台入口和日次结果页面复用。
+  const dailySection = createDailySection({
+    state,
+    setSectionLoading,
+    setSectionError,
+    pushToast: showToast,
+    t,
+    refreshShell
+  })
+
   // 保障场所主数据已加载，供部门、员工和排班等依赖场所的区块复用。
   const ensureWorkplacesLoaded = async (force = false) => {
     if (!force && state.bootstrapShell.sectionStates.workplace) return
@@ -309,6 +322,13 @@ export function useAttendanceWorkbench() {
     syncDerivedState()
   }
 
+  // 保障第四阶段日次结果已加载，供日次区块展示分页结果与详情。
+  const ensureDailyLoaded = async (force = false) => {
+    if (!force && state.bootstrapShell.sectionStates.daily) return
+    await dailySection.loadDailyResults()
+    syncDerivedState()
+  }
+
   // 根据当前激活区块按需加载所需数据，形成轻量壳 + section 独立加载模式。
   const ensureActiveSectionLoaded = async (sectionKey, force = false) => {
     if (sectionKey === 'wizard') {
@@ -344,6 +364,12 @@ export function useAttendanceWorkbench() {
     if (sectionKey === 'punch') {
       await ensureEmployeesLoaded(force)
       await ensurePunchLoaded(force)
+      return
+    }
+    if (sectionKey === 'daily') {
+      await ensureWorkplacesLoaded(force)
+      await ensureDepartmentsLoaded(force)
+      await ensureDailyLoaded(force)
     }
   }
 
@@ -415,6 +441,44 @@ export function useAttendanceWorkbench() {
     { deep: true }
   )
 
+  // 日次筛选条件变化时先回到第 1 页，再按新的数据库条件重查列表。
+  watch(
+    () => ({
+      startDate: state.dailyFilters.startDate,
+      endDate: state.dailyFilters.endDate,
+      workplaceId: state.dailyFilters.workplaceId,
+      departmentId: state.dailyFilters.departmentId,
+      employeeKeyword: state.dailyFilters.employeeKeyword,
+      status: state.dailyFilters.status,
+      exceptionOnly: state.dailyFilters.exceptionOnly
+    }),
+    async () => {
+      if (activeSection.value !== 'daily') return
+      // 非第 1 页时先回到首页，后续由分页监听接手真实重查，避免筛选触发两次请求。
+      if (state.dailyFilters.page !== 1) {
+        state.dailyFilters.page = 1
+        return
+      }
+      await dailySection.loadDailyResults()
+      syncDerivedState()
+    },
+    { deep: true }
+  )
+
+  // 日次页码或每页条数变化时只重查当前分页，不再重置其他筛选条件。
+  watch(
+    () => ({
+      page: state.dailyFilters.page,
+      pageSize: state.dailyFilters.pageSize
+    }),
+    async () => {
+      if (activeSection.value !== 'daily') return
+      await dailySection.loadDailyResults()
+      syncDerivedState()
+    },
+    { deep: true }
+  )
+
   // 返回与原页面兼容的状态和动作接口，保证视图层无需整体重写。
   return {
     locale,
@@ -446,6 +510,7 @@ export function useAttendanceWorkbench() {
     submitConfirmDialog,
     loadScheduleBoard: scheduleSection.loadScheduleBoard,
     loadPunchLogs: punchSection.loadPunchLogs,
+    loadDailyResults: dailySection.loadDailyResults,
     selectScheduleTemplate: scheduleSection.selectScheduleTemplate,
     closeScheduleTemplateTip: scheduleSection.closeScheduleTemplateTip,
     applySchedule: scheduleSection.applySchedule,
@@ -466,6 +531,9 @@ export function useAttendanceWorkbench() {
     submitPunchBind: punchSection.submitPunchBind,
     submitPunchIgnore: punchSection.submitPunchIgnore,
     submitPunchReprocess: punchSection.submitPunchReprocess,
+    openDailyDetail: dailySection.openDailyDetail,
+    submitDailyRecalculate: dailySection.submitDailyRecalculate,
+    submitDailyRangeRecalculate: dailySection.submitDailyRangeRecalculate,
     submitShiftTemplate: shiftSection.submitShiftTemplate,
     generateRecommended: shiftSection.generateRecommended,
     removeShiftTemplate: shiftSection.removeShiftTemplate,

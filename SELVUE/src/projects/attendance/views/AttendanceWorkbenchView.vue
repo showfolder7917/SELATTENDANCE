@@ -6,6 +6,7 @@ import LanguageSwitch from '../../../shared/components/LanguageSwitch.vue'
 import ThemeSwitch from '../../../shared/components/ThemeSwitch.vue'
 import AttendanceSectionNav from '../components/AttendanceSectionNav.vue'
 import AttendanceSummaryPanel from '../components/AttendanceSummaryPanel.vue'
+import DailySection from '../components/DailySection.vue'
 import DepartmentSection from '../components/DepartmentSection.vue'
 import EmployeeSection from '../components/EmployeeSection.vue'
 import PunchSection from '../components/PunchSection.vue'
@@ -64,13 +65,17 @@ const {
   runUnassignedCheck,
   handleScheduleExport,
   loadPunchLogs,
+  loadDailyResults,
   openPunchDetail,
+  openDailyDetail,
   submitManualPunch,
   runPunchImportPreview,
   submitPunchImport,
   submitPunchBind,
   submitPunchIgnore,
   submitPunchReprocess,
+  submitDailyRecalculate,
+  submitDailyRangeRecalculate,
   editWorkplace,
   openWorkplaceDepartments,
   editDepartment,
@@ -103,7 +108,8 @@ const workspaceNavItems = computed(() => {
     shift: state.shiftTemplates.length
     ,
     schedule: state.scheduleBoard.scheduleItems.length,
-    punch: state.punchLogList.total
+    punch: state.punchLogList.total,
+    daily: state.dailyList.total
   }
 
   const moduleHintMap = {
@@ -114,7 +120,8 @@ const workspaceNavItems = computed(() => {
     shift: t('sectionShiftHint')
     ,
     schedule: t('sectionScheduleHint'),
-    punch: t('sectionPunchHint')
+    punch: t('sectionPunchHint'),
+    daily: t('sectionDailyHint')
   }
 
   return navItems.value.map((item) => ({
@@ -514,6 +521,20 @@ onBeforeUnmount(() => {
               :on-bind-employee="submitPunchBind"
               :on-ignore-log="submitPunchIgnore"
               :on-reprocess-log="submitPunchReprocess"
+            />
+
+            <DailySection
+              :visible="activeSection === 'daily'"
+              :workplaces="state.workplaces"
+              :departments="state.departments"
+              :daily-list="state.dailyList"
+              :daily-filters="state.dailyFilters"
+              :daily-detail="state.dailyDetail"
+              :t="t"
+              :on-refresh="loadDailyResults"
+              :on-select-daily="openDailyDetail"
+              :on-recalculate-daily="submitDailyRecalculate"
+              :on-recalculate-range="submitDailyRangeRecalculate"
             />
           </div>
         </main>

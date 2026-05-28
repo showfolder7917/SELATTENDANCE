@@ -35,18 +35,18 @@ public class AttendancePunchControllerTest extends AttendanceControllerIntegrati
                 .param("page", "1")
                 .param("pageSize", "20"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.total").value(72))
+            .andExpect(jsonPath("$.data.total").value(75))
             .andExpect(jsonPath("$.data.page").value(1))
             .andExpect(jsonPath("$.data.pageSize").value(20))
             .andExpect(jsonPath("$.data.totalPages").value(4))
-            .andExpect(jsonPath("$.data.summary.processed").value(60))
+            .andExpect(jsonPath("$.data.summary.processed").value(63))
             .andExpect(jsonPath("$.data.summary.unmatched").value(4));
 
         mockMvc.perform(get("/api/attendance/punch/logs")
                 .param("page", "1")
                 .param("pageSize", "200"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.items.length()").value(72))
+            .andExpect(jsonPath("$.data.items.length()").value(75))
             .andExpect(jsonPath("$.data.pageSize").value(200))
             .andExpect(jsonPath("$.data.totalPages").value(1));
 

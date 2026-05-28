@@ -20,7 +20,8 @@ export const createSectionLoaders = () => ({
   employee: false,
   shift: false,
   schedule: false,
-  punch: false
+  punch: false,
+  daily: false
 })
 
 // 生成 section 级错误状态，供某个区块失败时只影响本区块而不是整页。
@@ -30,7 +31,8 @@ export const createSectionErrors = () => ({
   employee: '',
   shift: '',
   schedule: '',
-  punch: ''
+  punch: '',
+  daily: ''
 })
 
 // 生成 section 加载完成标记，供按需懒加载时避免重复首刷同一区块。
@@ -40,7 +42,8 @@ export const createSectionStates = () => ({
   employee: false,
   shift: false,
   schedule: false,
-  punch: false
+  punch: false,
+  daily: false
 })
 
 // 生成轻量首页壳状态，承载租户摘要、步骤计数和推荐动作。
@@ -52,7 +55,8 @@ export const createBootstrapShell = () => ({
     employee: 0,
     shift: 0,
     schedule: 0,
-    punch: 0
+    punch: 0,
+    daily: 0
   },
   sectionStates: createSectionStates(),
   recommendedNextAction: 'wizard.schedule'
@@ -114,6 +118,31 @@ export const createWorkbenchState = () => ({
     employeeId: '',
     ignoreReason: '确认后忽略'
   },
+  dailyFilters: {
+    startDate: '2026-05-01',
+    endDate: '2026-05-31',
+    workplaceId: '',
+    departmentId: '',
+    employeeKeyword: '',
+    status: '',
+    exceptionOnly: false,
+    page: 1,
+    pageSize: 20
+  },
+  dailyList: {
+    items: [],
+    total: 0,
+    page: 1,
+    pageSize: 20,
+    totalPages: 1,
+    summary: {
+      normalCount: 0,
+      lateCount: 0,
+      missingClockCount: 0,
+      absenceCount: 0
+    }
+  },
+  dailyDetail: null,
   scheduleFilters: {
     month: currentMonth(),
     workplaceId: '',
