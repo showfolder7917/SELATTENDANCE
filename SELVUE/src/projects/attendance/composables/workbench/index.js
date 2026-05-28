@@ -20,13 +20,15 @@ import { createEmployeeSection } from './employeeSection'
 import { createShiftSection } from './shiftSection'
 // 排班区块模块负责看板加载、单条排班和批量排班流程。
 import { createScheduleSection } from './scheduleSection'
+// 打卡区块模块负责第三阶段原始打卡记录、补录和导入处理。
+import { createPunchSection } from './punchSection'
 
 // 统一暴露工作台 composable，保持页面视图仍从一个入口拿状态和动作。
 export function useAttendanceWorkbench() {
   // 先从 URL 中读取初始 section，支持直接带 section 参数进入某个区块。
   const initialSection = new URLSearchParams(window.location.search).get('section')
   // 限定可用区块集合，避免 URL 传入未知值污染工作台状态。
-  const allowedSections = ['wizard', 'workplace', 'department', 'employee', 'shift', 'schedule']
+  const allowedSections = ['wizard', 'workplace', 'department', 'employee', 'shift', 'schedule', 'punch']
   // 从 URL 中读取当前语言，没有时回退到中文环境。
   const locale = ref(new URLSearchParams(window.location.search).get('locale') || 'zh-CN')
   // 用 section 参数或默认向导区块作为工作台当前激活区块。
@@ -37,6 +39,15 @@ export function useAttendanceWorkbench() {
   const shellLoading = ref(false)
   // 统一 toast 引用，供所有区块复用当前页面的消息提示层。
   const toast = ref('')
+  // 页面级确认弹窗状态放在工作台入口，供删除、复制、覆盖等动作共享同一套确认能力。
+  const confirmDialog = reactive({
+    open: false,
+    title: '',
+    message: '',
+    confirmLabel: '',
+    confirmVariant: 'primary',
+    resolver: null
+  })
 
   // 基于当前语言环境翻译文案 key，保持页面原有 `t()` 调用方式不变。
   const t = (key) => messages[locale.value][key] || key
@@ -53,7 +64,8 @@ export function useAttendanceWorkbench() {
     { key: 'department', label: t('navDepartment') },
     { key: 'employee', label: t('navEmployee') },
     { key: 'shift', label: t('navShift') },
-    { key: 'schedule', label: t('navSchedule') }
+    { key: 'schedule', label: t('navSchedule') },
+    { key: 'punch', label: t('navPunch') }
   ])
 
   // 继续提供推荐下一动作文案，优先使用轻量壳给出的推荐动作。
@@ -112,6 +124,46 @@ export function useAttendanceWorkbench() {
 
   // 用共享 toast 工具包装消息提示，保持所有区块反馈方式一致。
   const showToast = (message) => pushToast(toast, message)
+
+  // 每次关闭确认弹窗都清空旧文案和旧回调，避免下一次动作误复用上一轮确认状态。
+  const resetConfirmDialog = () => {
+    confirmDialog.open = false
+    confirmDialog.title = ''
+    confirmDialog.message = ''
+    confirmDialog.confirmLabel = ''
+    confirmDialog.confirmVariant = 'primary'
+    confirmDialog.resolver = null
+  }
+
+  // 给各区块提供统一确认入口，让业务动作只描述确认内容，不再直接依赖浏览器原生 confirm。
+  const requestConfirm = ({ title, message, confirmLabel, confirmVariant = 'primary' }) =>
+    new Promise((resolve) => {
+      confirmDialog.open = true
+      confirmDialog.title = title
+      confirmDialog.message = message
+      confirmDialog.confirmLabel = confirmLabel
+      confirmDialog.confirmVariant = confirmVariant
+      // 把当前确认结果回传给调用方，供删除、复制、覆盖动作决定是否继续执行。
+      confirmDialog.resolver = resolve
+    })
+
+  // 用户取消时统一回写 false，再清空弹窗状态，保证调用方能稳定终止后续动作。
+  const cancelConfirmDialog = () => {
+    const resolver = confirmDialog.resolver
+    resetConfirmDialog()
+    if (resolver) {
+      resolver(false)
+    }
+  }
+
+  // 用户确认时统一回写 true，再清空弹窗状态，保证调用方在弹窗关闭后继续真正写操作。
+  const submitConfirmDialog = () => {
+    const resolver = confirmDialog.resolver
+    resetConfirmDialog()
+    if (resolver) {
+      resolver(true)
+    }
+  }
 
   // 在轻量壳或各 section 刷新后统一修复默认表单和筛选引用。
   const syncDerivedState = () => {
@@ -201,7 +253,18 @@ export function useAttendanceWorkbench() {
     setSectionError,
     pushToast: showToast,
     t,
-    downloadCsv
+    downloadCsv,
+    requestConfirm
+  })
+
+  // 组装第三阶段打卡区块动作，供工作台入口和打卡记录页面复用。
+  const punchSection = createPunchSection({
+    state,
+    setSectionLoading,
+    setSectionError,
+    pushToast: showToast,
+    t,
+    refreshShell
   })
 
   // 保障场所主数据已加载，供部门、员工和排班等依赖场所的区块复用。
@@ -239,6 +302,13 @@ export function useAttendanceWorkbench() {
     syncDerivedState()
   }
 
+  // 保障第三阶段打卡列表已加载，供打卡区块展示原始打卡事实。
+  const ensurePunchLoaded = async (force = false) => {
+    if (!force && state.bootstrapShell.sectionStates.punch) return
+    await punchSection.loadPunchLogs()
+    syncDerivedState()
+  }
+
   // 根据当前激活区块按需加载所需数据，形成轻量壳 + section 独立加载模式。
   const ensureActiveSectionLoaded = async (sectionKey, force = false) => {
     if (sectionKey === 'wizard') {
@@ -269,6 +339,11 @@ export function useAttendanceWorkbench() {
       await ensureDepartmentsLoaded(force)
       await ensureShiftTemplatesLoaded(force)
       await ensureScheduleLoaded(force)
+      return
+    }
+    if (sectionKey === 'punch') {
+      await ensureEmployeesLoaded(force)
+      await ensurePunchLoaded(force)
     }
   }
 
@@ -303,6 +378,43 @@ export function useAttendanceWorkbench() {
     { deep: true }
   )
 
+  // 打卡筛选条件变化时先回到第 1 页，再按新的数据库条件重查列表。
+  watch(
+    () => ({
+      dateFrom: state.punchFilters.dateFrom,
+      dateTo: state.punchFilters.dateTo,
+      employeeKeyword: state.punchFilters.employeeKeyword,
+      sourceSystem: state.punchFilters.sourceSystem,
+      processStatus: state.punchFilters.processStatus,
+      punchType: state.punchFilters.punchType
+    }),
+    async () => {
+      if (activeSection.value !== 'punch') return
+      // 非第 1 页时先回到首页，后续由分页监听接手真实重查，避免同一轮筛选触发两次请求。
+      if (state.punchFilters.page !== 1) {
+        state.punchFilters.page = 1
+        return
+      }
+      await punchSection.loadPunchLogs()
+      syncDerivedState()
+    },
+    { deep: true }
+  )
+
+  // 打卡页码或每页条数变化时只重查当前分页，不再重置其他筛选条件。
+  watch(
+    () => ({
+      page: state.punchFilters.page,
+      pageSize: state.punchFilters.pageSize
+    }),
+    async () => {
+      if (activeSection.value !== 'punch') return
+      await punchSection.loadPunchLogs()
+      syncDerivedState()
+    },
+    { deep: true }
+  )
+
   // 返回与原页面兼容的状态和动作接口，保证视图层无需整体重写。
   return {
     locale,
@@ -310,6 +422,7 @@ export function useAttendanceWorkbench() {
     activeSection,
     loading,
     toast,
+    confirmDialog,
     state,
     t,
     navItems,
@@ -328,8 +441,13 @@ export function useAttendanceWorkbench() {
     submitMapping: employeeSection.submitMapping,
     submitImport: employeeSection.submitImport,
     handleExport: employeeSection.handleExport,
+    requestConfirm,
+    cancelConfirmDialog,
+    submitConfirmDialog,
     loadScheduleBoard: scheduleSection.loadScheduleBoard,
+    loadPunchLogs: punchSection.loadPunchLogs,
     selectScheduleTemplate: scheduleSection.selectScheduleTemplate,
+    closeScheduleTemplateTip: scheduleSection.closeScheduleTemplateTip,
     applySchedule: scheduleSection.applySchedule,
     removeScheduleItem: scheduleSection.removeScheduleItem,
     openBatchWizard: scheduleSection.openBatchWizard,
@@ -341,6 +459,13 @@ export function useAttendanceWorkbench() {
     copySchedulesFromLastMonth: scheduleSection.copySchedulesFromLastMonth,
     runUnassignedCheck: scheduleSection.runUnassignedCheck,
     handleScheduleExport: scheduleSection.handleScheduleExport,
+    openPunchDetail: punchSection.openPunchDetail,
+    submitManualPunch: punchSection.submitManualPunch,
+    runPunchImportPreview: punchSection.runPunchImportPreview,
+    submitPunchImport: punchSection.submitPunchImport,
+    submitPunchBind: punchSection.submitPunchBind,
+    submitPunchIgnore: punchSection.submitPunchIgnore,
+    submitPunchReprocess: punchSection.submitPunchReprocess,
     submitShiftTemplate: shiftSection.submitShiftTemplate,
     generateRecommended: shiftSection.generateRecommended,
     removeShiftTemplate: shiftSection.removeShiftTemplate,

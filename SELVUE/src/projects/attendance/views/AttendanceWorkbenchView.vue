@@ -1,11 +1,14 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import ConfirmDialog from '../../../shared/components/ConfirmDialog.vue'
+import FloatingTipBubble from '../../../shared/components/FloatingTipBubble.vue'
 import LanguageSwitch from '../../../shared/components/LanguageSwitch.vue'
 import ThemeSwitch from '../../../shared/components/ThemeSwitch.vue'
 import AttendanceSectionNav from '../components/AttendanceSectionNav.vue'
 import AttendanceSummaryPanel from '../components/AttendanceSummaryPanel.vue'
 import DepartmentSection from '../components/DepartmentSection.vue'
 import EmployeeSection from '../components/EmployeeSection.vue'
+import PunchSection from '../components/PunchSection.vue'
 import ResizableWorkbenchSplit from '../components/ResizableWorkbenchSplit.vue'
 import ScheduleSection from '../components/ScheduleSection.vue'
 import ShiftTemplateSection from '../components/ShiftTemplateSection.vue'
@@ -22,6 +25,7 @@ const {
   activeSection,
   loading,
   toast,
+  confirmDialog,
   state,
   t,
   navItems,
@@ -39,11 +43,15 @@ const {
   submitMapping,
   submitImport,
   handleExport,
+  requestConfirm,
+  cancelConfirmDialog,
+  submitConfirmDialog,
   submitShiftTemplate,
   loadScheduleBoard,
   generateRecommended,
   removeShiftTemplate,
   selectScheduleTemplate,
+  closeScheduleTemplateTip,
   applySchedule,
   removeScheduleItem,
   openBatchWizard,
@@ -55,6 +63,14 @@ const {
   copySchedulesFromLastMonth,
   runUnassignedCheck,
   handleScheduleExport,
+  loadPunchLogs,
+  openPunchDetail,
+  submitManualPunch,
+  runPunchImportPreview,
+  submitPunchImport,
+  submitPunchBind,
+  submitPunchIgnore,
+  submitPunchReprocess,
   editWorkplace,
   openWorkplaceDepartments,
   editDepartment,
@@ -86,7 +102,8 @@ const workspaceNavItems = computed(() => {
     employee: state.employees.length,
     shift: state.shiftTemplates.length
     ,
-    schedule: state.scheduleBoard.scheduleItems.length
+    schedule: state.scheduleBoard.scheduleItems.length,
+    punch: state.punchLogList.total
   }
 
   const moduleHintMap = {
@@ -96,7 +113,8 @@ const workspaceNavItems = computed(() => {
     employee: t('sectionEmployeeHint'),
     shift: t('sectionShiftHint')
     ,
-    schedule: t('sectionScheduleHint')
+    schedule: t('sectionScheduleHint'),
+    punch: t('sectionPunchHint')
   }
 
   return navItems.value.map((item) => ({
@@ -111,54 +129,28 @@ const activeSectionMeta = computed(
   () => workspaceNavItems.value.find((item) => item.key === activeSection.value) || workspaceNavItems.value[0]
 )
 
-// 删除确认框在页面层统一维护开关、文案和待执行动作，避免每个模块各自造一套弹窗状态。
-const deleteDialog = ref({
-  open: false,
-  title: '',
-  message: '',
-  confirmLabel: '',
-  onConfirm: null
-})
-
-// 统一关闭删除确认框，并清空挂在弹框里的旧动作，避免误触发上一条删除请求。
-function closeDeleteDialog() {
-  deleteDialog.value = {
-    open: false,
-    title: '',
-    message: '',
-    confirmLabel: '',
-    onConfirm: null
-  }
-}
-
-// 删除文案在页面层统一拼接，保证三套主题下看到的是同一套确认语义。
-function openDeleteDialog(targetLabel, targetName, onConfirm) {
+// 页面层继续只负责拼删除文案，再复用工作台统一确认入口，不再维护独立删除弹窗状态。
+async function requestDeleteConfirm(targetLabel, targetName, onConfirm) {
   const namedMessage = t('confirmDeleteMessageNamed')
     .replace('{target}', targetLabel)
     .replace('{name}', targetName)
   const unnamedMessage = t('confirmDeleteMessageUnnamed').replace('{target}', targetLabel)
-  deleteDialog.value = {
-    open: true,
+  // 先确认用户是否继续删除，再真正调用下层删除动作，保证所有删除入口共用同一套确认组件。
+  const confirmed = await requestConfirm({
     title: t('confirmDeleteTitle'),
     message: targetName ? namedMessage : unnamedMessage,
     confirmLabel: t('confirmDeleteAction'),
-    onConfirm
-  }
-}
-
-// 点击确认后先收起弹框，再执行真正删除动作，避免删除请求期间弹框还停留在页面上。
-async function confirmDeleteDialog() {
-  const pendingAction = deleteDialog.value.onConfirm
-  closeDeleteDialog()
-  if (pendingAction) {
-    await pendingAction()
+    confirmVariant: 'danger'
+  })
+  if (confirmed) {
+    await onConfirm()
   }
 }
 
 // 事业所删除文案优先展示名称，其次回退编码，避免用户只看到无意义主键。
-function requestWorkplaceDelete(id) {
+async function requestWorkplaceDelete(id) {
   const item = state.workplaces.find((entry) => entry.id === id)
-  openDeleteDialog(
+  await requestDeleteConfirm(
     t('workplaceTitle'),
     item?.workplaceName || item?.workplaceCode || '',
     () => removeWorkplace(id)
@@ -166,9 +158,9 @@ function requestWorkplaceDelete(id) {
 }
 
 // 部门删除沿用同一弹框能力，只替换目标模块标签和展示名称。
-function requestDepartmentDelete(id) {
+async function requestDepartmentDelete(id) {
   const item = state.departments.find((entry) => entry.id === id)
-  openDeleteDialog(
+  await requestDeleteConfirm(
     t('departmentTitle'),
     item?.departmentName || item?.departmentCode || '',
     () => removeDepartment(id)
@@ -176,9 +168,9 @@ function requestDepartmentDelete(id) {
 }
 
 // 员工删除确认优先展示员工姓名，避免在同一编号体系下误删到其他人。
-function requestEmployeeDelete(id) {
+async function requestEmployeeDelete(id) {
   const item = state.employees.find((entry) => entry.id === id)
-  openDeleteDialog(
+  await requestDeleteConfirm(
     t('employeeTitle'),
     item?.employeeName || item?.employeeNo || '',
     () => removeEmployee(id)
@@ -186,9 +178,9 @@ function requestEmployeeDelete(id) {
 }
 
 // 班次模板删除同样在页面层先确认，再把真正删除动作透传给 composable。
-function requestShiftTemplateDelete(id) {
+async function requestShiftTemplateDelete(id) {
   const item = state.shiftTemplates.find((entry) => entry.id === id)
-  openDeleteDialog(
+  await requestDeleteConfirm(
     t('shiftTitle'),
     item?.templateName || item?.templateCode || '',
     () => removeShiftTemplate(id)
@@ -196,14 +188,145 @@ function requestShiftTemplateDelete(id) {
 }
 
 // 排班删除需要把员工和日期拼成当前格标签，帮助用户确认自己要清掉的是哪一天哪位员工。
-function requestScheduleDelete(id) {
+async function requestScheduleDelete(id) {
   const item = state.scheduleBoard.scheduleItems.find((entry) => entry.id === id)
   const targetName = [
     item?.employeeName || state.scheduleForm.selectedEmployeeName || '',
     item?.workDate || state.scheduleForm.selectedWorkDate || ''
   ].filter(Boolean).join(' / ')
-  openDeleteDialog(t('scheduleTitle'), targetName, () => removeScheduleItem(id))
+  await requestDeleteConfirm(t('scheduleTitle'), targetName, () => removeScheduleItem(id))
 }
+
+// 这组尺寸继续留在 attendance 页面，专门服务于“首次打开时默认摆到模板区哪里”。
+const scheduleTipBubbleWidth = 320
+const scheduleTipBubbleHeight = 182
+
+function clampTipCoordinate(value, min, max) {
+  return Math.max(min, Math.min(max, value))
+}
+
+// 全局 tip 打开时按模板区当前可见位置初始化浮层和箭头锚点，避免首次出现漂到错误区域。
+async function ensureScheduleTemplateTipLayout() {
+  if (activeSection.value !== 'schedule' || !state.scheduleTemplateTip.open) {
+    return
+  }
+  await nextTick()
+  const target = document.querySelector('[data-schedule-template-target]')
+  if (!target) {
+    return
+  }
+  const rect = target.getBoundingClientRect()
+  if (state.scheduleTemplateTip.anchorX == null || state.scheduleTemplateTip.anchorY == null) {
+    // 默认把尾巴尖端落在右侧模板区左上角附近，首次弹出时就能明确指向“先选模板”的区域。
+    state.scheduleTemplateTip.anchorX = Math.round(rect.left + 56)
+    state.scheduleTemplateTip.anchorY = Math.round(rect.top + 28)
+  }
+  if (state.scheduleTemplateTip.bubbleX == null || state.scheduleTemplateTip.bubbleY == null) {
+    // 提示框默认悬在模板区左上方，既贴近目标，又尽量不挡住模板卡片本身。
+    state.scheduleTemplateTip.bubbleX = clampTipCoordinate(
+      Math.round(rect.left - 26),
+      16,
+      window.innerWidth - (scheduleTipBubbleWidth + 16)
+    )
+    state.scheduleTemplateTip.bubbleY = clampTipCoordinate(
+      Math.round(rect.top - 196),
+      16,
+      window.innerHeight - (scheduleTipBubbleHeight + 16)
+    )
+  }
+}
+
+// 页面层只负责把共享 tip 的坐标写回到 attendance 状态，供下次打开或切换时继续沿用。
+function updateScheduleTemplateTipField(field, value) {
+  state.scheduleTemplateTip[field] = value
+}
+
+watch(
+  () => [activeSection.value, state.scheduleTemplateTip.open],
+  async ([nextSection, tipOpen]) => {
+    if (nextSection === 'schedule' && tipOpen) {
+      await ensureScheduleTemplateTipLayout()
+    }
+  }
+)
+
+// 共享气泡的正文和上下文文案继续由 attendance 业务层拼好，组件本身不感知员工和日期语义。
+const scheduleTemplateTipMetaText = computed(() =>
+  t('scheduleTemplateTipContext')
+    .replace('{employee}', state.scheduleTemplateTip.employeeName || '-')
+    .replace('{date}', state.scheduleTemplateTip.workDate || '-')
+)
+
+// 左侧导航容器引用用于计算何时切换成悬浮停留状态。
+const sidebarPaneRef = ref(null)
+// 左侧导航实际盒子引用用于读取当前高度并在悬浮时保留占位。
+const sidebarStickRef = ref(null)
+// 侧栏悬浮后的定位数据统一收在这里，供模板层直接绑定样式。
+const sidebarFloatingState = ref({
+  active: false,
+  left: 0,
+  width: 0,
+  height: 0
+})
+
+// 根据当前滚动位置和左栏几何信息决定侧栏是否需要固定停留在视口中。
+function syncSidebarFloating() {
+  if (!sidebarPaneRef.value || !sidebarStickRef.value) return
+  // 窄屏仍走原本自然文档流，避免固定侧栏挤压移动端内容。
+  if (window.innerWidth <= 1180) {
+    sidebarFloatingState.value = { active: false, left: 0, width: 0, height: 0 }
+    return
+  }
+  const paneRect = sidebarPaneRef.value.getBoundingClientRect()
+  const stickRect = sidebarStickRef.value.getBoundingClientRect()
+  const shouldFloat = paneRect.top <= 20
+  sidebarFloatingState.value = {
+    active: shouldFloat,
+    // 悬浮时保持与左栏当前横向位置一致，避免分栏拖拽后侧栏跳位。
+    left: paneRect.left,
+    // 悬浮时保持与左栏当前宽度一致，避免内容重新换行。
+    width: paneRect.width,
+    // 左栏进入悬浮后用当前真实高度给占位容器补空间，防止布局抖动。
+    height: stickRect.height
+  }
+}
+
+// 供模板直接复用的左栏占位样式，悬浮后仍保留原高度避免右侧主区回流。
+const sidebarPaneStyle = computed(() => {
+  if (!sidebarFloatingState.value.active) {
+    return {}
+  }
+  return {
+    minHeight: `${Math.ceil(sidebarFloatingState.value.height)}px`
+  }
+})
+
+// 供模板直接复用的左栏悬浮样式，让导航固定停留在当前视口顶部附近。
+const sidebarStickStyle = computed(() => {
+  if (!sidebarFloatingState.value.active) {
+    return {}
+  }
+  return {
+    position: 'fixed',
+    top: '20px',
+    left: `${Math.round(sidebarFloatingState.value.left)}px`,
+    width: `${Math.round(sidebarFloatingState.value.width)}px`
+  }
+})
+
+// 页面挂载后立即计算一次左栏状态，并在滚动和窗口变化时持续同步。
+onMounted(async () => {
+  await nextTick()
+  syncSidebarFloating()
+  window.addEventListener('scroll', syncSidebarFloating, { passive: true })
+  window.addEventListener('resize', syncSidebarFloating)
+})
+
+// 页面销毁时清理滚动与缩放监听，避免离开页面后残留无效回调。
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', syncSidebarFloating)
+  window.removeEventListener('resize', syncSidebarFloating)
+})
 </script>
 
 <template>
@@ -228,8 +351,8 @@ function requestScheduleDelete(id) {
       :max-left-percent="22"
     >
       <template #left>
-        <div class="selattendance-sidebar-pane">
-          <div class="selattendance-sidebar-stick">
+        <div ref="sidebarPaneRef" class="selattendance-sidebar-pane" :style="sidebarPaneStyle">
+          <div ref="sidebarStickRef" class="selattendance-sidebar-stick" :style="sidebarStickStyle">
             <aside class="selattendance-sidebar seladmin-surface">
               <div class="selattendance-sidebar-header">
                 <p class="seladmin-eyebrow">{{ t('workspaceSidebarTitle') }}</p>
@@ -352,6 +475,7 @@ function requestScheduleDelete(id) {
               :departments="state.departments"
               :schedule-board="state.scheduleBoard"
               :schedule-filters="state.scheduleFilters"
+              :schedule-template-tip="state.scheduleTemplateTip"
               :schedule-form="state.scheduleForm"
               :batch-wizard="state.batchWizard"
               :unassigned-items="state.scheduleUnassignedItems"
@@ -370,32 +494,62 @@ function requestScheduleDelete(id) {
               :on-prev-batch-step="prevBatchStep"
               :on-confirm-batch-wizard="confirmBatchWizard"
             />
+
+            <PunchSection
+              :visible="activeSection === 'punch'"
+              :employees="state.employees"
+              :punch-log-list="state.punchLogList"
+              :punch-filters="state.punchFilters"
+              :punch-detail="state.punchDetail"
+              :punch-manual-form="state.punchManualForm"
+              :punch-import-form="state.punchImportForm"
+              :punch-import-preview="state.punchImportPreview"
+              :punch-action-form="state.punchActionForm"
+              :t="t"
+              :on-refresh="loadPunchLogs"
+              :on-select-log="openPunchDetail"
+              :on-submit-manual="submitManualPunch"
+              :on-preview-import="runPunchImportPreview"
+              :on-submit-import="submitPunchImport"
+              :on-bind-employee="submitPunchBind"
+              :on-ignore-log="submitPunchIgnore"
+              :on-reprocess-log="submitPunchReprocess"
+            />
           </div>
         </main>
       </template>
     </ResizableWorkbenchSplit>
 
-    <div v-if="toast" class="seladmin-toast seladmin-surface">{{ toast }}</div>
-    <div v-if="deleteDialog.open" class="selattendance-confirm-overlay" @click.self="closeDeleteDialog">
-      <section
-        class="selattendance-confirm-dialog seladmin-surface"
-        role="alertdialog"
-        aria-modal="true"
-        :aria-label="deleteDialog.title"
-      >
-        <p class="seladmin-eyebrow">{{ deleteDialog.title }}</p>
-        <h3>{{ deleteDialog.title }}</h3>
-        <p class="seladmin-copy">{{ deleteDialog.message }}</p>
-        <div class="selattendance-confirm-actions">
-          <button type="button" class="seladmin-button seladmin-button-secondary" @click="closeDeleteDialog">
-            {{ t('cancel') }}
-          </button>
-          <button type="button" class="seladmin-button selattendance-confirm-danger" @click="confirmDeleteDialog">
-            {{ deleteDialog.confirmLabel }}
-          </button>
-        </div>
-      </section>
+    <div v-if="toast" class="seladmin-toast seladmin-surface" role="status" aria-live="polite">
+      {{ toast }}
     </div>
+    <FloatingTipBubble
+      :open="activeSection === 'schedule' && state.scheduleTemplateTip.open"
+      :title="t('scheduleTemplateTipTitle')"
+      :body="t('scheduleTemplateTipBody')"
+      :meta-text="scheduleTemplateTipMetaText"
+      :bubble-x="state.scheduleTemplateTip.bubbleX || 24"
+      :bubble-y="state.scheduleTemplateTip.bubbleY || 24"
+      :anchor-x="state.scheduleTemplateTip.anchorX || 48"
+      :anchor-y="state.scheduleTemplateTip.anchorY || 48"
+      :close-aria-label="t('scheduleTemplateTipClose')"
+      :tail-drag-aria-label="t('scheduleTemplateTipAnchorDrag')"
+      @close="closeScheduleTemplateTip()"
+      @update:bubble-x="updateScheduleTemplateTipField('bubbleX', $event)"
+      @update:bubble-y="updateScheduleTemplateTipField('bubbleY', $event)"
+      @update:anchor-x="updateScheduleTemplateTipField('anchorX', $event)"
+      @update:anchor-y="updateScheduleTemplateTipField('anchorY', $event)"
+    />
+    <ConfirmDialog
+      :open="confirmDialog.open"
+      :title="confirmDialog.title"
+      :message="confirmDialog.message"
+      :confirm-label="confirmDialog.confirmLabel"
+      :cancel-label="t('cancel')"
+      :confirm-variant="confirmDialog.confirmVariant"
+      @cancel="cancelConfirmDialog"
+      @confirm="submitConfirmDialog"
+    />
     <div v-if="loading" class="seladmin-loading">{{ t('loading') }}</div>
   </div>
 </template>

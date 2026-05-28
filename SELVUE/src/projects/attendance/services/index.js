@@ -39,3 +39,15 @@ export {
   checkUnassignedSchedules,
   exportSchedules
 } from './scheduleApi'
+
+// 暴露第三阶段打卡接口，供打卡记录区块独立加载和处理原始打卡事实。
+export {
+  listPunchLogs,
+  getPunchLogDetail,
+  createManualPunch,
+  previewPunchImport,
+  importPunchCsv,
+  bindPunchEmployee,
+  ignorePunchLog,
+  reprocessPunchLog
+} from './punchApi'

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.attendance.punch.dao.AttendancePunchDao">
+
+  <resultMap id="PunchLogItemResultMap" type="com.sp.selfsp.attendance.punch.domain.out.AttendancePunchOut$PunchLogItemOut">
+    <id column="id" property="id"/>
+    <result column="employee_id" property="employeeId"/>
+    <result column="employee_no" property="employeeNo"/>
+    <result column="employee_name" property="employeeName"/>
+    <result column="external_employee_id" property="externalEmployeeId"/>
+    <result column="source_system" property="sourceSystem"/>
+    <result column="source_event_id" property="sourceEventId"/>
+    <result column="punch_time" property="punchTime"/>
+    <result column="punch_type" property="punchType"/>
+    <result column="device_name" property="deviceName"/>
+    <result column="process_status" property="processStatus"/>
+    <result column="error_message" property="errorMessage"/>
+    <result column="import_batch_id" property="importBatchId"/>
+    <result column="created_at" property="createdAt"/>
+  </resultMap>
+
+  <resultMap id="PunchLogDetailResultMap" type="com.sp.selfsp.attendance.punch.domain.out.AttendancePunchOut$PunchLogDetailOut" extends="PunchLogItemResultMap">
+    <result column="ignored_reason" property="ignoredReason"/>
+    <result column="raw_payload" property="rawPayload"/>
+  </resultMap>
+
+  <sql id="PunchJoinedColumns">
+    p.id, p.employee_id, e.employee_no, e.employee_name, p.external_employee_id, p.source_system, p.source_event_id,
+    p.punch_time, p.punch_type, p.device_name, p.process_status, p.error_message, p.ignored_reason,
+    p.import_batch_id, p.raw_payload, p.created_at
+  </sql>
+
+  <sql id="PunchWhere">
+    p.tenant_id = #{tenantId}
+    <if test="query != null and query.dateFrom != null and query.dateFrom != ''">
+      AND p.punch_time &gt;= CAST(CONCAT(#{query.dateFrom}, ' 00:00:00') AS TIMESTAMP)
+    </if>
+    <if test="query != null and query.dateTo != null and query.dateTo != ''">
+      AND p.punch_time &lt;= CAST(CONCAT(#{query.dateTo}, ' 23:59:59') AS TIMESTAMP)
+    </if>
+    <if test="query != null and query.employeeKeyword != null and query.employeeKeyword != ''">
+      AND (
+        e.employee_no LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+        OR e.employee_name LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+        OR p.external_employee_id LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+      )
+    </if>
+    <if test="query != null and query.sourceSystem != null and query.sourceSystem != ''">
+      AND p.source_system = #{query.sourceSystem}
+    </if>
+    <if test="query != null and query.processStatus != null and query.processStatus != ''">
+      AND p.process_status = #{query.processStatus}
+    </if>
+    <if test="query != null and query.punchType != null and query.punchType != ''">
+      AND p.punch_type = #{query.punchType}
+    </if>
+  </sql>
+
+  <select id="selectLogs" resultMap="PunchLogItemResultMap">
+    SELECT <include refid="PunchJoinedColumns"/>
+    FROM punch_raw_log p
+    LEFT JOIN employee e ON e.id = p.employee_id AND e.tenant_id = p.tenant_id
+    WHERE <include refid="PunchWhere"/>
+    ORDER BY p.punch_time DESC, p.id DESC
+    LIMIT #{pageSize} OFFSET #{offset}
+  </select>
+
+  <select id="countLogs" resultType="java.lang.Integer">
+    SELECT COUNT(*)
+    FROM punch_raw_log p
+    LEFT JOIN employee e ON e.id = p.employee_id AND e.tenant_id = p.tenant_id
+    WHERE <include refid="PunchWhere"/>
+  </select>
+
+  <select id="countSummaryByStatus" resultType="java.util.HashMap">
+    SELECT p.process_status AS processStatus, COUNT(*) AS totalCount
+    FROM punch_raw_log p
+    LEFT JOIN employee e ON e.id = p.employee_id AND e.tenant_id = p.tenant_id
+    WHERE <include refid="PunchWhere"/>
+    GROUP BY p.process_status
+  </select>
+
+  <select id="selectById" resultMap="PunchLogDetailResultMap">
+    SELECT <include refid="PunchJoinedColumns"/>
+    FROM punch_raw_log p
+    LEFT JOIN employee e ON e.id = p.employee_id AND e.tenant_id = p.tenant_id
+    WHERE p.tenant_id = #{tenantId}
+      AND p.id = #{id}
+  </select>
+
+  <select id="selectBySourceEvent" resultMap="PunchLogDetailResultMap">
+    SELECT <include refid="PunchJoinedColumns"/>
+    FROM punch_raw_log p
+    LEFT JOIN employee e ON e.id = p.employee_id AND e.tenant_id = p.tenant_id
+    WHERE p.tenant_id = #{tenantId}
+      AND p.source_system = #{sourceSystem}
+      AND p.source_event_id = #{sourceEventId}
+  </select>
+
+  <insert id="insertLog">
+    INSERT INTO punch_raw_log (
+      tenant_id, employee_id, external_employee_id, source_system, source_event_id, punch_time,
+      punch_type, device_id, device_name, raw_payload, import_batch_id, process_status, error_message, ignored_reason
+    ) VALUES (
+      #{tenantId}, #{employeeId}, #{externalEmployeeId}, #{sourceSystem}, #{sourceEventId}, #{punchTime},
+      #{punchType}, #{deviceId}, #{deviceName}, #{rawPayload}, #{importBatchId}, #{processStatus}, #{errorMessage}, #{ignoredReason}
+    )
+  </insert>
+
+  <select id="selectLatestLog" resultMap="PunchLogDetailResultMap">
+    SELECT <include refid="PunchJoinedColumns"/>
+    FROM punch_raw_log p
+    LEFT JOIN employee e ON e.id = p.employee_id AND e.tenant_id = p.tenant_id
+    WHERE p.tenant_id = #{tenantId}
+    ORDER BY p.id DESC
+    LIMIT 1
+  </select>
+
+  <update id="updateEmployeeAndStatus">
+    UPDATE punch_raw_log
+    SET employee_id = #{employeeId},
+        process_status = #{processStatus},
+        error_message = #{errorMessage},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+
+  <update id="updateIgnored">
+    UPDATE punch_raw_log
+    SET process_status = #{processStatus},
+        ignored_reason = #{ignoredReason},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+
+  <update id="updateStatus">
+    UPDATE punch_raw_log
+    SET process_status = #{processStatus},
+        error_message = #{errorMessage},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+
+  <insert id="insertImportBatch">
+    INSERT INTO punch_import_batch (
+      tenant_id, source_system, import_type, file_name, status, started_at, created_at
+    ) VALUES (
+      #{tenantId}, #{sourceSystem}, #{importType}, #{fileName}, #{status}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+    )
+  </insert>
+
+  <select id="selectLatestImportBatch" resultType="java.util.HashMap">
+    SELECT id, file_name, status
+    FROM punch_import_batch
+    WHERE tenant_id = #{tenantId}
+    ORDER BY id DESC
+    LIMIT 1
+  </select>
+
+  <update id="updateImportBatchResult">
+    UPDATE punch_import_batch
+    SET total_count = #{totalCount},
+        success_count = #{successCount},
+        duplicate_count = #{duplicateCount},
+        unmatched_count = #{unmatchedCount},
+        error_count = #{errorCount},
+        ignored_count = #{ignoredCount},
+        status = #{status},
+        finished_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+</mapper>

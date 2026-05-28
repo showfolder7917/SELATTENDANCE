@@ -26,6 +26,13 @@ public interface AttendanceEmployeeDao {
     // 执行当前业务步骤，推进本行对应的 数据访问 处理。
     AttendanceOut.EmployeeOut selectByEmployeeNo(@Param("tenantId") Long tenantId, @Param("employeeNo") String employeeNo);
 
+    // 按外部员工编号读取已绑定员工，供第三阶段打卡接收自动匹配员工。
+    AttendanceOut.EmployeeOut selectByExternalEmployeeId(
+        @Param("tenantId") Long tenantId,
+        @Param("sourceSystem") String sourceSystem,
+        @Param("externalEmployeeId") String externalEmployeeId
+    );
+
     // 执行当前业务步骤，推进本行对应的 数据访问 处理。
     int insert(@Param("tenantId") Long tenantId, @Param("in") AttendanceIn.EmployeeSaveIn in);
 
@@ -85,4 +92,3 @@ public interface AttendanceEmployeeDao {
     // 执行当前业务步骤，推进本行对应的 数据访问 处理。
     int updateExternalMapping(@Param("tenantId") Long tenantId, @Param("employeeId") Long employeeId, @Param("in") AttendanceIn.ExternalMappingSaveIn in);
 }
-

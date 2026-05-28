@@ -1,6 +1,6 @@
 // 这里集中放 workbench 共享辅助函数，避免各 section 模块重复处理相同状态修复逻辑。
 
-// 把提示消息写入 toast，并在短暂展示后自动清空，保持现有交互体验不变。
+// 把提示消息写入 toast，并在短暂展示后自动清空，保持最初版本的轻量提示节奏。
 export const pushToast = (toast, message) => {
   // 立即写入最新提示语，供页面右下角提示层渲染。
   toast.value = message
@@ -87,4 +87,6 @@ export const syncShellCounters = (state) => {
   state.bootstrapShell.sectionCounters.shift = state.shiftTemplates.length
   // 用排班项列表长度回填排班计数。
   state.bootstrapShell.sectionCounters.schedule = state.scheduleBoard.scheduleItems.length
+  // 用打卡总记录数回填第三阶段打卡计数，供导航徽标和工作台状态展示。
+  state.bootstrapShell.sectionCounters.punch = state.punchLogList.total
 }

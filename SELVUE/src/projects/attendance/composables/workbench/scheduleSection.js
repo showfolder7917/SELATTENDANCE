@@ -20,8 +20,21 @@ export const createScheduleSection = ({
   setSectionError,
   pushToast,
   t,
-  downloadCsv
+  downloadCsv,
+  requestConfirm
 }) => {
+  // 统一打开模板引导气泡，把刚刚失败的点击上下文写给右侧模板区显示。
+  const openScheduleTemplateTip = (employeeName, workDate) => {
+    state.scheduleTemplateTip.open = true
+    state.scheduleTemplateTip.employeeName = employeeName
+    state.scheduleTemplateTip.workDate = workDate
+  }
+
+  // 用户手动关闭气泡时只收起提示，不清空当前排班选择上下文。
+  const closeScheduleTemplateTip = () => {
+    state.scheduleTemplateTip.open = false
+  }
+
   // 独立读取排班看板，供排班区块按当前筛选条件局部刷新。
   const loadScheduleBoard = async () => {
     // 标记排班区块进入加载态，支持局部刷新不阻塞整页。
@@ -57,6 +70,8 @@ export const createScheduleSection = ({
     state.scheduleForm.selectedTemplateId = template.id
     // 把模板名称写入排班表单，供覆盖确认和界面提示复用。
     state.scheduleForm.selectedTemplateName = template.templateName
+    // 一旦已经选中模板，就把“先选模板”的引导气泡收起，避免继续遮挡模板区。
+    closeScheduleTemplateTip()
   }
 
   // 应用单条排班，供排班区块把选中模板写到某位员工某一天。
@@ -71,19 +86,23 @@ export const createScheduleSection = ({
     })
     // 没有先选模板时直接阻断保存，避免写入无效排班。
     if (!state.scheduleForm.selectedTemplateId) {
-      pushToast(t('scheduleTemplateNeedPick'))
+      // 未选模板时在右侧模板区打开指向性气泡，引导用户去正确位置选择模板。
+      openScheduleTemplateTip(row.employeeName, workDate)
       return
     }
     // 已存在排班项时弹覆盖确认，避免用户误覆盖原排班。
-    if (
-      existingItem &&
-      !window.confirm(
-        t('scheduleOverwriteConfirm')
+    if (existingItem) {
+      // 已有排班时先走统一确认弹窗，避免覆盖动作继续落回浏览器原生确认框。
+      const confirmed = await requestConfirm({
+        title: t('scheduleReplaceConfirmAction'),
+        message: t('scheduleOverwriteConfirm')
           .replace('{current}', existingItem.templateName)
-          .replace('{next}', state.scheduleForm.selectedTemplateName || '-')
-      )
-    ) {
-      return
+          .replace('{next}', state.scheduleForm.selectedTemplateName || '-'),
+        confirmLabel: t('scheduleReplaceConfirmAction')
+      })
+      if (!confirmed) {
+        return
+      }
     }
     // 提交单条排班创建请求，让后端按模板建立该日排班项。
     await createSchedule({
@@ -158,8 +177,13 @@ export const createScheduleSection = ({
 
   // 确认批量排班向导，供排班区块一次性写入一段日期范围的排班。
   const confirmBatchWizard = async () => {
-    // 先让用户确认批量覆盖动作，避免大范围误操作。
-    if (!window.confirm(t('scheduleBatchConfirmDialog'))) {
+    // 批量排班先走统一确认弹窗，避免大范围写入动作继续弹出系统原生确认框。
+    const confirmed = await requestConfirm({
+      title: t('scheduleBatchConfirm'),
+      message: t('scheduleBatchConfirmDialog'),
+      confirmLabel: t('scheduleBatchConfirm')
+    })
+    if (!confirmed) {
       return
     }
     // 组装批量排班载荷，按向导当前配置提交给后端。
@@ -189,8 +213,13 @@ export const createScheduleSection = ({
 
   // 复制上周排班到当前月区间，供排班区块快速铺排重复班表。
   const copySchedulesFromLastWeek = async () => {
-    // 复制前先给用户确认，避免误覆盖当前月份排班。
-    if (!window.confirm(t('scheduleCopyWeekConfirm'))) {
+    // 复制上周前统一走页面确认弹窗，保证复制类动作和删除类动作复用同一套组件。
+    const confirmed = await requestConfirm({
+      title: t('scheduleCopyLastWeek'),
+      message: t('scheduleCopyWeekConfirm'),
+      confirmLabel: t('scheduleCopyLastWeek')
+    })
+    if (!confirmed) {
       return
     }
     // 提交复制上周请求，让后端按当前看板员工和日期范围复制排班。
@@ -213,8 +242,13 @@ export const createScheduleSection = ({
 
   // 复制上月排班到当前月区间，供排班区块快速复用周期性班表。
   const copySchedulesFromLastMonth = async () => {
-    // 复制前先给用户确认，避免大范围覆盖当前排班。
-    if (!window.confirm(t('scheduleCopyMonthConfirm'))) {
+    // 复制上月前统一走页面确认弹窗，避免本地环境继续出现浏览器原生确认框。
+    const confirmed = await requestConfirm({
+      title: t('scheduleCopyLastMonth'),
+      message: t('scheduleCopyMonthConfirm'),
+      confirmLabel: t('scheduleCopyLastMonth')
+    })
+    if (!confirmed) {
       return
     }
     // 提交复制上月请求，让后端按当前看板员工和日期范围复制排班。
@@ -275,6 +309,7 @@ export const createScheduleSection = ({
   return {
     loadScheduleBoard,
     selectScheduleTemplate,
+    closeScheduleTemplateTip,
     applySchedule,
     removeScheduleItem,
     openBatchWizard,

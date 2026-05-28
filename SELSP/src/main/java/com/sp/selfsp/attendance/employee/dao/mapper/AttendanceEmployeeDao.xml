@@ -81,6 +81,22 @@
       AND e.employee_no = #{employeeNo}
   </select>
 
+  <select id="selectByExternalEmployeeId" resultMap="EmployeeResultMap">
+    SELECT <include refid="EmployeeJoinedColumns"/>
+    FROM employee e
+    LEFT JOIN workplace w ON w.id = e.workplace_id
+    LEFT JOIN department d ON d.id = e.department_id
+    LEFT JOIN employee_external_mapping m
+      ON m.employee_id = e.id AND m.tenant_id = e.tenant_id AND m.status = 'ACTIVE'
+    WHERE e.tenant_id = #{tenantId}
+      AND m.external_employee_id = #{externalEmployeeId}
+    <if test="sourceSystem != null and sourceSystem != ''">
+      AND m.source_system = #{sourceSystem}
+    </if>
+    ORDER BY e.id ASC
+    LIMIT 1
+  </select>
+
   <insert id="insert">
     INSERT INTO employee (
       tenant_id, workplace_id, department_id, employee_no, employee_name, employee_name_kana, gender,
@@ -186,4 +202,3 @@
       AND employee_id = #{employeeId}
   </update>
 </mapper>
-

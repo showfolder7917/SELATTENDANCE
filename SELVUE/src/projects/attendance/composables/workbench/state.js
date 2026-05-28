@@ -19,7 +19,8 @@ export const createSectionLoaders = () => ({
   department: false,
   employee: false,
   shift: false,
-  schedule: false
+  schedule: false,
+  punch: false
 })
 
 // 生成 section 级错误状态，供某个区块失败时只影响本区块而不是整页。
@@ -28,7 +29,8 @@ export const createSectionErrors = () => ({
   department: '',
   employee: '',
   shift: '',
-  schedule: ''
+  schedule: '',
+  punch: ''
 })
 
 // 生成 section 加载完成标记，供按需懒加载时避免重复首刷同一区块。
@@ -37,7 +39,8 @@ export const createSectionStates = () => ({
   department: false,
   employee: false,
   shift: false,
-  schedule: false
+  schedule: false,
+  punch: false
 })
 
 // 生成轻量首页壳状态，承载租户摘要、步骤计数和推荐动作。
@@ -48,7 +51,8 @@ export const createBootstrapShell = () => ({
     department: 0,
     employee: 0,
     shift: 0,
-    schedule: 0
+    schedule: 0,
+    punch: 0
   },
   sectionStates: createSectionStates(),
   recommendedNextAction: 'wizard.schedule'
@@ -68,6 +72,48 @@ export const createWorkbenchState = () => ({
   },
   employees: [],
   shiftTemplates: [],
+  punchFilters: {
+    dateFrom: '2026-05-01',
+    dateTo: '2026-05-31',
+    employeeKeyword: '',
+    sourceSystem: '',
+    processStatus: '',
+    punchType: '',
+    page: 1,
+    pageSize: 20
+  },
+  punchLogList: {
+    items: [],
+    total: 0,
+    page: 1,
+    pageSize: 20,
+    totalPages: 1,
+    summary: {
+      processed: 0,
+      unmatched: 0,
+      error: 0,
+      duplicate: 0,
+      ignored: 0
+    }
+  },
+  punchDetail: null,
+  punchManualForm: {
+    employeeId: '',
+    punchTime: '2026-05-28T09:00',
+    punchType: 'CLOCK_IN',
+    sourceSystem: 'MANUAL',
+    deviceName: '管理员手动补录',
+    note: ''
+  },
+  punchImportForm: {
+    fileName: 'attendance-punch-import.csv',
+    csvText: ''
+  },
+  punchImportPreview: null,
+  punchActionForm: {
+    employeeId: '',
+    ignoreReason: '确认后忽略'
+  },
   scheduleFilters: {
     month: currentMonth(),
     workplaceId: '',
@@ -82,6 +128,16 @@ export const createWorkbenchState = () => ({
     scheduleItems: [],
     shiftTemplates: [],
     endDate: ''
+  },
+  // 记录“先选模板”引导气泡状态，供排班右侧模板区定点提示当前要操作的位置。
+  scheduleTemplateTip: {
+    open: false,
+    employeeName: '',
+    workDate: '',
+    bubbleX: null,
+    bubbleY: null,
+    anchorX: null,
+    anchorY: null
   },
   scheduleForm: {
     selectedTemplateId: null,

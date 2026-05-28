@@ -45,6 +45,8 @@ export const messages = {
     navShift: '班次模板',
     // 维护 导航排班 字段，供当前前端状态或配置直接使用。
     navSchedule: '排班管理',
+    // 维护 导航打卡 字段，供当前前端状态或配置直接使用。
+    navPunch: '打卡记录',
     // 维护 workspaceSidebarTitle 字段，供当前前端状态或配置直接使用。
     workspaceSidebarTitle: '功能导航',
     // 维护 workspaceSidebarHint 字段，供当前前端状态或配置直接使用。
@@ -63,6 +65,8 @@ export const messages = {
     sectionShiftHint: '维护班次模板，为下一阶段排班复用做准备。',
     // 维护 section排班Hint 字段，供当前前端状态或配置直接使用。
     sectionScheduleHint: '像填日历一样完成第二阶段排班，并立即检查未排班缺口。',
+    // 维护 section打卡Hint 字段，供当前前端状态或配置直接使用。
+    sectionPunchHint: '第三阶段开始接收真实打卡事实，并处理未匹配、失败和忽略记录。',
     // 维护 wizardTitle 字段，供当前前端状态或配置直接使用。
     wizardTitle: '初始化向导',
     // 维护 wizardHint 字段，供当前前端状态或配置直接使用。
@@ -85,6 +89,8 @@ export const messages = {
     shiftTitle: '班次模板',
     // 维护 排班Title 字段，供当前前端状态或配置直接使用。
     scheduleTitle: '排班管理',
+    // 维护 打卡Title 字段，供当前前端状态或配置直接使用。
+    punchTitle: '打卡记录',
     // 维护 保存 字段，供当前前端状态或配置直接使用。
     save: '保存',
     // 维护 新增 字段，供当前前端状态或配置直接使用。
@@ -293,6 +299,16 @@ export const messages = {
     scheduleTemplatePicked: '当前将使用：{template}',
     // 维护 需先选模板提示 字段，供当前前端状态或配置直接使用。
     scheduleTemplateNeedPick: '请先在右侧选择一个班次模板，再点击日历格子。',
+    // 维护 模板引导气泡标题 字段，供当前前端状态或配置直接使用。
+    scheduleTemplateTipTitle: '先在这里选班次模板',
+    // 维护 模板引导气泡正文 字段，供当前前端状态或配置直接使用。
+    scheduleTemplateTipBody: '选择一个班次模板后，再返回左侧点击日历格子。',
+    // 维护 模板引导气泡上下文 字段，供当前前端状态或配置直接使用。
+    scheduleTemplateTipContext: '你刚刚点击了 {employee} 在 {date} 的格子。',
+    // 维护 模板引导气泡关闭 字段，供当前前端状态或配置直接使用。
+    scheduleTemplateTipClose: '关闭提示',
+    // 维护 模板引导气泡锚点拖拽 字段，供当前前端状态或配置直接使用。
+    scheduleTemplateTipAnchorDrag: '拖动箭头指向',
     // 维护 排班备注 字段，供当前前端状态或配置直接使用。
     scheduleRemark: '排班备注',
     // 维护 排班备注提示 字段，供当前前端状态或配置直接使用。
@@ -333,6 +349,8 @@ export const messages = {
     scheduleSkipExisting: '遇到已有排班时直接跳过',
     scheduleOverwriteExisting: '允许覆盖已有排班',
     scheduleBatchConfirm: '确认批量排班',
+    // 维护 替换排班确认动作 字段，供当前前端状态或配置直接使用。
+    scheduleReplaceConfirmAction: '确认替换',
     scheduleBatchPrev: '上一步',
     scheduleBatchNext: '下一步',
     scheduleBatchConfirmDialog: '这次会批量写入当前所选员工和日期范围，确认继续吗？',
@@ -348,6 +366,55 @@ export const messages = {
     scheduleBatchResultToast: '批量排班完成：新增 {created}，覆盖 {updated}，跳过 {skipped}',
     scheduleCopyResultToast: '复制完成：新增 {created}，覆盖 {updated}，跳过 {skipped}',
     scheduleUnassignedChecked: '未排班检查已刷新',
+    punchLead: '先把原始打卡事实接进来，再处理未匹配、失败和重复记录，后续日次计算才有依据。',
+    punchRefresh: '刷新打卡',
+    punchDateFrom: '开始日期',
+    punchDateTo: '结束日期',
+    punchEmployeeKeywordHint: '输入员工编号、姓名或外部打卡 ID',
+    punchAllSources: '全部来源',
+    punchAllStatuses: '全部状态',
+    punchStatusProcessed: '已处理',
+    punchStatusUnmatched: '未匹配',
+    punchStatusError: '失败',
+    punchStatusDuplicate: '重复',
+    punchStatusIgnored: '已忽略',
+    punchPageSize: '每页条数',
+    punchPrevPage: '上一页',
+    punchNextPage: '下一页',
+    punchPaginationSummary: '共 {total} 条',
+    punchPaginationCurrent: '第 {page} / {totalPages} 页',
+    punchTime: '打卡时间',
+    punchType: '打卡类型',
+    punchDeviceName: '设备名称',
+    punchUnmatchedLabel: '未匹配员工',
+    punchManualTitle: '手动补录',
+    punchManualHint: '员工忘记打卡时，可直接手动补一条原始打卡事实。',
+    punchPickEmployee: '请选择员工',
+    punchManualSubmit: '提交补录',
+    punchImportTitle: 'CSV 导入',
+    punchImportHint: '先预览，再正式导入，避免一次把错误数据整批带进来。',
+    punchImportFileName: '文件名',
+    punchImportPlaceholder: '表头需包含 externalEmployeeId,punchTime,punchType,sourceSystem,sourceEventId,deviceId,deviceName',
+    punchPreviewImport: '预览导入',
+    punchSubmitImport: '正式导入',
+    punchPreviewSummary: '预览摘要',
+    punchPreviewTotal: '总行数：{count}',
+    punchPreviewReady: '可导入：{count}',
+    punchPreviewUnmatched: '未匹配：{count}',
+    punchPreviewError: '错误：{count}',
+    punchDetailTitle: '当前记录详情',
+    punchBindEmployee: '绑定到已有员工',
+    punchBindAction: '确认绑定',
+    punchIgnoreReason: '忽略原因',
+    punchIgnoreAction: '忽略当前记录',
+    punchReprocessAction: '重新处理',
+    punchRawPayload: '查看原始 JSON',
+    punchToastManualSaved: '手动补录已保存',
+    punchToastPreviewReady: '导入预览已刷新',
+    punchToastImported: '打卡导入已处理',
+    punchToastBound: '未匹配记录已绑定到员工',
+    punchToastIgnored: '当前打卡记录已忽略',
+    punchToastReprocessed: '当前打卡记录已重新处理',
     // 执行当前业务步骤，推进本行对应的 constants 处理。
     'guide.tenant': '完成公司/教室信息后，初始化向导才能进入组织资料建设。',
     // 执行当前业务步骤，推进本行对应的 constants 处理。
@@ -427,6 +494,8 @@ export const messages = {
     navShift: 'シフトテンプレート',
     // 维护 导航排班 字段，供当前前端状态或配置直接使用。
     navSchedule: 'シフト作成',
+    // 维护 导航打卡 字段，供当前前端状态或配置直接使用。
+    navPunch: '打刻記録',
     // 维护 workspaceSidebarTitle 字段，供当前前端状态或配置直接使用。
     workspaceSidebarTitle: '機能ナビ',
     // 维护 workspaceSidebarHint 字段，供当前前端状态或配置直接使用。
@@ -445,6 +514,8 @@ export const messages = {
     sectionShiftHint: 'シフトテンプレートを整備し、次フェーズのシフト作成に備えます。',
     // 维护 section排班Hint 字段，供当前前端状态或配置直接使用。
     sectionScheduleHint: 'カレンダー感覚でシフトを並べ、未配置の穴をすぐ確認できます。',
+    // 维护 section打卡Hint 字段，供当前前端状态或配置直接使用。
+    sectionPunchHint: 'Phase 3 で実打刻ログを受け取り、未紐付け・失敗・無視データを整理します。',
     // 维护 wizardTitle 字段，供当前前端状态或配置直接使用。
     wizardTitle: '初期化ウィザード',
     // 维护 wizardHint 字段，供当前前端状态或配置直接使用。
@@ -467,6 +538,8 @@ export const messages = {
     shiftTitle: 'シフトテンプレート',
     // 维护 排班Title 字段，供当前前端状态或配置直接使用。
     scheduleTitle: 'シフト作成',
+    // 维护 打卡Title 字段，供当前前端状态或配置直接使用。
+    punchTitle: '打刻記録',
     // 维护 保存 字段，供当前前端状态或配置直接使用。
     save: '保存',
     // 维护 新增 字段，供当前前端状态或配置直接使用。
@@ -625,6 +698,11 @@ export const messages = {
     scheduleTemplatePanelTitle: 'テンプレートパネル',
     scheduleTemplatePicked: '現在使うテンプレート：{template}',
     scheduleTemplateNeedPick: '先に右側でテンプレートを選び、その後でカレンダーセルを押してください。',
+    scheduleTemplateTipTitle: '先にここでテンプレートを選択',
+    scheduleTemplateTipBody: 'テンプレートを 1 つ選んでから、左側のカレンダーセルをもう一度押してください。',
+    scheduleTemplateTipContext: '{employee} の {date} をクリックしました。',
+    scheduleTemplateTipClose: 'ガイドを閉じる',
+    scheduleTemplateTipAnchorDrag: '矢印の指し先を移動',
     scheduleRemark: 'シフトメモ',
     scheduleRemarkHint: '例：月初研修、臨時ヘルプ、午前会議',
     scheduleCurrentSelectionTitle: '現在のセル',
@@ -652,6 +730,8 @@ export const messages = {
     scheduleSkipExisting: '既存シフトがある日はスキップする',
     scheduleOverwriteExisting: '既存シフトを上書きしてよい',
     scheduleBatchConfirm: '一括シフトを保存',
+    // 维护 替换排班确认动作 字段，供当前前端状态或配置直接使用。
+    scheduleReplaceConfirmAction: '置き換える',
     scheduleBatchPrev: '前へ',
     scheduleBatchNext: '次へ',
     scheduleBatchConfirmDialog: '現在の選択内容で一括シフトを保存します。続けますか？',
@@ -667,6 +747,55 @@ export const messages = {
     scheduleBatchResultToast: '一括シフト完了：新規 {created}、上書き {updated}、スキップ {skipped}',
     scheduleCopyResultToast: 'コピー完了：新規 {created}、上書き {updated}、スキップ {skipped}',
     scheduleUnassignedChecked: '未配置チェックを更新しました',
+    punchLead: 'まず原始打刻事実を受け取り、未紐付け・失敗・重複を整理してから日次計算へ進みます。',
+    punchRefresh: '打刻更新',
+    punchDateFrom: '開始日',
+    punchDateTo: '終了日',
+    punchEmployeeKeywordHint: '社員番号、氏名、外部打刻 ID で検索',
+    punchAllSources: '全ソース',
+    punchAllStatuses: '全状態',
+    punchStatusProcessed: '処理済み',
+    punchStatusUnmatched: '未紐付け',
+    punchStatusError: '失敗',
+    punchStatusDuplicate: '重複',
+    punchStatusIgnored: '無視済み',
+    punchPageSize: '1ページ件数',
+    punchPrevPage: '前へ',
+    punchNextPage: '次へ',
+    punchPaginationSummary: '合計 {total} 件',
+    punchPaginationCurrent: '{page} / {totalPages} ページ',
+    punchTime: '打刻時刻',
+    punchType: '打刻種別',
+    punchDeviceName: '端末名',
+    punchUnmatchedLabel: '未紐付け',
+    punchManualTitle: '手動補録',
+    punchManualHint: '社員が打刻を忘れた場合でも、原始打刻事実としてそのまま補録できます。',
+    punchPickEmployee: '社員を選択してください',
+    punchManualSubmit: '補録を保存',
+    punchImportTitle: 'CSV 取込',
+    punchImportHint: '先にプレビューしてから正式取込し、誤データの一括流入を防ぎます。',
+    punchImportFileName: 'ファイル名',
+    punchImportPlaceholder: 'ヘッダー: externalEmployeeId,punchTime,punchType,sourceSystem,sourceEventId,deviceId,deviceName',
+    punchPreviewImport: '取込プレビュー',
+    punchSubmitImport: '正式取込',
+    punchPreviewSummary: 'プレビュー集計',
+    punchPreviewTotal: '総行数：{count}',
+    punchPreviewReady: '取込可能：{count}',
+    punchPreviewUnmatched: '未紐付け：{count}',
+    punchPreviewError: 'エラー：{count}',
+    punchDetailTitle: '現在の記録詳細',
+    punchBindEmployee: '既存社員へ紐付け',
+    punchBindAction: '社員に紐付ける',
+    punchIgnoreReason: '無視理由',
+    punchIgnoreAction: 'この記録を無視',
+    punchReprocessAction: '再処理',
+    punchRawPayload: '原始 JSON を表示',
+    punchToastManualSaved: '手動補録を保存しました',
+    punchToastPreviewReady: '取込プレビューを更新しました',
+    punchToastImported: '打刻取込を処理しました',
+    punchToastBound: '未紐付け記録を社員へ紐付けました',
+    punchToastIgnored: '現在の打刻記録を無視しました',
+    punchToastReprocessed: '現在の打刻記録を再処理しました',
     // 执行当前业务步骤，推进本行对应的 constants 处理。
     'guide.tenant': '会社 / 教室情報を登録すると組織マスタ準備に進めます。',
     // 执行当前业务步骤，推进本行对应的 constants 处理。

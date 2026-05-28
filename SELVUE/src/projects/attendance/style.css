@@ -63,10 +63,15 @@ body {
   position: sticky;
   top: 20px;
   align-self: start;
+  /* 侧栏吸附后最多占满当前视口高度，避免跟着长内容继续整体下滑。 */
+  max-height: calc(100vh - 40px);
 }
 
 .selattendance-sidebar {
   padding: 22px 18px;
+  /* 侧栏内容超过当前视口时改为侧栏内部滚动，而不是把整块导航继续推到页面下方。 */
+  max-height: calc(100vh - 40px);
+  overflow: auto;
 }
 
 .selattendance-sidebar-header {
@@ -144,6 +149,179 @@ body {
 
 .selattendance-section-button.active .selattendance-section-badge {
   background: rgba(255, 255, 255, 0.18);
+}
+
+.selattendance-punch-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.selattendance-punch-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(37, 55, 87, 0.48);
+  border: 1px solid rgba(115, 144, 202, 0.22);
+}
+
+.selattendance-punch-summary-card strong {
+  font-size: 1.25rem;
+}
+
+.selattendance-punch-summary-card small {
+  color: rgba(218, 228, 255, 0.72);
+}
+
+.selattendance-punch-summary-card.warm {
+  background: rgba(109, 73, 34, 0.38);
+}
+
+.selattendance-punch-summary-card.danger {
+  background: rgba(115, 42, 42, 0.38);
+}
+
+.selattendance-punch-summary-card.muted {
+  background: rgba(74, 80, 97, 0.34);
+}
+
+.selattendance-punch-list-shell {
+  overflow: auto;
+  border-radius: 24px;
+  border: 1px solid rgba(115, 144, 202, 0.18);
+}
+
+.selattendance-punch-pagination {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.selattendance-punch-pagination-size {
+  min-width: 140px;
+}
+
+.selattendance-punch-pagination-meta {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  color: rgba(216, 226, 255, 0.72);
+}
+
+.selattendance-punch-pagination-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.selattendance-punch-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.selattendance-punch-table th,
+.selattendance-punch-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid rgba(115, 144, 202, 0.12);
+  text-align: left;
+  vertical-align: top;
+}
+
+.selattendance-punch-row {
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.selattendance-punch-row:hover {
+  background: rgba(85, 110, 180, 0.14);
+}
+
+.selattendance-punch-row.active {
+  background: rgba(79, 124, 255, 0.16);
+}
+
+.selattendance-punch-row small {
+  display: block;
+  margin-top: 4px;
+  color: rgba(216, 226, 255, 0.66);
+}
+
+.selattendance-punch-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: rgba(79, 124, 255, 0.16);
+}
+
+.selattendance-punch-status.status-unmatched {
+  background: rgba(255, 172, 72, 0.18);
+}
+
+.selattendance-punch-status.status-error {
+  background: rgba(255, 96, 96, 0.18);
+}
+
+.selattendance-punch-status.status-ignored,
+.selattendance-punch-status.status-duplicate {
+  background: rgba(146, 155, 180, 0.18);
+}
+
+.selattendance-punch-side {
+  gap: 16px;
+}
+
+.selattendance-punch-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.selattendance-punch-preview {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(115, 144, 202, 0.16);
+}
+
+.selattendance-punch-detail-grid {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.selattendance-punch-detail-grid small {
+  color: rgba(218, 228, 255, 0.72);
+}
+
+.selattendance-punch-raw {
+  margin-top: 12px;
+}
+
+.selattendance-punch-raw summary {
+  cursor: pointer;
+  color: rgba(230, 238, 255, 0.88);
+}
+
+.selattendance-punch-raw pre {
+  margin-top: 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(8, 16, 32, 0.56);
+  border: 1px solid rgba(115, 144, 202, 0.16);
+  font-size: 0.82rem;
 }
 
 .selattendance-sidebar-foot {
@@ -800,6 +978,22 @@ body {
   border-radius: 20px;
   border: 1px solid rgba(124, 141, 181, 0.16);
   background: rgba(255, 255, 255, 0.04);
+}
+
+.selattendance-schedule-template-block {
+  position: relative;
+}
+
+.selattendance-template-palette-shell {
+  position: relative;
+}
+
+.selattendance-template-palette-target {
+  position: relative;
+  border-radius: 22px;
+  box-shadow:
+    0 0 0 2px rgba(255, 156, 124, 0.42),
+    0 24px 38px rgba(13, 10, 20, 0.18);
 }
 
 .selattendance-template-palette {

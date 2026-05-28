@@ -62,8 +62,8 @@ public class AttendanceBootstrapServiceImpl implements AttendanceBootstrapServic
         boolean scheduleReady = isScheduleReady(counts);
         // 构建排班步骤，并根据门禁状态决定显示可操作还是锁定。
         steps.add(buildPhaseGateStep("schedule", "wizard.schedule", countAsInt(counts, "scheduleCount"), "guide.schedule", scheduleReady));
-        // 构建打卡阶段门禁步骤，仅在已存在排班数据时开放下一阶段。
-        steps.add(buildPhaseGateStep("punch", "wizard.punch", 0, "guide.punch", countAsInt(counts, "scheduleCount") > 0));
+        // 构建打卡阶段门禁步骤，仅在已存在排班数据时开放第三阶段打卡接收与原始数据管理。
+        steps.add(buildPhaseGateStep("punch", "wizard.punch", countAsInt(counts, "punchCount"), "guide.punch", countAsInt(counts, "scheduleCount") > 0));
         // 把步骤列表回填到首页壳结果，供前端工作台导航和向导复用。
         summaryOut.setSteps(steps);
         // 计算推荐下一动作，供首页侧边栏直接提示当前最该完成的步骤。

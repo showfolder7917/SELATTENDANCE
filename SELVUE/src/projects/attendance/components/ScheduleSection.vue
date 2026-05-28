@@ -10,6 +10,7 @@ const props = defineProps({
   departments: { type: Array, required: true },
   scheduleBoard: { type: Object, required: true },
   scheduleFilters: { type: Object, required: true },
+  scheduleTemplateTip: { type: Object, required: true },
   scheduleForm: { type: Object, required: true },
   batchWizard: { type: Object, required: true },
   unassignedItems: { type: Array, required: true },
@@ -225,9 +226,10 @@ const wizardStepLabels = computed(() => [
           </div>
         </div>
 
-        <section class="selattendance-schedule-side-block">
+        <section class="selattendance-schedule-side-block selattendance-schedule-template-block">
           <div class="seladmin-panel-header"><h3>{{ t('scheduleTemplatePanelTitle') }}</h3></div>
-          <div class="selattendance-template-palette">
+          <div class="selattendance-template-palette-shell" data-schedule-template-target>
+            <div class="selattendance-template-palette" :class="{ 'selattendance-template-palette-target': scheduleTemplateTip.open }">
             <button
               v-for="template in scheduleBoard.shiftTemplates"
               :key="template.id"
@@ -240,6 +242,7 @@ const wizardStepLabels = computed(() => [
               <strong>{{ template.templateName }}</strong>
               <small>{{ template.startTime || t('scheduleRestLabel') }}<template v-if="template.endTime"> - {{ template.endTime }}</template></small>
             </button>
+          </div>
           </div>
           <p class="seladmin-copy">
             {{ selectedTemplate ? t('scheduleTemplatePicked').replace('{template}', selectedTemplate.templateName) : t('scheduleTemplateNeedPick') }}
