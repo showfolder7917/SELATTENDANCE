@@ -1,9 +1,11 @@
 <script setup>
+import { computed } from 'vue'
 import EmptyGuide from '../../../shared/components/EmptyGuide.vue'
+import SharedDataTable from '../../../shared/components/SharedDataTable.vue'
 import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
 import { attendanceMasterDataLayoutPreset } from '../constants/workbenchLayoutPresets'
 
-defineProps({
+const props = defineProps({
   visible: { type: Boolean, required: true },
   workplaces: { type: Array, required: true },
   departments: { type: Array, required: true },
@@ -19,6 +21,15 @@ defineProps({
   onOpenSchedule: { type: Function, required: true },
   onDelete: { type: Function, required: true }
 })
+
+// 部门页继续保留当前列顺序和动作列，只把表格展示壳下沉到 shared。
+const departmentColumns = computed(() => [
+  { key: 'departmentCode', label: props.t('departmentCode') },
+  { key: 'departmentName', label: props.t('departmentName'), wrap: true, minWidth: '140px' },
+  { key: 'workplaceName', label: props.t('workplace'), wrap: true, minWidth: '140px' },
+  { key: 'sortOrder', label: props.t('sortOrder'), minWidth: '92px' },
+  { key: 'actions', label: '', minWidth: '248px' }
+])
 </script>
 
 <template>
@@ -38,30 +49,26 @@ defineProps({
           <button type="button" @click="onClearWorkplaceFilter()">{{ t('showAllDepartments') }}</button>
         </div>
         <EmptyGuide v-if="!departments.length" :title="t('departmentTitle')" :description="t('emptyDepartment')" />
-        <div v-else class="selattendance-table-shell">
-          <table class="seladmin-table selattendance-wide-table">
-            <thead><tr><th>{{ t('departmentCode') }}</th><th>{{ t('departmentName') }}</th><th>{{ t('workplace') }}</th><th>{{ t('sortOrder') }}</th><th></th></tr></thead>
-            <tbody>
-              <tr
-                v-for="item in filteredDepartments"
-                :key="item.id"
-                :class="{ 'selattendance-table-row-active': departmentForm.id === item.id }"
-                @click="onEdit(item)"
-              >
-                <td>{{ item.departmentCode }}</td>
-                <td>{{ item.departmentName }}</td>
-                <td>{{ item.workplaceName }}</td>
-                <td>{{ item.sortOrder }}</td>
-                <td class="seladmin-inline-actions">
-                  <button type="button" @click.stop="onEdit(item)">{{ t('save') }}</button>
-                  <button type="button" @click.stop="onOpenEmployees(item)">{{ t('jumpEmployee') }}</button>
-                  <button type="button" @click.stop="onOpenSchedule(item)">{{ t('jumpSchedule') }}</button>
-                  <button type="button" @click.stop="onDelete(item.id)">{{ t('delete') }}</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <SharedDataTable
+          v-else
+          variant="admin"
+          :columns="departmentColumns"
+          :rows="filteredDepartments"
+          row-key="id"
+          :active-row-key="departmentForm.id"
+          clickable-rows
+          min-table-width="860px"
+          @row-click="onEdit"
+        >
+          <template #cell-actions="{ row }">
+            <div class="seladmin-inline-actions">
+              <button type="button" @click.stop="onEdit(row)">{{ t('save') }}</button>
+              <button type="button" @click.stop="onOpenEmployees(row)">{{ t('jumpEmployee') }}</button>
+              <button type="button" @click.stop="onOpenSchedule(row)">{{ t('jumpSchedule') }}</button>
+              <button type="button" @click.stop="onDelete(row.id)">{{ t('delete') }}</button>
+            </div>
+          </template>
+        </SharedDataTable>
       </article>
     </template>
 

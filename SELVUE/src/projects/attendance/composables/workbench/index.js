@@ -494,6 +494,7 @@ export function useAttendanceWorkbench() {
     filteredDepartments,
     currentDepartmentWorkplaceName,
     filteredEmployees,
+    showToast,
     loadBootstrap,
     submitTenant,
     submitWorkplace: workplaceSection.submitWorkplace,

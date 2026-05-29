@@ -1,9 +1,11 @@
 <script setup>
+import { computed } from 'vue'
 import EmptyGuide from '../../../shared/components/EmptyGuide.vue'
+import SharedDataTable from '../../../shared/components/SharedDataTable.vue'
 import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
 import { attendanceMasterDataLayoutPreset } from '../constants/workbenchLayoutPresets'
 
-defineProps({
+const props = defineProps({
   visible: { type: Boolean, required: true },
   shiftTemplates: { type: Array, required: true },
   shiftForm: { type: Object, required: true },
@@ -13,6 +15,17 @@ defineProps({
   onEdit: { type: Function, required: true },
   onDelete: { type: Function, required: true }
 })
+
+// 班次模板页保持现有列结构，只把表格壳替换成共享组件。
+const shiftColumns = computed(() => [
+  { key: 'templateCode', label: props.t('shiftCode'), minWidth: '120px' },
+  { key: 'templateName', label: props.t('shiftName'), wrap: true, minWidth: '148px' },
+  { key: 'shiftType', label: props.t('shiftType'), minWidth: '116px' },
+  { key: 'startTime', label: props.t('startTime'), minWidth: '108px' },
+  { key: 'endTime', label: props.t('endTime'), minWidth: '108px' },
+  { key: 'crossDay', label: props.t('crossDay'), minWidth: '88px' },
+  { key: 'actions', label: '', minWidth: '132px' }
+])
 </script>
 
 <template>
@@ -28,30 +41,33 @@ defineProps({
       <article class="seladmin-panel seladmin-surface selattendance-data-panel selattendance-master-list-panel">
         <div class="seladmin-panel-header"><h2>{{ t('shiftTitle') }}</h2></div>
         <EmptyGuide v-if="!shiftTemplates.length" :title="t('shiftTitle')" :description="t('emptyShift')" />
-        <div v-else class="selattendance-table-shell">
-          <table class="seladmin-table selattendance-wide-table">
-            <thead><tr><th>{{ t('shiftCode') }}</th><th>{{ t('shiftName') }}</th><th>{{ t('shiftType') }}</th><th>{{ t('startTime') }}</th><th>{{ t('endTime') }}</th><th>{{ t('crossDay') }}</th><th></th></tr></thead>
-            <tbody>
-              <tr
-                v-for="item in shiftTemplates"
-                :key="item.id"
-                :class="{ 'selattendance-table-row-active': shiftForm.id === item.id }"
-                @click="onEdit(item)"
-              >
-                <td>{{ item.templateCode }}</td>
-                <td>{{ item.templateName }}</td>
-                <td>{{ item.shiftType }}</td>
-                <td>{{ item.startTime || '-' }}</td>
-                <td>{{ item.endTime || '-' }}</td>
-                <td>{{ item.crossDay ? 'Y' : 'N' }}</td>
-                <td class="seladmin-inline-actions">
-                  <button type="button" @click.stop="onEdit(item)">{{ t('save') }}</button>
-                  <button type="button" @click.stop="onDelete(item.id)">{{ t('delete') }}</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <SharedDataTable
+          v-else
+          variant="admin"
+          :columns="shiftColumns"
+          :rows="shiftTemplates"
+          row-key="id"
+          :active-row-key="shiftForm.id"
+          clickable-rows
+          min-table-width="900px"
+          @row-click="onEdit"
+        >
+          <template #cell-startTime="{ row }">
+            {{ row.startTime || '-' }}
+          </template>
+          <template #cell-endTime="{ row }">
+            {{ row.endTime || '-' }}
+          </template>
+          <template #cell-crossDay="{ row }">
+            {{ row.crossDay ? 'Y' : 'N' }}
+          </template>
+          <template #cell-actions="{ row }">
+            <div class="seladmin-inline-actions">
+              <button type="button" @click.stop="onEdit(row)">{{ t('save') }}</button>
+              <button type="button" @click.stop="onDelete(row.id)">{{ t('delete') }}</button>
+            </div>
+          </template>
+        </SharedDataTable>
       </article>
     </template>
 

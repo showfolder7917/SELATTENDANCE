@@ -1,9 +1,11 @@
 <script setup>
+import { computed } from 'vue'
 import EmptyGuide from '../../../shared/components/EmptyGuide.vue'
+import SharedDataTable from '../../../shared/components/SharedDataTable.vue'
 import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
 import { attendanceMasterDataLayoutPreset } from '../constants/workbenchLayoutPresets'
 
-defineProps({
+const props = defineProps({
   visible: { type: Boolean, required: true },
   workplaces: { type: Array, required: true },
   departments: { type: Array, required: true },
@@ -25,6 +27,17 @@ defineProps({
   onEditMapping: { type: Function, required: true },
   onDeleteEmployee: { type: Function, required: true }
 })
+
+// 员工页保留原有多列信息和警告文案，通过 slot 继续输出姓名副标题和绑定状态。
+const employeeColumns = computed(() => [
+  { key: 'employeeNo', label: props.t('employeeNo'), minWidth: '116px' },
+  { key: 'employeeName', label: props.t('employeeName'), wrap: true, minWidth: '160px' },
+  { key: 'departmentName', label: props.t('departmentName'), wrap: true, minWidth: '140px' },
+  { key: 'workplaceName', label: props.t('workplace'), wrap: true, minWidth: '140px' },
+  { key: 'employmentType', label: props.t('employmentType'), minWidth: '120px' },
+  { key: 'externalEmployeeId', label: props.t('externalEmployeeId'), minWidth: '140px' },
+  { key: 'actions', label: '', minWidth: '208px' }
+])
 </script>
 
 <template>
@@ -49,33 +62,33 @@ defineProps({
           <input v-model="employeeFilters.status" :placeholder="t('status')" />
         </div>
         <EmptyGuide v-if="!employees.length" :title="t('employeeTitle')" :description="t('emptyEmployee')" />
-        <div v-else class="selattendance-table-shell">
-          <table class="seladmin-table selattendance-wide-table">
-            <thead><tr><th>{{ t('employeeNo') }}</th><th>{{ t('employeeName') }}</th><th>{{ t('departmentName') }}</th><th>{{ t('workplace') }}</th><th>{{ t('employmentType') }}</th><th>{{ t('externalEmployeeId') }}</th><th></th></tr></thead>
-            <tbody>
-              <tr
-                v-for="item in filteredEmployees"
-                :key="item.id"
-                :class="{ 'selattendance-table-row-active': employeeForm.id === item.id }"
-                @click="onEditEmployee(item)"
-              >
-                <td>{{ item.employeeNo }}</td>
-                <td><div>{{ item.employeeName }}</div><small>{{ item.employeeNameKana }}</small></td>
-                <td>{{ item.departmentName }}</td>
-                <td>{{ item.workplaceName }}</td>
-                <td>{{ item.employmentType }}</td>
-                <td><span v-if="item.externalMappingBound">{{ item.externalEmployeeId }}</span><span v-else class="seladmin-warning-text">{{ t('bindMapping') }}</span></td>
-                <td>
-                  <div class="seladmin-inline-actions">
-                    <button type="button" @click.stop="onEditEmployee(item)">{{ t('save') }}</button>
-                    <button type="button" @click.stop="onEditMapping(item)">{{ t('bindMapping') }}</button>
-                    <button type="button" @click.stop="onDeleteEmployee(item.id)">{{ t('delete') }}</button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <SharedDataTable
+          v-else
+          variant="admin"
+          :columns="employeeColumns"
+          :rows="filteredEmployees"
+          row-key="id"
+          :active-row-key="employeeForm.id"
+          clickable-rows
+          min-table-width="1080px"
+          @row-click="onEditEmployee"
+        >
+          <template #cell-employeeName="{ row }">
+            <div>{{ row.employeeName }}</div>
+            <small>{{ row.employeeNameKana }}</small>
+          </template>
+          <template #cell-externalEmployeeId="{ row }">
+            <span v-if="row.externalMappingBound">{{ row.externalEmployeeId }}</span>
+            <span v-else class="seladmin-warning-text">{{ t('bindMapping') }}</span>
+          </template>
+          <template #cell-actions="{ row }">
+            <div class="seladmin-inline-actions">
+              <button type="button" @click.stop="onEditEmployee(row)">{{ t('save') }}</button>
+              <button type="button" @click.stop="onEditMapping(row)">{{ t('bindMapping') }}</button>
+              <button type="button" @click.stop="onDeleteEmployee(row.id)">{{ t('delete') }}</button>
+            </div>
+          </template>
+        </SharedDataTable>
       </article>
     </template>
 

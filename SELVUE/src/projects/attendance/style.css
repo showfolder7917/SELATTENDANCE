@@ -200,40 +200,190 @@ body {
 }
 
 .selattendance-punch-list-shell {
+  min-height: 0;
   overflow: auto;
   border-radius: 24px;
   border: 1px solid rgba(115, 144, 202, 0.18);
+  position: relative;
 }
 
 .selattendance-punch-pagination {
   display: flex;
-  align-items: end;
-  justify-content: space-between;
+  align-items: center;
   gap: 16px;
-  margin-top: 14px;
-  flex-wrap: wrap;
+  margin-top: 0;
+  padding: 10px 14px;
+  border-top: 1px solid rgba(115, 144, 202, 0.14);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  flex-wrap: nowrap;
 }
 
 .selattendance-punch-pagination-size {
-  min-width: 140px;
+  min-width: 132px;
+  display: inline-grid;
+  grid-template-columns: auto 84px;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.selattendance-punch-pagination-size > span {
+  margin: 0;
+  white-space: nowrap;
+  color: rgba(220, 229, 255, 0.82);
+  font-size: 0.88rem;
+}
+
+.selattendance-punch-pagination-size .shared-mini-select {
+  min-width: 84px;
+  z-index: 2;
+}
+
+.selattendance-punch-pagination-size .shared-mini-select.open {
+  z-index: 12;
+}
+
+.selattendance-punch-pagination-size .shared-mini-select-trigger {
+  box-sizing: border-box;
+}
+
+.selattendance-punch-pagination-size .shared-mini-select-menu {
+  top: auto;
+  bottom: calc(100% + 8px);
+  min-width: 92px;
 }
 
 .selattendance-punch-pagination-meta {
-  display: grid;
-  gap: 4px;
-  justify-items: center;
-  color: rgba(216, 226, 255, 0.72);
+  flex: 0 0 auto;
+  color: rgba(216, 226, 255, 0.78);
+  white-space: nowrap;
+  font-size: 0.9rem;
 }
 
-.selattendance-punch-pagination-actions {
+.selattendance-punch-pagination-pages {
   display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(115, 144, 202, 0.08);
+}
+
+.selattendance-pagination-number {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid rgba(115, 144, 202, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(230, 238, 255, 0.9);
+  cursor: pointer;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+
+.selattendance-pagination-tail {
+  min-width: fit-content;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(115, 144, 202, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(230, 238, 255, 0.82);
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 0.92rem;
+}
+
+.selattendance-pagination-tail:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.selattendance-punch-pagination .seladmin-button {
+  min-width: fit-content;
+  height: 36px;
+  padding: 0 14px;
+  line-height: 36px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.selattendance-pagination-number.active {
+  background: rgba(91, 125, 255, 0.22);
+  border-color: rgba(132, 165, 255, 0.34);
+  color: rgba(255, 255, 255, 0.98);
+}
+
+.selattendance-pagination-ellipsis {
+  color: rgba(216, 226, 255, 0.62);
+  letter-spacing: 2px;
+}
+
+.selattendance-punch-pagination-jump {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: 10px;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  padding: 4px 0;
+}
+
+.selattendance-punch-pagination-jump-field {
+  min-width: 196px;
+  display: grid;
+  grid-template-columns: auto minmax(80px, 90px) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.selattendance-punch-pagination-jump-field span {
+  margin: 0;
+  white-space: nowrap;
+  color: rgba(220, 229, 255, 0.82);
+  font-size: 0.88rem;
+}
+
+.selattendance-punch-pagination-jump-field input {
+  text-align: center;
+  height: 36px;
 }
 
 .selattendance-punch-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.selattendance-punch-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  padding: 18px 16px;
+  background: linear-gradient(180deg, rgba(28, 40, 67, 0.98), rgba(19, 29, 48, 0.98));
+  color: rgba(242, 246, 255, 0.94);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(115, 144, 202, 0.18),
+    0 8px 18px rgba(8, 12, 24, 0.24);
+  backdrop-filter: blur(14px);
+}
+
+.selattendance-punch-table thead th:first-child {
+  border-top-left-radius: 18px;
+}
+
+.selattendance-punch-table thead th:last-child {
+  border-top-right-radius: 18px;
 }
 
 .selattendance-punch-table th,
@@ -242,6 +392,10 @@ body {
   border-bottom: 1px solid rgba(115, 144, 202, 0.12);
   text-align: left;
   vertical-align: top;
+}
+
+.selattendance-punch-table tbody td {
+  background: rgba(11, 18, 34, 0.2);
 }
 
 .selattendance-punch-row {
@@ -390,13 +544,41 @@ body {
 
 .selattendance-master-list-panel,
 .selattendance-master-detail-panel,
-.selattendance-punch-list-panel,
 .selattendance-punch-detail-panel,
-.selattendance-daily-list-panel,
 .selattendance-daily-detail-panel {
   height: 100%;
   min-height: 0;
   overflow: auto;
+}
+
+.selattendance-punch-list-panel,
+.selattendance-daily-list-panel {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+}
+
+.selattendance-punch-list-panel .selattendance-punch-pagination,
+.selattendance-daily-list-panel .selattendance-punch-pagination {
+  align-self: end;
+}
+
+@media (max-width: 1280px) {
+  .selattendance-punch-pagination {
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .selattendance-punch-pagination-size,
+  .selattendance-punch-pagination-jump-field {
+    min-width: 128px;
+  }
+
+  .selattendance-punch-pagination-pages {
+    gap: 8px;
+  }
 }
 
 .selattendance-punch-raw {
@@ -538,18 +720,6 @@ body {
   min-height: 100%;
 }
 
-.selattendance-table-shell {
-  overflow: auto;
-  border-radius: 22px;
-  border: 1px solid rgba(112, 141, 194, 0.36);
-  background: rgba(20, 28, 42, 0.96);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
-}
-
-.selattendance-wide-table {
-  min-width: 820px;
-}
-
 .selattendance-filter-row {
   margin-bottom: 18px;
 }
@@ -576,99 +746,6 @@ body {
   flex: 0 0 auto;
 }
 
-.selattendance-data-panel .seladmin-table th,
-.selattendance-data-panel .seladmin-table td {
-  white-space: nowrap;
-  border-bottom: 1px solid rgba(112, 141, 194, 0.28);
-  border-right: 1px solid rgba(112, 141, 194, 0.22);
-  background: rgba(18, 26, 40, 0.98);
-}
-
-.selattendance-data-panel .seladmin-table td:nth-child(2),
-.selattendance-data-panel .seladmin-table th:nth-child(2) {
-  white-space: normal;
-  min-width: 140px;
-}
-
-.selattendance-data-panel .seladmin-table th:last-child,
-.selattendance-data-panel .seladmin-table td:last-child {
-  border-right: 0;
-}
-
-.selattendance-data-panel .seladmin-table thead th {
-  background: rgba(34, 44, 62, 0.98);
-  box-shadow: inset 0 -1px 0 rgba(112, 141, 194, 0.34);
-}
-
-.selattendance-data-panel .seladmin-table tbody tr:nth-child(even) td {
-  background: rgba(24, 32, 47, 0.98);
-}
-
-.selattendance-data-panel .seladmin-table tbody tr {
-  cursor: pointer;
-  transition: background 160ms ease, box-shadow 160ms ease;
-}
-
-.selattendance-data-panel .seladmin-table tbody tr:hover td {
-  background: rgba(40, 58, 88, 0.96);
-}
-
-.selattendance-data-panel .seladmin-table tbody tr.selattendance-table-row-active td {
-  background: rgba(66, 98, 148, 0.94);
-  box-shadow: inset 0 1px 0 rgba(173, 201, 246, 0.12), inset 0 -1px 0 rgba(173, 201, 246, 0.12);
-}
-
-.selattendance-data-panel .seladmin-table tbody tr.selattendance-table-row-active:hover td {
-  background: rgba(74, 110, 166, 0.96);
-}
-
-[data-selattendance-theme='liquid-glass'] .selattendance-table-shell {
-  border-color: rgba(172, 196, 236, 0.5);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.74) 0%, rgba(241, 247, 255, 0.62) 100%),
-    rgba(227, 237, 249, 0.72);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.76),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.24);
-}
-
-[data-selattendance-theme='liquid-glass'] .selattendance-data-panel .seladmin-table {
-  color: rgba(58, 70, 96, 0.96);
-}
-
-[data-selattendance-theme='liquid-glass'] .selattendance-data-panel .seladmin-table th,
-[data-selattendance-theme='liquid-glass'] .selattendance-data-panel .seladmin-table td {
-  border-bottom-color: rgba(166, 185, 220, 0.56);
-  border-right-color: rgba(182, 199, 229, 0.46);
-  background: rgba(237, 243, 251, 0.76);
-  color: rgba(71, 82, 106, 0.96);
-}
-
-[data-selattendance-theme='liquid-glass'] .selattendance-data-panel .seladmin-table thead th {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.86) 0%, rgba(231, 239, 249, 0.72) 100%),
-    rgba(222, 232, 246, 0.84);
-  color: rgba(84, 94, 118, 0.98);
-  box-shadow: inset 0 -1px 0 rgba(174, 193, 225, 0.52);
-}
-
-[data-selattendance-theme='liquid-glass'] .selattendance-data-panel .seladmin-table tbody tr:nth-child(even) td {
-  background: rgba(228, 236, 247, 0.82);
-}
-
-[data-selattendance-theme='liquid-glass'] .selattendance-data-panel .seladmin-table tbody tr:hover td {
-  background: rgba(213, 226, 243, 0.9);
-}
-
-[data-selattendance-theme='liquid-glass'] .selattendance-data-panel .seladmin-table tbody tr.selattendance-table-row-active td {
-  background: rgba(199, 216, 239, 0.96);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58), inset 0 -1px 0 rgba(168, 188, 221, 0.34);
-}
-
-[data-selattendance-theme='liquid-glass'] .selattendance-data-panel .seladmin-table tbody tr.selattendance-table-row-active:hover td {
-  background: rgba(190, 210, 236, 0.98);
-}
-
 [data-selattendance-theme='liquid-glass'] .selattendance-context-strip {
   border-color: rgba(170, 190, 225, 0.46);
   background:
@@ -678,14 +755,6 @@ body {
 
 [data-selattendance-theme='liquid-glass'] .selattendance-context-strip span {
   color: rgba(84, 96, 122, 0.92);
-}
-
-[data-selattendance-theme='liquid-glass'] .selattendance-data-panel .seladmin-table td small {
-  color: rgba(96, 109, 136, 0.82);
-}
-
-[data-selattendance-theme='liquid-glass'] .selattendance-data-panel .seladmin-table .seladmin-warning-text {
-  color: rgba(178, 112, 55, 0.96);
 }
 
 .selattendance-content .seladmin-action-row {

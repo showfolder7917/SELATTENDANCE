@@ -38,6 +38,7 @@ const {
   filteredDepartments,
   currentDepartmentWorkplaceName,
   filteredEmployees,
+  showToast,
   submitTenant,
   submitWorkplace,
   removeWorkplace,
@@ -554,6 +555,7 @@ onBeforeUnmount(() => {
               :on-bind-employee="submitPunchBind"
               :on-ignore-log="submitPunchIgnore"
               :on-reprocess-log="submitPunchReprocess"
+              :on-show-toast="showToast"
             />
 
             <DailySection
@@ -568,6 +570,7 @@ onBeforeUnmount(() => {
               :on-select-daily="openDailyDetail"
               :on-recalculate-daily="submitDailyRecalculate"
               :on-recalculate-range="submitDailyRangeRecalculate"
+              :on-show-toast="showToast"
             />
           </div>
         </main>

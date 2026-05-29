@@ -1,5 +1,7 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
+import SharedDataTable from '../../../shared/components/SharedDataTable.vue'
+import SharedMiniSelect from '../../../shared/components/SharedMiniSelect.vue'
 import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
 import { attendanceDailyLayoutPreset } from '../constants/workbenchLayoutPresets'
 
@@ -14,11 +16,15 @@ const props = defineProps({
   onRefresh: { type: Function, required: true },
   onSelectDaily: { type: Function, required: true },
   onRecalculateDaily: { type: Function, required: true },
-  onRecalculateRange: { type: Function, required: true }
+  onRecalculateRange: { type: Function, required: true },
+  onShowToast: { type: Function, required: true }
 })
 
 // 固定每页条数档位，保证第四阶段前端分页值与后端数据库分页口径完全一致。
 const pageSizeOptions = [20, 50, 100, 200]
+
+// 跳页输入框单独保留本地值，允许用户先编辑再点击加载。
+const pageJumpInput = ref('')
 
 // 当前页优先使用后端回传页码，避免前端自行换算导致分页状态漂移。
 const currentPage = computed(() => Number(props.dailyList.page || props.dailyFilters.page || 1))
@@ -38,6 +44,68 @@ const isPrevDisabled = computed(() => currentPage.value <= 1)
 
 // 下一页按钮在最后一页时禁用，避免请求不存在的页码。
 const isNextDisabled = computed(() => currentPage.value >= totalPages.value)
+
+// 最后一页按钮在已经位于最后一页时禁用，避免重复请求同一页。
+const isLastDisabled = computed(() => currentPage.value >= totalPages.value)
+
+// 生成底部分页条要显示的页码片段，兼顾首页、当前页附近和最后一页。
+const pageItems = computed(() => {
+  const total = totalPages.value
+  const current = currentPage.value
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, index) => ({ type: 'page', value: index + 1 }))
+  }
+
+  const items = [{ type: 'page', value: 1 }]
+  let start = Math.max(2, current - 1)
+  let end = Math.min(total - 1, current + 1)
+
+  // 当前页靠前时多显示前几页，减少过早出现的省略号。
+  if (current <= 4) {
+    start = 2
+    end = 5
+  }
+
+  // 当前页接近末尾时多显示最后几页，让尾部翻页更直观。
+  if (current >= total - 3) {
+    start = total - 4
+    end = total - 1
+  }
+
+  if (start > 2) {
+    items.push({ type: 'ellipsis', key: 'leading' })
+  }
+
+  for (let page = start; page <= end; page += 1) {
+    items.push({ type: 'page', value: page })
+  }
+
+  if (end < total - 1) {
+    items.push({ type: 'ellipsis', key: 'trailing' })
+  }
+
+  items.push({ type: 'page', value: total })
+  return items
+})
+
+// 日次结果页继续保留当前列顺序和状态翻译，只把表格外壳收口到共享组件。
+const dailyColumns = computed(() => [
+  { key: 'employeeName', label: props.t('employeeName'), minWidth: '160px' },
+  { key: 'workDate', label: props.t('dailyWorkDate'), minWidth: '118px' },
+  { key: 'scheduleLabel', label: props.t('dailyScheduleLabel'), wrap: true, minWidth: '220px' },
+  { key: 'actualClockIn', label: props.t('dailyActualClockIn'), minWidth: '148px' },
+  { key: 'actualClockOut', label: props.t('dailyActualClockOut'), minWidth: '148px' },
+  { key: 'status', label: props.t('status'), minWidth: '120px' }
+])
+
+// 当前页变化后同步输入框，让用户看到的跳页值始终跟当前实际页一致。
+watch(
+  () => currentPage.value,
+  (nextPage) => {
+    pageJumpInput.value = String(nextPage)
+  },
+  { immediate: true }
+)
 
 // 把后端状态码翻译成当前语言的第四阶段业务状态名称。
 function translateDailyStatus(status) {
@@ -78,10 +146,43 @@ function goNextPage() {
   props.dailyFilters.page = currentPage.value + 1
 }
 
+// 点击最后一页时直接跳到总页数，方便长列表快速收尾定位。
+function goLastPage() {
+  if (isLastDisabled.value) return
+  props.dailyFilters.page = totalPages.value
+}
+
 // 切换每页条数时同步回到第 1 页，避免旧页码在新页大小下跳空。
-function handlePageSizeChange(event) {
-  props.dailyFilters.pageSize = Number(event.target.value)
+function handlePageSizeChange(nextPageSize) {
+  props.dailyFilters.pageSize = Number(nextPageSize)
   props.dailyFilters.page = 1
+}
+
+// 直接点击页码时只切到目标页，避免重复请求当前页。
+function goToPage(page) {
+  if (page === currentPage.value) return
+  props.dailyFilters.page = page
+}
+
+// 点击加载时校验输入页码是否合法，错误时用页面级 toast 直接提示用户。
+function submitPageJump() {
+  const rawValue = String(pageJumpInput.value || '').trim()
+  if (!/^\d+$/.test(rawValue)) {
+    props.onShowToast(
+      props.t('dailyPageInvalid').replace('{totalPages}', String(totalPages.value))
+    )
+    return
+  }
+
+  const targetPage = Number(rawValue)
+  if (targetPage < 1 || targetPage > totalPages.value) {
+    props.onShowToast(
+      props.t('dailyPageOutOfRange').replace('{totalPages}', String(totalPages.value))
+    )
+    return
+  }
+
+  goToPage(targetPage)
 }
 </script>
 
@@ -173,60 +274,85 @@ function handlePageSizeChange(event) {
           </label>
         </div>
 
-        <div class="selattendance-punch-list-shell">
-          <table class="selattendance-punch-table">
-            <thead>
-              <tr>
-                <th>{{ t('employeeName') }}</th>
-                <th>{{ t('dailyWorkDate') }}</th>
-                <th>{{ t('dailyScheduleLabel') }}</th>
-                <th>{{ t('dailyActualClockIn') }}</th>
-                <th>{{ t('dailyActualClockOut') }}</th>
-                <th>{{ t('status') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="item in dailyList.items"
-                :key="item.id"
-                class="selattendance-punch-row"
-                :class="{ active: dailyDetail?.id === item.id }"
-                @click="onSelectDaily(item)"
-              >
-                <td>
-                  <strong>{{ item.employeeName }}</strong>
-                  <small>{{ item.employeeNo }} / {{ item.departmentName }}</small>
-                </td>
-                <td>{{ item.workDate }}</td>
-                <td>{{ item.scheduleLabel || '-' }}</td>
-                <td>{{ formatDateTime(item.actualClockIn) }}</td>
-                <td>{{ formatDateTime(item.actualClockOut) }}</td>
-                <td>
-                  <span class="selattendance-punch-status" :class="`status-${(item.status || '').toLowerCase()}`">
-                    {{ translateDailyStatus(item.status) }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="selattendance-punch-pagination">
-          <label class="seladmin-field selattendance-punch-pagination-size">
-            <span>{{ t('dailyPageSize') }}</span>
-            <select :value="String(dailyFilters.pageSize || 20)" @change="handlePageSizeChange">
-              <option v-for="size in pageSizeOptions" :key="size" :value="String(size)">{{ size }}</option>
-            </select>
-          </label>
-          <div class="selattendance-punch-pagination-meta">
-            <small>{{ t('dailyPaginationSummary').replace('{total}', String(dailyList.total || 0)) }}</small>
-            <small>{{ t('dailyPaginationCurrent').replace('{page}', String(currentPage)).replace('{totalPages}', String(totalPages)) }}</small>
-          </div>
-          <div class="selattendance-punch-pagination-actions">
-            <button class="seladmin-button seladmin-button-secondary" type="button" :disabled="isPrevDisabled" @click="goPrevPage()">{{ t('dailyPrevPage') }}</button>
-            <button class="seladmin-button seladmin-button-secondary" type="button" :disabled="isNextDisabled" @click="goNextPage()">{{ t('dailyNextPage') }}</button>
-          </div>
-        </div>
+        <SharedDataTable
+          class="selattendance-punch-list-shell"
+          variant="list"
+          sticky-header
+          clickable-rows
+          :show-pagination="totalPages > 1"
+          :columns="dailyColumns"
+          :rows="dailyList.items || []"
+          row-key="id"
+          :active-row-key="dailyDetail?.id || null"
+          min-table-width="980px"
+          :empty-text="t('emptyData')"
+          @row-click="onSelectDaily"
+        >
+          <template #cell-employeeName="{ row }">
+            <strong>{{ row.employeeName }}</strong>
+            <small>{{ row.employeeNo }} / {{ row.departmentName }}</small>
+          </template>
+          <template #cell-scheduleLabel="{ row }">
+            {{ row.scheduleLabel || '-' }}
+          </template>
+          <template #cell-actualClockIn="{ row }">
+            {{ formatDateTime(row.actualClockIn) }}
+          </template>
+          <template #cell-actualClockOut="{ row }">
+            {{ formatDateTime(row.actualClockOut) }}
+          </template>
+          <template #cell-status="{ row }">
+            <span class="selattendance-punch-status" :class="`status-${(row.status || '').toLowerCase()}`">
+              {{ translateDailyStatus(row.status) }}
+            </span>
+          </template>
+          <template #pagination>
+            <div class="selattendance-punch-pagination">
+              <label class="selattendance-punch-pagination-size">
+                <span>{{ t('dailyPageSize') }}</span>
+                <SharedMiniSelect
+                  :model-value="String(dailyFilters.pageSize || 20)"
+                  :options="pageSizeOptions.map((size) => ({ value: String(size), label: String(size) }))"
+                  :aria-label="t('dailyPageSize')"
+                  @change="handlePageSizeChange"
+                />
+              </label>
+              <div class="selattendance-punch-pagination-pages" :aria-label="t('dailyPaginationNav')">
+                <button class="seladmin-button seladmin-button-secondary" type="button" :disabled="isPrevDisabled" @click="goPrevPage()">{{ t('dailyPrevPage') }}</button>
+                <template v-for="item in pageItems" :key="item.type === 'page' ? `page-${item.value}` : item.key">
+                  <button
+                    v-if="item.type === 'page'"
+                    class="selattendance-pagination-number"
+                    :class="{ active: item.value === currentPage }"
+                    type="button"
+                    @click="goToPage(item.value)"
+                  >
+                    {{ item.value }}
+                  </button>
+                  <span v-else class="selattendance-pagination-ellipsis">...</span>
+                </template>
+                <button class="selattendance-pagination-tail" type="button" :disabled="isLastDisabled" @click="goLastPage()">{{ t('dailyLastPage') }}</button>
+                <button class="seladmin-button seladmin-button-secondary" type="button" :disabled="isNextDisabled" @click="goNextPage()">{{ t('dailyNextPage') }}</button>
+              </div>
+              <div class="selattendance-punch-pagination-jump">
+                <label class="selattendance-punch-pagination-jump-field">
+                  <span>{{ t('dailyPageJumpPrefix') }}</span>
+                  <input
+                    v-model="pageJumpInput"
+                    inputmode="numeric"
+                    :placeholder="t('dailyPageJumpPlaceholder').replace('{totalPages}', String(totalPages))"
+                    @keydown.enter.prevent="submitPageJump()"
+                  />
+                  <span>{{ t('dailyPageJumpSuffix') }}</span>
+                </label>
+                <button class="seladmin-button seladmin-button-primary" type="button" @click="submitPageJump()">{{ t('dailyPageJumpSubmit') }}</button>
+              </div>
+              <div class="selattendance-punch-pagination-meta">
+                <small>{{ t('dailyPaginationSummary').replace('{total}', String(dailyList.total || 0)) }}</small>
+              </div>
+            </div>
+          </template>
+        </SharedDataTable>
       </article>
     </template>
 
