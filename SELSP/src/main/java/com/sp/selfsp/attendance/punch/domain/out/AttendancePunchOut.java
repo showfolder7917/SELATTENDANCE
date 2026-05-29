@@ -6,17 +6,14 @@ import java.util.List;
 /**
  * 第三阶段打卡模块输出对象集合。
  */
-// 定义 打卡输出集合，承接当前文件对应的业务职责。
 public final class AttendancePunchOut {
 
-    // 定义 打卡输出集合 处理入口，承接当前业务动作。
     private AttendancePunchOut() {
     }
 
     /**
      * 打卡列表输出。
      */
-    // 定义 打卡记录列表Out，承接当前文件对应的业务职责。
     public static class PunchLogListOut {
 
         // 列表项用于渲染当前页打卡记录。
@@ -84,7 +81,6 @@ public final class AttendancePunchOut {
     /**
      * 打卡列表项输出。
      */
-    // 定义 打卡记录项Out，承接当前文件对应的业务职责。
     public static class PunchLogItemOut {
 
         private Long id;
@@ -218,7 +214,6 @@ public final class AttendancePunchOut {
     /**
      * 打卡详情输出。
      */
-    // 定义 打卡详情Out，承接当前文件对应的业务职责。
     public static class PunchLogDetailOut extends PunchLogItemOut {
 
         private String ignoredReason;
@@ -262,7 +257,6 @@ public final class AttendancePunchOut {
     /**
      * 打卡汇总输出。
      */
-    // 定义 打卡汇总Out，承接当前文件对应的业务职责。
     public static class PunchSummaryOut {
 
         private Integer processed;
@@ -315,7 +309,6 @@ public final class AttendancePunchOut {
     /**
      * 手动补录返回。
      */
-    // 定义 手动打卡结果Out，承接当前文件对应的业务职责。
     public static class PunchManualResultOut {
 
         private Long id;
@@ -350,7 +343,6 @@ public final class AttendancePunchOut {
     /**
      * CSV 预览返回。
      */
-    // 定义 打卡导入预览Out，承接当前文件对应的业务职责。
     public static class PunchImportPreviewOut {
 
         private List<PunchPreviewRowOut> previewRows;
@@ -376,7 +368,6 @@ public final class AttendancePunchOut {
     /**
      * CSV 预览行。
      */
-    // 定义 打卡预览行Out，承接当前文件对应的业务职责。
     public static class PunchPreviewRowOut {
 
         private Integer rowNumber;
@@ -447,7 +438,6 @@ public final class AttendancePunchOut {
     /**
      * CSV 预览汇总。
      */
-    // 定义 打卡预览汇总Out，承接当前文件对应的业务职责。
     public static class PunchImportPreviewSummaryOut {
 
         private Integer totalCount;
@@ -491,7 +481,6 @@ public final class AttendancePunchOut {
     /**
      * CSV 导入结果。
      */
-    // 定义 打卡导入结果Out，承接当前文件对应的业务职责。
     public static class PunchImportResultOut {
 
         private Long batchId;

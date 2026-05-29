@@ -58,7 +58,7 @@ public class AttendanceShiftTemplateServiceBoundaryTest {
     }
 
     /**
-     * 辅助目的：为shiftTemplateSaveIn提供测试支撑。
+     * 测试辅助目的：构造班次模板保存入参，统一复用模板新增和推荐模板测试。
      */
     private AttendanceIn.ShiftTemplateSaveIn shiftTemplateSaveIn(
         String code,

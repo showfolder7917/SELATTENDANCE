@@ -45,7 +45,7 @@ public class AttendanceEmployeeRegressionTest extends AttendanceServiceIntegrati
     }
 
     /**
-     * 辅助目的：为employeeSaveIn提供测试支撑。
+     * 测试辅助目的：构造员工保存入参，便于回归测试快速生成可重复更新的员工数据。
      */
     private AttendanceIn.EmployeeSaveIn employeeSaveIn(String employeeNo, String employeeName, String employmentType, LocalDate hireDate) {
         AttendanceIn.EmployeeSaveIn saveIn = new AttendanceIn.EmployeeSaveIn();

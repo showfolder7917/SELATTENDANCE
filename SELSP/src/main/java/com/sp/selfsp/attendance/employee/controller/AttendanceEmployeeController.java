@@ -15,97 +15,67 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-// 把当前类注册为 Spring REST 控制器，负责对外暴露考勤接口。
 @RestController
-// 给当前控制器绑定统一接口前缀，便于前端按模块访问。
 @RequestMapping("/api/attendance/employees")
-// 定义 考勤员工控制器，承接当前文件对应的业务职责。
 public class AttendanceEmployeeController {
 
-    // 声明 考勤员工服务 字段，用来保存当前业务状态或依赖。
     private final AttendanceEmployeeService attendanceEmployeeService;
 
-    // 定义 考勤员工控制器 接口入口，负责接收前端请求并转发到业务服务。
     public AttendanceEmployeeController(AttendanceEmployeeService attendanceEmployeeService) {
-        // 把外部传入结果写入 考勤员工服务 字段，供后续流程继续使用。
         this.attendanceEmployeeService = attendanceEmployeeService;
     }
 
-    // 把当前方法暴露为查询接口，供前端读取业务数据。
     @GetMapping
-    // 定义 listEmployees 接口入口，负责接收前端请求并转发到业务服务。
     public CommonResponse<List<AttendanceOut.EmployeeOut>> listEmployees(
-        // 声明 RequestParam 注解，让当前代码接入既定框架能力。
         @RequestParam(required = false) String keyword,
-        // 声明 RequestParam 注解，让当前代码接入既定框架能力。
         @RequestParam(required = false) Long departmentId,
-        // 声明 RequestParam 注解，让当前代码接入既定框架能力。
         @RequestParam(required = false) String employmentType,
-        // 声明 RequestParam 注解，让当前代码接入既定框架能力。
         @RequestParam(required = false) String status
-    // 执行当前业务步骤，推进本行对应的 控制器 处理。
     ) {
-        // 执行当前业务步骤，推进本行对应的 控制器 处理。
+        // 查询条件先组装成统一入参对象，后续服务层才能复用同一套筛选逻辑。
         AttendanceIn.EmployeeQueryIn queryIn = new AttendanceIn.EmployeeQueryIn();
-        // 执行当前业务步骤，推进本行对应的 控制器 处理。
         queryIn.setKeyword(keyword);
-        // 执行当前业务步骤，推进本行对应的 控制器 处理。
         queryIn.setDepartmentId(departmentId);
-        // 执行当前业务步骤，推进本行对应的 控制器 处理。
         queryIn.setEmploymentType(employmentType);
-        // 执行当前业务步骤，推进本行对应的 控制器 处理。
         queryIn.setStatus(status);
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // 列表结果统一包进标准响应壳，供前端员工列表页直接消费。
         return CommonResponse.success(attendanceEmployeeService.listEmployees(queryIn));
     }
 
-    // 把当前方法暴露为新增接口，供前端提交新数据。
     @PostMapping
-    // 定义 新增员工 接口入口，负责接收前端请求并转发到业务服务。
     public CommonResponse<AttendanceOut.EmployeeOut> createEmployee(@RequestBody AttendanceIn.EmployeeSaveIn saveIn) {
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // 新增员工时直接把表单入参交给服务层做校验、归一化和持久化。
         return CommonResponse.success(attendanceEmployeeService.createEmployee(saveIn));
     }
 
-    // 把当前方法暴露为更新接口，供前端保存修改结果。
     @PutMapping("/{id}")
-    // 定义 更新员工 接口入口，负责接收前端请求并转发到业务服务。
     public CommonResponse<AttendanceOut.EmployeeOut> updateEmployee(@PathVariable Long id, @RequestBody AttendanceIn.EmployeeSaveIn saveIn) {
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // 更新接口使用路径 id 锁定目标员工，避免只靠请求体导致误更新。
         return CommonResponse.success(attendanceEmployeeService.updateEmployee(id, saveIn));
     }
 
-    // 把当前方法暴露为删除接口，供前端移除业务数据。
     @DeleteMapping("/{id}")
-    // 定义 删除员工 接口入口，负责接收前端请求并转发到业务服务。
     public CommonResponse<Void> deleteEmployee(@PathVariable Long id) {
-        // 执行当前业务步骤，推进本行对应的 控制器 处理。
+        // 删除前的引用校验和清理动作全部在服务层执行，控制器只负责触发。
         attendanceEmployeeService.deleteEmployee(id);
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
         return CommonResponse.success(null);
     }
 
-    // 把当前方法暴露为更新接口，供前端保存修改结果。
     @PutMapping("/{id}/external-mapping")
-    // 定义 绑定外部系统映射 接口入口，负责接收前端请求并转发到业务服务。
     public CommonResponse<AttendanceOut.EmployeeOut> bindExternalMapping(@PathVariable Long id, @RequestBody AttendanceIn.ExternalMappingSaveIn saveIn) {
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // 外部打卡映射单独拆接口，便于页面在员工详情里单独维护第三方绑定信息。
         return CommonResponse.success(attendanceEmployeeService.bindExternalMapping(id, saveIn));
     }
 
-    // 把当前方法暴露为新增接口，供前端提交新数据。
     @PostMapping("/import")
-    // 定义 导入Employees 接口入口，负责接收前端请求并转发到业务服务。
     public CommonResponse<AttendanceOut.EmployeeImportResultOut> importEmployees(@RequestBody AttendanceIn.EmployeeImportIn saveIn) {
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // CSV 导入返回成功数、失败数和错误行，供前端直接展示导入结果弹窗。
         return CommonResponse.success(attendanceEmployeeService.importEmployees(saveIn));
     }
 
-    // 把当前方法暴露为查询接口，供前端读取业务数据。
     @GetMapping("/export")
-    // 定义 导出Employees 接口入口，负责接收前端请求并转发到业务服务。
     public CommonResponse<AttendanceOut.CsvExportOut> exportEmployees() {
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // 导出接口返回文件名和 CSV 文本，前端可以直接组装下载文件。
         return CommonResponse.success(attendanceEmployeeService.exportEmployees());
     }
 }

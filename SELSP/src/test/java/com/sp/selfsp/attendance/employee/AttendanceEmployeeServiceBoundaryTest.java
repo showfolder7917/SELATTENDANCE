@@ -39,6 +39,7 @@ public class AttendanceEmployeeServiceBoundaryTest {
      */
     @Test
     void shouldCreateEmployeeWithWorkRuleAndRejectDuplicateEmployeeNo() {
+        // 先新增一个正常员工，确认服务层会同时落员工主表和默认工时规则。
         AttendanceOut.EmployeeOut employeeOut = attendanceEmployeeService.createEmployee(
             employeeSaveIn("E1001", "Service Employee", 1L, 1L)
         );
@@ -47,6 +48,7 @@ public class AttendanceEmployeeServiceBoundaryTest {
         assertEquals("E1001", employeeOut.getEmployeeNo());
         assertEquals(1, attendanceEmployeeDao.countWorkRuleByEmployeeId(1L, employeeOut.getId()));
 
+        // 再用相同员工编号提交第二次，验证租户内唯一编号约束会被触发。
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
             () -> attendanceEmployeeService.createEmployee(employeeSaveIn("E1001", "Duplicate Employee", 1L, 1L))
@@ -59,6 +61,7 @@ public class AttendanceEmployeeServiceBoundaryTest {
      */
     @Test
     void shouldInsertThenUpdateExternalMappingAndExportEmployees() {
+        // 先创建一个员工，再验证外部打卡映射从首次插入到后续更新的完整链路。
         AttendanceOut.EmployeeOut employeeOut = attendanceEmployeeService.createEmployee(
             employeeSaveIn("E1002", "Mapping Employee", 1L, 1L)
         );
@@ -76,6 +79,7 @@ public class AttendanceEmployeeServiceBoundaryTest {
         assertEquals("EXT-002", updated.getExternalEmployeeId());
         assertEquals("NO-002", updated.getExternalEmployeeNo());
 
+        // 导出时应把刚更新后的外部员工标识带进 CSV，保证外部映射能被运营侧复核。
         AttendanceOut.CsvExportOut exportOut = attendanceEmployeeService.exportEmployees();
         assertEquals("attendance-employees-phase1.csv", exportOut.getFileName());
         assertTrue(exportOut.getContent().contains("EXT-002"));
@@ -86,6 +90,7 @@ public class AttendanceEmployeeServiceBoundaryTest {
      */
     @Test
     void shouldImportEmployeesAndCollectErrorsForBadRows() {
+        // 同一批 CSV 同时放一条合法记录和一条坏记录，验证导入会按行累计成功与失败结果。
         String csvText = String.join("\n",
             "employeeNo,employeeName,employeeNameKana,employmentType,workplaceCode,departmentCode,hireDate,email,phone",
             "E1003,Import Success,Import Kana,FULL_TIME,TKY-HQ,ADMIN,2026-05-01,success@example.jp,090-3000-0000",
@@ -97,6 +102,7 @@ public class AttendanceEmployeeServiceBoundaryTest {
         assertEquals(1, resultOut.getFailedCount());
         assertTrue(resultOut.getErrors().get(0).contains("UNKNOWN"));
 
+        // 最终列表只应新增成功那一条员工，坏行不能污染主表。
         java.util.List<AttendanceOut.EmployeeOut> employees = attendanceEmployeeService.listEmployees(new AttendanceIn.EmployeeQueryIn());
         assertEquals(2, employees.size());
     }
@@ -130,10 +136,12 @@ public class AttendanceEmployeeServiceBoundaryTest {
      */
     @Test
     void shouldUpdateEmployeeInPlaceAndRewritePartTimeWorkRule() {
+        // 先创建一个全职员工，作为后续切换成兼职规则的目标数据。
         AttendanceIn.EmployeeSaveIn createIn = employeeSaveIn("E1006", "Mutable Employee", 1L, 1L);
         createIn.setHireDate(LocalDate.of(2026, 5, 1));
         AttendanceOut.EmployeeOut created = attendanceEmployeeService.createEmployee(createIn);
 
+        // 更新时把雇佣类型改成兼职并清空状态，验证服务层会重算规则并回填默认状态。
         AttendanceIn.EmployeeSaveIn updateIn = employeeSaveIn("E1006", "Part Time Employee", 1L, 1L);
         updateIn.setEmploymentType("PART_TIME");
         updateIn.setHireDate(null);
@@ -144,6 +152,7 @@ public class AttendanceEmployeeServiceBoundaryTest {
         assertEquals("PART_TIME", updated.getEmploymentType());
         assertEquals("ACTIVE", updated.getStatus());
 
+        // 直接查规则表，确认兼职员工的日工时、周工时和规则类型都被改写。
         Map<String, Object> workRule = jdbcTemplate.queryForMap(
             "SELECT work_rule_type, standard_daily_minutes, standard_weekly_minutes, effective_start_date FROM employee_work_rule WHERE tenant_id = 1 AND employee_id = ?",
             created.getId()
@@ -358,7 +367,7 @@ public class AttendanceEmployeeServiceBoundaryTest {
     }
 
     /**
-     * 辅助目的：为employeeSaveIn提供测试支撑。
+     * 测试辅助目的：构造员工保存入参，统一复用员工新增、更新和非法输入校验场景。
      */
     private AttendanceIn.EmployeeSaveIn employeeSaveIn(String employeeNo, String employeeName, Long workplaceId, Long departmentId) {
         AttendanceIn.EmployeeSaveIn saveIn = new AttendanceIn.EmployeeSaveIn();
@@ -371,7 +380,7 @@ public class AttendanceEmployeeServiceBoundaryTest {
     }
 
     /**
-     * 辅助目的：为externalMappingSaveIn提供测试支撑。
+     * 测试辅助目的：构造外部打卡映射入参，统一覆盖新增映射、更新映射和非法映射校验。
      */
     private AttendanceIn.ExternalMappingSaveIn externalMappingSaveIn(String sourceSystem, String externalEmployeeId, String externalEmployeeNo, String status) {
         AttendanceIn.ExternalMappingSaveIn saveIn = new AttendanceIn.ExternalMappingSaveIn();
@@ -383,7 +392,7 @@ public class AttendanceEmployeeServiceBoundaryTest {
     }
 
     /**
-     * 辅助目的：为employeeImportIn提供测试支撑。
+     * 测试辅助目的：构造员工导入请求体，便于在导入测试里直接塞入整段 CSV 文本。
      */
     private AttendanceIn.EmployeeImportIn employeeImportIn(String csvText) {
         AttendanceIn.EmployeeImportIn saveIn = new AttendanceIn.EmployeeImportIn();
@@ -392,7 +401,7 @@ public class AttendanceEmployeeServiceBoundaryTest {
     }
 
     /**
-     * 辅助目的：为invokeEmployeePrivate提供测试支撑。
+     * 测试辅助目的：通过反射调用私有方法，补齐难以从公开接口覆盖到的分支验证。
      */
     private Object invokeEmployeePrivate(String methodName, Class<?>[] parameterTypes, Object... args) {
         try {

@@ -14,14 +14,14 @@ public abstract class AttendanceControllerIntegrationSupport extends AttendanceI
     protected static final MediaType JSON = MediaType.APPLICATION_JSON;
 
     /**
-     * 辅助目的：为writeJson提供测试支撑。
+     * 测试辅助目的：把请求对象序列化成 JSON 文本，供控制器测试直接提交请求体。
      */
     protected String writeJson(Object body) throws Exception {
         return objectMapper.writeValueAsString(body);
     }
 
     /**
-     * 辅助目的：为readData提供测试支撑。
+     * 测试辅助目的：从统一响应壳中解析 data 节点，便于控制器测试直接断言业务数据。
      */
     protected JsonNode readData(MvcResult mvcResult) throws Exception {
         JsonNode response = objectMapper.readTree(mvcResult.getResponse().getContentAsString());

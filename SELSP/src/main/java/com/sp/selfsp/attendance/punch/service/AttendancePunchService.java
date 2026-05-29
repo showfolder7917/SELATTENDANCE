@@ -6,7 +6,6 @@ import com.sp.selfsp.attendance.punch.domain.out.AttendancePunchOut;
 /**
  * 第三阶段打卡服务接口。
  */
-// 定义 考勤打卡服务，承接当前文件对应的业务职责。
 public interface AttendancePunchService {
 
     // 读取打卡记录列表，供第三阶段打卡页面首屏加载。

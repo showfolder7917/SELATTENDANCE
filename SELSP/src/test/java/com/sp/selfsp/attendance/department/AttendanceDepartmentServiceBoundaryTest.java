@@ -62,7 +62,7 @@ public class AttendanceDepartmentServiceBoundaryTest {
     }
 
     /**
-     * 辅助目的：为departmentSaveIn提供测试支撑。
+     * 测试辅助目的：构造部门保存入参，统一复用部门新增、更新和删除前置场景。
      */
     private AttendanceIn.DepartmentSaveIn departmentSaveIn(Long workplaceId, String code, String name, Integer sortOrder, String status) {
         AttendanceIn.DepartmentSaveIn saveIn = new AttendanceIn.DepartmentSaveIn();

@@ -3,17 +3,14 @@ package com.sp.selfsp.attendance.daily.domain.in;
 /**
  * 第四阶段日次勤怠输入对象集合。
  */
-// 定义 日次勤怠输入集合，承接当前文件对应的业务职责。
 public final class AttendanceDailyIn {
 
-    // 定义 日次勤怠输入集合 处理入口，承接当前业务动作。
     private AttendanceDailyIn() {
     }
 
     /**
      * 日次列表查询入参。
      */
-    // 定义 日次列表查询In，承接当前文件对应的业务职责。
     public static class DailyQueryIn {
 
         // 开始日期用于圈定本次要查看和自动补算的日次范围。
@@ -111,7 +108,6 @@ public final class AttendanceDailyIn {
     /**
      * 单日重算入参。
      */
-    // 定义 单日重算In，承接当前文件对应的业务职责。
     public static class DailyRecalculateIn {
 
         // 员工主键用于定位要重算哪位员工。
@@ -139,7 +135,6 @@ public final class AttendanceDailyIn {
     /**
      * 范围重算入参。
      */
-    // 定义 范围重算In，承接当前文件对应的业务职责。
     public static class DailyRecalculateRangeIn {
 
         // 开始日期用于定义本次批量重算起点。

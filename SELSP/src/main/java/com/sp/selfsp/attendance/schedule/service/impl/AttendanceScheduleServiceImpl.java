@@ -31,33 +31,23 @@ import org.springframework.util.StringUtils;
 /**
  * 第二阶段排班服务实现。
  */
-// 把当前类注册为服务实现，负责承接业务编排。
 @Service
-// 定义 考勤排班服务Impl，承接当前文件对应的业务职责。
 public class AttendanceScheduleServiceImpl implements AttendanceScheduleService {
 
     // 日期格式统一使用年月字符串，保证前后端 month 参数稳定。
-    // 声明 年月格式化器 字段，用来保存当前业务状态或依赖。
     private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM", Locale.ROOT);
 
-    // 声明 考勤员工数据访问 字段，用来保存当前业务状态或依赖。
     private final AttendanceEmployeeDao attendanceEmployeeDao;
-    // 声明 考勤班次模板数据访问 字段，用来保存当前业务状态或依赖。
     private final AttendanceShiftTemplateDao attendanceShiftTemplateDao;
-    // 声明 考勤排班数据访问 字段，用来保存当前业务状态或依赖。
     private final AttendanceScheduleDao attendanceScheduleDao;
 
-    // 定义 考勤排班服务Impl 业务动作，负责承接当前模块的处理流程。
     public AttendanceScheduleServiceImpl(
         AttendanceEmployeeDao attendanceEmployeeDao,
         AttendanceShiftTemplateDao attendanceShiftTemplateDao,
         AttendanceScheduleDao attendanceScheduleDao
     ) {
-        // 把外部传入结果写入 考勤员工数据访问 字段，供后续流程继续使用。
         this.attendanceEmployeeDao = attendanceEmployeeDao;
-        // 把外部传入结果写入 考勤班次模板数据访问 字段，供后续流程继续使用。
         this.attendanceShiftTemplateDao = attendanceShiftTemplateDao;
-        // 把外部传入结果写入 考勤排班数据访问 字段，供后续流程继续使用。
         this.attendanceScheduleDao = attendanceScheduleDao;
     }
 
@@ -389,7 +379,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         return exportOut;
     }
 
-    // 定义 copy排班 业务动作，负责承接当前模块的处理流程。
     private AttendanceScheduleOut.ScheduleBatchResultOut copySchedules(AttendanceScheduleIn.ScheduleCopyIn saveIn, int minusDays, String message) {
         validateCopyIn(saveIn);
         List<Long> employeeIds = distinctEmployeeIds(saveIn.getEmployeeIds());
@@ -410,7 +399,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         return applyCopiedSchedules(employeeIds, targetDates, sourceIndex, Boolean.TRUE.equals(saveIn.getOverwriteExisting()), message);
     }
 
-    // 定义 copy上月排班 业务动作，负责承接当前模块的处理流程。
     private AttendanceScheduleOut.ScheduleBatchResultOut copySchedulesByMonth(AttendanceScheduleIn.ScheduleCopyIn saveIn) {
         validateCopyIn(saveIn);
         List<Long> employeeIds = distinctEmployeeIds(saveIn.getEmployeeIds());
@@ -432,7 +420,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         return applyCopiedSchedules(employeeIds, targetDates, sourceIndex, Boolean.TRUE.equals(saveIn.getOverwriteExisting()), "已复制上月排班");
     }
 
-    // 定义 apply复制排班 业务动作，负责承接当前模块的处理流程。
     private AttendanceScheduleOut.ScheduleBatchResultOut applyCopiedSchedules(
         List<Long> employeeIds,
         List<LocalDate> targetDates,
@@ -498,7 +485,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         return resultOut;
     }
 
-    // 定义 rebuild复制后的结束时间 业务动作，负责承接当前模块的处理流程。
     private LocalDateTime rebuildCopiedEndTime(LocalDate targetDate, AttendanceScheduleOut.ScheduleItemOut sourceItem) {
         if (sourceItem.getScheduledEndTime() == null) {
             return null;
@@ -510,7 +496,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         return LocalDateTime.of(copiedDate, sourceItem.getScheduledEndTime().toLocalTime());
     }
 
-    // 定义 list排班员工 业务动作，负责承接当前模块的处理流程。
     private List<AttendanceOut.EmployeeOut> listScheduleEmployees(AttendanceScheduleIn.ScheduleBoardQueryIn queryIn) {
         // 先把排班看板筛选转换成现有员工查询对象，尽量复用第一阶段员工查询能力。
         AttendanceIn.EmployeeQueryIn employeeQueryIn = new AttendanceIn.EmployeeQueryIn();
@@ -527,7 +512,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
             .toList();
     }
 
-    // 定义 build员工Rows 业务动作，负责承接当前模块的处理流程。
     private List<AttendanceScheduleOut.ScheduleEmployeeRowOut> buildEmployeeRows(
         List<AttendanceOut.EmployeeOut> employeeList,
         Map<Long, Set<LocalDate>> assignedDateMap,
@@ -550,7 +534,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         return rowList;
     }
 
-    // 定义 build已分配日期Map 业务动作，负责承接当前模块的处理流程。
     private Map<Long, Set<LocalDate>> buildAssignedDateMap(List<AttendanceScheduleOut.ScheduleItemOut> scheduleItems) {
         Map<Long, Set<LocalDate>> assignedDateMap = new LinkedHashMap<>();
         for (AttendanceScheduleOut.ScheduleItemOut scheduleItemOut : scheduleItems) {
@@ -559,7 +542,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         return assignedDateMap;
     }
 
-    // 定义 build日期列表 业务动作，负责承接当前模块的处理流程。
     private List<LocalDate> buildDates(LocalDate startDate, LocalDate endDate) {
         List<LocalDate> dates = new ArrayList<>();
         LocalDate cursor = startDate;
@@ -570,7 +552,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         return dates;
     }
 
-    // 定义 build运行态 业务动作，负责承接当前模块的处理流程。
     private ScheduleRuntime buildRuntime(LocalDate workDate, AttendanceOut.ShiftTemplateOut shiftTemplateOut, String remark) {
         // 休息、有休这类无时间模板允许只写工作日类型，不强制塞时间。
         LocalDateTime scheduledStartTime = null;
@@ -591,7 +572,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         );
     }
 
-    // 定义 resolve工作日类型 业务动作，负责承接当前模块的处理流程。
     private String resolveWorkDayType(String shiftType) {
         if (!StringUtils.hasText(shiftType)) {
             return "WORKDAY";
@@ -605,7 +585,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         };
     }
 
-    // 定义 require员工 业务动作，负责承接当前模块的处理流程。
     private AttendanceOut.EmployeeOut requireEmployee(Long employeeId) {
         validateId(employeeId);
         AttendanceOut.EmployeeOut employeeOut = attendanceEmployeeDao.selectById(AttendanceTenantContext.DEFAULT_TENANT_ID, employeeId);
@@ -615,7 +594,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         return employeeOut;
     }
 
-    // 定义 require班次模板 业务动作，负责承接当前模块的处理流程。
     private AttendanceOut.ShiftTemplateOut requireShiftTemplate(Long shiftTemplateId) {
         validateId(shiftTemplateId);
         AttendanceOut.ShiftTemplateOut shiftTemplateOut = attendanceShiftTemplateDao.selectById(AttendanceTenantContext.DEFAULT_TENANT_ID, shiftTemplateId);
@@ -625,7 +603,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         return shiftTemplateOut;
     }
 
-    // 定义 require排班 业务动作，负责承接当前模块的处理流程。
     private AttendanceScheduleOut.ScheduleItemOut requireSchedule(Long id) {
         AttendanceScheduleOut.ScheduleItemOut scheduleItemOut = attendanceScheduleDao.selectById(AttendanceTenantContext.DEFAULT_TENANT_ID, id);
         if (scheduleItemOut == null) {
@@ -634,7 +611,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         return scheduleItemOut;
     }
 
-    // 定义 require月份 业务动作，负责承接当前模块的处理流程。
     private YearMonth requireMonth(String monthText) {
         if (!StringUtils.hasText(monthText)) {
             throw new IllegalArgumentException("month 不能为空");
@@ -642,7 +618,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         return YearMonth.parse(monthText.trim(), MONTH_FORMATTER);
     }
 
-    // 定义 validate单日排班入参 业务动作，负责承接当前模块的处理流程。
     private void validateScheduleSaveIn(AttendanceScheduleIn.ScheduleSaveIn saveIn) {
         if (saveIn == null) {
             throw new IllegalArgumentException("scheduleSaveIn 不能为空");
@@ -654,7 +629,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         }
     }
 
-    // 定义 validate批量排班入参 业务动作，负责承接当前模块的处理流程。
     private void validateBatchAssign(AttendanceScheduleIn.ScheduleBatchAssignIn saveIn) {
         if (saveIn == null) {
             throw new IllegalArgumentException("scheduleBatchAssignIn 不能为空");
@@ -666,7 +640,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         validateDateRange(saveIn.getStartDate(), saveIn.getEndDate());
     }
 
-    // 定义 validate复制入参 业务动作，负责承接当前模块的处理流程。
     private void validateCopyIn(AttendanceScheduleIn.ScheduleCopyIn saveIn) {
         if (saveIn == null) {
             throw new IllegalArgumentException("scheduleCopyIn 不能为空");
@@ -677,7 +650,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         validateDateRange(saveIn.getStartDate(), saveIn.getEndDate());
     }
 
-    // 定义 validate清空入参 业务动作，负责承接当前模块的处理流程。
     private void validateClearRange(AttendanceScheduleIn.ScheduleClearRangeIn saveIn) {
         if (saveIn == null) {
             throw new IllegalArgumentException("scheduleClearRangeIn 不能为空");
@@ -688,7 +660,6 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         validateDateRange(saveIn.getStartDate(), saveIn.getEndDate());
     }
 
-    // 定义 validate日期区间 业务动作，负责承接当前模块的处理流程。
     private void validateDateRange(LocalDate startDate, LocalDate endDate) {
         if (startDate == null || endDate == null) {
             throw new IllegalArgumentException("日期区间不能为空");
@@ -698,24 +669,20 @@ public class AttendanceScheduleServiceImpl implements AttendanceScheduleService 
         }
     }
 
-    // 定义 validateId 业务动作，负责承接当前模块的处理流程。
     private void validateId(Long id) {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("id 必须大于 0");
         }
     }
 
-    // 定义 distinct员工Ids 业务动作，负责承接当前模块的处理流程。
     private List<Long> distinctEmployeeIds(List<Long> employeeIds) {
         return employeeIds.stream().filter(Objects::nonNull).distinct().toList();
     }
 
-    // 定义 trimToNull 业务动作，负责承接当前模块的处理流程。
     private String trimToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
     }
 
-    // 定义 csvCell 业务动作，负责承接当前模块的处理流程。
     private String csvCell(String value) {
         String safeValue = value == null ? "" : value.replace("\"", "\"\"");
         return "\"" + safeValue + "\"";

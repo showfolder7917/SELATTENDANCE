@@ -5,17 +5,14 @@ import java.util.Map;
 /**
  * 第三阶段打卡模块输入对象集合。
  */
-// 定义 打卡输入集合，承接当前文件对应的业务职责。
 public final class AttendancePunchIn {
 
-    // 定义 打卡输入集合 处理入口，承接当前业务动作。
     private AttendancePunchIn() {
     }
 
     /**
      * 打卡记录查询入参。
      */
-    // 定义 打卡记录查询In，承接当前文件对应的业务职责。
     public static class PunchLogQueryIn {
 
         // 开始日期用于缩小打卡查询区间，避免首页默认拉全历史。
@@ -103,7 +100,6 @@ public final class AttendancePunchIn {
     /**
      * 手动补录打卡入参。
      */
-    // 定义 手动打卡保存In，承接当前文件对应的业务职责。
     public static class PunchManualSaveIn {
 
         // 员工主键用于把补录打卡直接归属到系统员工。
@@ -171,7 +167,6 @@ public final class AttendancePunchIn {
     /**
      * CSV 导入请求入参。
      */
-    // 定义 打卡导入In，承接当前文件对应的业务职责。
     public static class PunchImportIn {
 
         // 文件名用于回显批次来源和导入结果摘要。
@@ -199,7 +194,6 @@ public final class AttendancePunchIn {
     /**
      * 未匹配记录绑定员工入参。
      */
-    // 定义 打卡绑定员工In，承接当前文件对应的业务职责。
     public static class PunchBindEmployeeIn {
 
         // 员工主键用于把未匹配记录重新归属到系统内已有员工。
@@ -217,7 +211,6 @@ public final class AttendancePunchIn {
     /**
      * 忽略记录入参。
      */
-    // 定义 打卡忽略In，承接当前文件对应的业务职责。
     public static class PunchIgnoreIn {
 
         // 忽略原因用于说明为什么这条记录不再进入后续日次计算。
@@ -235,7 +228,6 @@ public final class AttendancePunchIn {
     /**
      * Webhook 接收入参。
      */
-    // 定义 Webhook打卡In，承接当前文件对应的业务职责。
     public static class PunchWebhookIn {
 
         // 租户编码用于未来多租户扩展时判断这条 Webhook 属于谁。

@@ -26,10 +26,10 @@ import org.springframework.util.StringUtils;
 
 /**
  * 第三阶段打卡服务实现。
+ *
+ * <p>负责承接手工补录、CSV 导入、Webhook 接收、员工绑定和重处理这几条原始打卡接入链路。</p>
  */
-// 把当前类注册为服务实现，负责承接第三阶段打卡编排。
 @Service
-// 定义 考勤打卡服务Impl，承接当前文件对应的业务职责。
 public class AttendancePunchServiceImpl implements AttendancePunchService {
 
     // 默认页码用于页面第一次打开时先看最近一批打卡记录。

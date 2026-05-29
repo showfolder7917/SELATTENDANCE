@@ -14,482 +14,328 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-// 把当前类注册为服务实现，负责承接业务编排。
+/**
+ * 员工模块服务实现。
+ *
+ * <p>负责串联员工主数据、所属组织、工时规则和外部打卡映射这几条业务链。</p>
+ */
 @Service
-// 定义 考勤员工服务Impl，承接当前文件对应的业务职责。
 public class AttendanceEmployeeServiceImpl implements AttendanceEmployeeService {
 
-    // 声明 考勤员工数据访问 字段，用来保存当前业务状态或依赖。
+    // 员工主表与附属表的读写都从这里进入。
     private final AttendanceEmployeeDao attendanceEmployeeDao;
-    // 声明 考勤事业所数据访问 字段，用来保存当前业务状态或依赖。
+    // 员工归属事业所校验依赖这个 DAO。
     private final AttendanceWorkplaceDao attendanceWorkplaceDao;
-    // 声明 考勤部门数据访问 字段，用来保存当前业务状态或依赖。
+    // 员工归属部门校验依赖这个 DAO。
     private final AttendanceDepartmentDao attendanceDepartmentDao;
 
-    // 定义 考勤员工服务Impl 业务动作，负责承接当前模块的处理流程。
     public AttendanceEmployeeServiceImpl(
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         AttendanceEmployeeDao attendanceEmployeeDao,
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         AttendanceWorkplaceDao attendanceWorkplaceDao,
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         AttendanceDepartmentDao attendanceDepartmentDao
-    // 执行当前业务步骤，推进本行对应的 服务impl 处理。
     ) {
-        // 把外部传入结果写入 考勤员工数据访问 字段，供后续流程继续使用。
         this.attendanceEmployeeDao = attendanceEmployeeDao;
-        // 把外部传入结果写入 考勤事业所数据访问 字段，供后续流程继续使用。
         this.attendanceWorkplaceDao = attendanceWorkplaceDao;
-        // 把外部传入结果写入 考勤部门数据访问 字段，供后续流程继续使用。
         this.attendanceDepartmentDao = attendanceDepartmentDao;
     }
 
-    // 显式声明当前方法在覆写上层约定，实现当前业务契约。
     @Override
-    // 定义 listEmployees 业务动作，负责承接当前模块的处理流程。
     public List<AttendanceOut.EmployeeOut> listEmployees(AttendanceIn.EmployeeQueryIn queryIn) {
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // 查询入参允许为空，空时等价于“不过滤任何条件”的员工全量列表。
         return attendanceEmployeeDao.selectList(
-            // 执行当前业务步骤，推进本行对应的 服务impl 处理。
             AttendanceTenantContext.DEFAULT_TENANT_ID,
-            // 执行当前业务步骤，推进本行对应的 服务impl 处理。
             queryIn == null ? new AttendanceIn.EmployeeQueryIn() : queryIn
         );
     }
 
-    // 显式声明当前方法在覆写上层约定，实现当前业务契约。
     @Override
-    // 声明 Transactional 注解，让当前代码接入既定框架能力。
     @Transactional
-    // 定义 新增员工 业务动作，负责承接当前模块的处理流程。
     public AttendanceOut.EmployeeOut createEmployee(AttendanceIn.EmployeeSaveIn saveIn) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 先做必填校验，避免脏数据进入主表和附属规则表。
         validateEmployee(saveIn);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 员工必须挂在真实存在的事业所下，否则后续排班地点无法确定。
         requireExistingWorkplace(saveIn.getWorkplaceId());
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 员工必须挂在真实存在的部门下，否则组织筛选和报表统计会失真。
         requireExistingDepartment(saveIn.getDepartmentId());
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 入库前统一去空格和补默认值，保证后续唯一键校验和列表展示稳定。
         normalizeEmployee(saveIn);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 员工编号在租户内必须唯一，避免导入或手工录入造成重复员工。
         ensureEmployeeNoUnique(saveIn.getEmployeeNo(), null);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 先写入员工主表，后续工时规则和外部信息都依赖这个员工主键。
         attendanceEmployeeDao.insert(AttendanceTenantContext.DEFAULT_TENANT_ID, saveIn);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 通过员工编号回读刚新增的完整员工信息，拿到数据库生成的主键和标准化后的字段。
         AttendanceOut.EmployeeOut employeeOut = attendanceEmployeeDao.selectByEmployeeNo(AttendanceTenantContext.DEFAULT_TENANT_ID, saveIn.getEmployeeNo());
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 新增员工后立即补默认工时规则，避免排班和日次计算时缺少规则基线。
         upsertEmployeeWorkRule(employeeOut.getId(), employeeOut.getEmploymentType(), employeeOut.getHireDate());
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // 返回数据库中的最新员工快照，确保前端拿到完整联表字段。
         return requireExistingEmployee(employeeOut.getId());
     }
 
-    // 显式声明当前方法在覆写上层约定，实现当前业务契约。
     @Override
-    // 声明 Transactional 注解，让当前代码接入既定框架能力。
     @Transactional
-    // 定义 更新员工 业务动作，负责承接当前模块的处理流程。
     public AttendanceOut.EmployeeOut updateEmployee(Long id, AttendanceIn.EmployeeSaveIn saveIn) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 路径 id 非法时立即拦截，避免误更新租户内其他数据。
         validateId(id);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 更新和新增共用同一套员工表单校验规则。
         validateEmployee(saveIn);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 目标员工不存在时不允许继续更新，避免前端拿旧页面覆盖已删除数据。
         requireExistingEmployee(id);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 更新后归属事业所仍需存在，保证后续排班地点有效。
         requireExistingWorkplace(saveIn.getWorkplaceId());
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 更新后归属部门仍需存在，保证组织统计和筛选有效。
         requireExistingDepartment(saveIn.getDepartmentId());
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 统一整理输入值，避免因为空格导致唯一性和展示异常。
         normalizeEmployee(saveIn);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 更新时允许保留自己的编号，但不能撞上别人的编号。
         ensureEmployeeNoUnique(saveIn.getEmployeeNo(), id);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 先更新主表，再根据最新雇佣类型重算默认工时规则。
         attendanceEmployeeDao.updateById(AttendanceTenantContext.DEFAULT_TENANT_ID, id, saveIn);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         AttendanceOut.EmployeeOut employeeOut = requireExistingEmployee(id);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 雇佣类型或入社日变化后，要同步覆盖该员工的默认工时规则。
         upsertEmployeeWorkRule(id, employeeOut.getEmploymentType(), employeeOut.getHireDate());
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
         return employeeOut;
     }
 
-    // 显式声明当前方法在覆写上层约定，实现当前业务契约。
     @Override
-    // 声明 Transactional 注解，让当前代码接入既定框架能力。
     @Transactional
-    // 定义 删除员工 业务动作，负责承接当前模块的处理流程。
     public void deleteEmployee(Long id) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 删除动作只接受合法主键。
         validateId(id);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 删除前先确认员工存在，保证前端重复删除时能得到明确错误。
         requireExistingEmployee(id);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 先删工时规则，避免留下无法关联员工主表的孤儿数据。
         attendanceEmployeeDao.deleteWorkRuleByEmployeeId(AttendanceTenantContext.DEFAULT_TENANT_ID, id);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 再删外部打卡映射，确保第三方标识不会指向已删除员工。
         attendanceEmployeeDao.deleteExternalMappingByEmployeeId(AttendanceTenantContext.DEFAULT_TENANT_ID, id);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 最后删除员工主表记录。
         attendanceEmployeeDao.deleteById(AttendanceTenantContext.DEFAULT_TENANT_ID, id);
     }
 
-    // 显式声明当前方法在覆写上层约定，实现当前业务契约。
     @Override
-    // 声明 Transactional 注解，让当前代码接入既定框架能力。
     @Transactional
-    // 定义 绑定外部系统映射 业务动作，负责承接当前模块的处理流程。
     public AttendanceOut.EmployeeOut bindExternalMapping(Long id, AttendanceIn.ExternalMappingSaveIn saveIn) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 绑定外部打卡系统前必须先锁定有效员工。
         validateId(id);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         requireExistingEmployee(id);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 外部来源系统名决定后续从哪个第三方接收打卡。
         requireText(saveIn == null ? null : saveIn.getSourceSystem(), "sourceSystem 不能为空");
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 第三方员工 ID 是后续回写和重处理原始打卡的主定位键。
         requireText(saveIn.getExternalEmployeeId(), "externalEmployeeId 不能为空");
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 第三方员工编号用于人工核对和导入导出展示。
         requireText(saveIn.getExternalEmployeeNo(), "externalEmployeeNo 不能为空");
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
+        // 未显式指定状态时默认按启用处理，保证新绑定能立即参与打卡归集。
         if (!StringUtils.hasText(saveIn.getStatus())) {
-            // 执行当前业务步骤，推进本行对应的 服务impl 处理。
             saveIn.setStatus("ACTIVE");
         }
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
+        // 同一个员工只保留一条当前映射，已有记录时走更新，没有记录时走新增。
         if ((attendanceEmployeeDao.countExternalMappingByEmployeeId(AttendanceTenantContext.DEFAULT_TENANT_ID, id)) > 0) {
-            // 执行当前业务步骤，推进本行对应的 服务impl 处理。
             attendanceEmployeeDao.updateExternalMapping(AttendanceTenantContext.DEFAULT_TENANT_ID, id, saveIn);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         } else {
-            // 执行当前业务步骤，推进本行对应的 服务impl 处理。
             attendanceEmployeeDao.insertExternalMapping(AttendanceTenantContext.DEFAULT_TENANT_ID, id, saveIn);
         }
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
+        // 返回联表后的员工详情，让前端立即看到绑定结果。
         return requireExistingEmployee(id);
     }
 
-    // 显式声明当前方法在覆写上层约定，实现当前业务契约。
     @Override
-    // 声明 Transactional 注解，让当前代码接入既定框架能力。
     @Transactional
-    // 定义 导入Employees 业务动作，负责承接当前模块的处理流程。
     public AttendanceOut.EmployeeImportResultOut importEmployees(AttendanceIn.EmployeeImportIn saveIn) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 导入接口至少要拿到整段 CSV 文本，空文本直接视为无效请求。
         requireText(saveIn == null ? null : saveIn.getCsvText(), "csvText 不能为空");
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 先按行拆分，后续逐行转成员工保存入参。
         String[] lines = saveIn.getCsvText().trim().split("\\r?\\n");
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
+        // 只有表头没有数据时不进入导入流程，避免误报成功。
         if (lines.length < 2) {
-            // 在关键校验失败时主动抛出异常，阻止错误数据继续流转。
             throw new IllegalArgumentException("CSV 至少需要表头和一行数据");
         }
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 收集每一条失败行的错误消息，供前端导入结果页逐条展示。
         List<String> errors = new ArrayList<>();
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 统计真正成功写入员工主表的记录数。
         int successCount = 0;
-        // 遍历当前业务集合，逐条完成对应的数据处理动作。
+        // 跳过表头，从第二行开始逐条导入员工数据。
         for (int index = 1; index < lines.length; index++) {
-            // 执行当前业务步骤，推进本行对应的 服务impl 处理。
             String line = lines[index].trim();
-            // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
+            // 空行直接忽略，避免用户在 CSV 尾部多敲回车造成无意义错误。
             if (line.isEmpty()) {
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 continue;
             }
-            // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+            // 保留空列拆分，避免尾部空字段被 split 默认丢掉。
             String[] fields = line.split(",", -1);
-            // 进入受控处理区块，统一兜底当前业务动作的异常路径。
+            // 每一行单独保护，保证坏数据不会中断整批导入。
             try {
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 createEmployee(buildEmployeeFromCsv(fields));
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 successCount++;
-            // 执行当前业务步骤，推进本行对应的 服务impl 处理。
             } catch (IllegalArgumentException error) {
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+                // 错误行号按用户看到的 CSV 行号返回，便于直接定位原文件。
                 errors.add("第 " + (index + 1) + " 行：" + error.getMessage());
             }
         }
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
+        // 把整批导入结果组装成前端导入总结弹窗需要的返回结构。
         AttendanceOut.EmployeeImportResultOut resultOut = new AttendanceOut.EmployeeImportResultOut();
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         resultOut.setSuccessCount(successCount);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         resultOut.setFailedCount(errors.size());
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         resultOut.setErrors(errors);
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
         return resultOut;
     }
 
-    // 显式声明当前方法在覆写上层约定，实现当前业务契约。
     @Override
-    // 定义 导出Employees 业务动作，负责承接当前模块的处理流程。
     public AttendanceOut.CsvExportOut exportEmployees() {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         List<AttendanceOut.EmployeeOut> employees = listEmployees(new AttendanceIn.EmployeeQueryIn());
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         StringBuilder builder = new StringBuilder();
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         builder.append("employeeNo,employeeName,employeeNameKana,employmentType,workplaceName,departmentName,status,externalEmployeeId\n");
-        // 遍历当前业务集合，逐条完成对应的数据处理动作。
         for (AttendanceOut.EmployeeOut employee : employees) {
-            // 执行当前业务步骤，推进本行对应的 服务impl 处理。
             builder.append(csvCell(employee.getEmployeeNo())).append(",")
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 .append(csvCell(employee.getEmployeeName())).append(",")
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 .append(csvCell(employee.getEmployeeNameKana())).append(",")
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 .append(csvCell(employee.getEmploymentType())).append(",")
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 .append(csvCell(employee.getWorkplaceName())).append(",")
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 .append(csvCell(employee.getDepartmentName())).append(",")
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 .append(csvCell(employee.getStatus())).append(",")
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 .append(csvCell(employee.getExternalEmployeeId())).append("\n");
         }
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         AttendanceOut.CsvExportOut exportOut = new AttendanceOut.CsvExportOut();
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         exportOut.setFileName("attendance-employees-phase1.csv");
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         exportOut.setContent(builder.toString());
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
         return exportOut;
     }
 
-    // 定义 upsert员工工时规则 业务动作，负责承接当前模块的处理流程。
     private void upsertEmployeeWorkRule(Long employeeId, String employmentType, LocalDate hireDate) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         int dailyMinutes = "PART_TIME".equals(employmentType) || "ARBEIT".equals(employmentType) ? 300 : 480;
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         int weeklyMinutes = "PART_TIME".equals(employmentType) || "ARBEIT".equals(employmentType) ? 1500 : 2400;
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         LocalDate effectiveStartDate = hireDate == null ? LocalDate.now() : hireDate;
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if ((attendanceEmployeeDao.countWorkRuleByEmployeeId(AttendanceTenantContext.DEFAULT_TENANT_ID, employeeId)) > 0) {
-            // 执行当前业务步骤，推进本行对应的 服务impl 处理。
             attendanceEmployeeDao.updateWorkRule(
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 AttendanceTenantContext.DEFAULT_TENANT_ID,
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 employeeId,
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 employmentType == null ? "STANDARD" : employmentType,
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 dailyMinutes,
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 weeklyMinutes,
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 effectiveStartDate
             );
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         } else {
-            // 执行当前业务步骤，推进本行对应的 服务impl 处理。
             attendanceEmployeeDao.insertWorkRule(
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 AttendanceTenantContext.DEFAULT_TENANT_ID,
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 employeeId,
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 employmentType == null ? "STANDARD" : employmentType,
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 dailyMinutes,
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 weeklyMinutes,
-                // 执行当前业务步骤，推进本行对应的 服务impl 处理。
                 effectiveStartDate
             );
         }
     }
 
-    // 定义 validate员工 业务动作，负责承接当前模块的处理流程。
     private void validateEmployee(AttendanceIn.EmployeeSaveIn saveIn) {
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (saveIn == null) {
-            // 在关键校验失败时主动抛出异常，阻止错误数据继续流转。
             throw new IllegalArgumentException("employeeSaveIn 不能为空");
         }
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         requireText(saveIn.getEmployeeNo(), "employeeNo 不能为空");
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         requireText(saveIn.getEmployeeName(), "employeeName 不能为空");
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         requireText(saveIn.getEmploymentType(), "employmentType 不能为空");
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (saveIn.getWorkplaceId() == null || saveIn.getWorkplaceId() <= 0) {
-            // 在关键校验失败时主动抛出异常，阻止错误数据继续流转。
             throw new IllegalArgumentException("workplaceId 不能为空");
         }
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (saveIn.getDepartmentId() == null || saveIn.getDepartmentId() <= 0) {
-            // 在关键校验失败时主动抛出异常，阻止错误数据继续流转。
             throw new IllegalArgumentException("departmentId 不能为空");
         }
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (!StringUtils.hasText(saveIn.getStatus())) {
-            // 执行当前业务步骤，推进本行对应的 服务impl 处理。
             saveIn.setStatus("ACTIVE");
         }
     }
 
-    // 定义 normalize员工 业务动作，负责承接当前模块的处理流程。
     private void normalizeEmployee(AttendanceIn.EmployeeSaveIn saveIn) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setEmployeeNo(saveIn.getEmployeeNo().trim());
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setEmployeeName(saveIn.getEmployeeName().trim());
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setEmployeeNameKana(trimToNull(saveIn.getEmployeeNameKana()));
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setGender(trimToNull(saveIn.getGender()));
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setEmploymentType(saveIn.getEmploymentType().trim());
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setEmail(trimToNull(saveIn.getEmail()));
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setPhone(trimToNull(saveIn.getPhone()));
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setStatus(saveIn.getStatus().trim());
     }
 
-    // 定义 ensure员工NoUnique 业务动作，负责承接当前模块的处理流程。
     private void ensureEmployeeNoUnique(String employeeNo, Long currentId) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         AttendanceOut.EmployeeOut employeeOut = attendanceEmployeeDao.selectByEmployeeNo(AttendanceTenantContext.DEFAULT_TENANT_ID, employeeNo.trim());
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (employeeOut == null) {
-            // 执行当前业务步骤，推进本行对应的 服务impl 处理。
             return;
         }
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (currentId != null && currentId.equals(employeeOut.getId())) {
-            // 执行当前业务步骤，推进本行对应的 服务impl 处理。
             return;
         }
-        // 在关键校验失败时主动抛出异常，阻止错误数据继续流转。
         throw new IllegalArgumentException("employeeNo 已存在");
     }
 
-    // 定义 requireExisting员工 业务动作，负责承接当前模块的处理流程。
     private AttendanceOut.EmployeeOut requireExistingEmployee(Long id) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         AttendanceOut.EmployeeOut employeeOut = attendanceEmployeeDao.selectById(AttendanceTenantContext.DEFAULT_TENANT_ID, id);
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (employeeOut == null) {
-            // 在关键校验失败时主动抛出异常，阻止错误数据继续流转。
             throw new IllegalArgumentException("员工不存在，id=" + id);
         }
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
         return employeeOut;
     }
 
-    // 定义 requireExisting事业所 业务动作，负责承接当前模块的处理流程。
     private void requireExistingWorkplace(Long workplaceId) {
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (attendanceWorkplaceDao.selectById(AttendanceTenantContext.DEFAULT_TENANT_ID, workplaceId) == null) {
-            // 在关键校验失败时主动抛出异常，阻止错误数据继续流转。
             throw new IllegalArgumentException("事业所不存在，id=" + workplaceId);
         }
     }
 
-    // 定义 requireExisting部门 业务动作，负责承接当前模块的处理流程。
     private void requireExistingDepartment(Long departmentId) {
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (attendanceDepartmentDao.selectById(AttendanceTenantContext.DEFAULT_TENANT_ID, departmentId) == null) {
-            // 在关键校验失败时主动抛出异常，阻止错误数据继续流转。
             throw new IllegalArgumentException("部门不存在，id=" + departmentId);
         }
     }
 
-    // 定义 build员工FromCsv 业务动作，负责承接当前模块的处理流程。
     private AttendanceIn.EmployeeSaveIn buildEmployeeFromCsv(String[] fields) {
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (fields.length < 9) {
-            // 在关键校验失败时主动抛出异常，阻止错误数据继续流转。
             throw new IllegalArgumentException("CSV 列数不足");
         }
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         AttendanceIn.EmployeeSaveIn saveIn = new AttendanceIn.EmployeeSaveIn();
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setEmployeeNo(fields[0].trim());
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setEmployeeName(fields[1].trim());
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setEmployeeNameKana(fields[2].trim());
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setEmploymentType(fields[3].trim());
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setWorkplaceId(resolveWorkplaceIdByCode(fields[4].trim()));
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setDepartmentId(resolveDepartmentIdByCode(fields[5].trim()));
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setHireDate(StringUtils.hasText(fields[6]) ? LocalDate.parse(fields[6].trim()) : null);
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setEmail(trimToNull(fields[7]));
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setPhone(trimToNull(fields[8]));
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         saveIn.setStatus("ACTIVE");
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
         return saveIn;
     }
 
-    // 定义 resolve事业所IdBy编码 业务动作，负责承接当前模块的处理流程。
     private Long resolveWorkplaceIdByCode(String workplaceCode) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         AttendanceOut.WorkplaceOut workplaceOut = attendanceWorkplaceDao.selectByCode(AttendanceTenantContext.DEFAULT_TENANT_ID, workplaceCode);
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (workplaceOut == null) {
-            // 在关键校验失败时主动抛出异常，阻止错误数据继续流转。
             throw new IllegalArgumentException("workplaceCode 不存在: " + workplaceCode);
         }
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
         return workplaceOut.getId();
     }
 
-    // 定义 resolve部门IdBy编码 业务动作，负责承接当前模块的处理流程。
     private Long resolveDepartmentIdByCode(String departmentCode) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         AttendanceOut.DepartmentOut departmentOut = attendanceDepartmentDao.selectByCode(AttendanceTenantContext.DEFAULT_TENANT_ID, departmentCode);
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (departmentOut == null) {
-            // 在关键校验失败时主动抛出异常，阻止错误数据继续流转。
             throw new IllegalArgumentException("departmentCode 不存在: " + departmentCode);
         }
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
         return departmentOut.getId();
     }
 
-    // 定义 csvCell 业务动作，负责承接当前模块的处理流程。
     private String csvCell(String value) {
-        // 执行当前业务步骤，推进本行对应的 服务impl 处理。
         String safe = value == null ? "" : value.replace("\"", "\"\"");
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
         return "\"" + safe + "\"";
     }
 
-    // 定义 validateId 业务动作，负责承接当前模块的处理流程。
     private void validateId(Long id) {
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (id == null || id <= 0) {
-            // 在关键校验失败时主动抛出异常，阻止错误数据继续流转。
             throw new IllegalArgumentException("id 必须大于 0");
         }
     }
 
-    // 定义 requireText 业务动作，负责承接当前模块的处理流程。
     private void requireText(String value, String message) {
-        // 根据当前业务条件分流处理路径，避免错误数据进入后续流程。
         if (!StringUtils.hasText(value)) {
-            // 在关键校验失败时主动抛出异常，阻止错误数据继续流转。
             throw new IllegalArgumentException(message);
         }
     }
 
-    // 定义 trimToNull 业务动作，负责承接当前模块的处理流程。
     private String trimToNull(String value) {
-        // 返回当前步骤产出的业务结果，继续交给上一层消费。
         return StringUtils.hasText(value) ? value.trim() : null;
     }
 }

@@ -62,7 +62,7 @@ public class AttendanceTenantServiceBoundaryTest {
     }
 
     /**
-     * 辅助目的：为tenantSaveIn提供测试支撑。
+     * 测试辅助目的：构造租户保存入参，统一复用租户新增和租户更新测试。
      */
     private AttendanceIn.TenantSaveIn tenantSaveIn(String tenantCode, String tenantName, String timezone) {
         AttendanceIn.TenantSaveIn saveIn = new AttendanceIn.TenantSaveIn();

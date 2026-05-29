@@ -23,10 +23,10 @@ import org.springframework.util.StringUtils;
 
 /**
  * 第四阶段日次勤怠服务实现。
+ *
+ * <p>负责把排班快照和原始打卡汇总成日次结果，同时生成异常清单和可追溯的计算日志。</p>
  */
-// 把当前类注册为服务实现，负责承接第四阶段日次计算与异常编排。
 @Service
-// 定义 日次勤怠服务Impl，承接当前文件对应的业务职责。
 public class AttendanceDailyServiceImpl implements AttendanceDailyService {
 
     // 默认页码用于页面第一次进入时先展示第一页日次结果。
@@ -48,9 +48,7 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
         AttendanceDailyDao attendanceDailyDao,
         ObjectMapper objectMapper
     ) {
-        // 把外部传入结果写入 日次DAO 字段，供后续流程继续使用。
         this.attendanceDailyDao = attendanceDailyDao;
-        // 把外部传入结果写入 JSON序列化器 字段，供后续流程继续使用。
         this.objectMapper = objectMapper;
     }
 

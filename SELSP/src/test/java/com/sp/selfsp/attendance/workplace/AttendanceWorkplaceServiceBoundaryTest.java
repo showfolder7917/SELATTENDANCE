@@ -34,11 +34,13 @@ public class AttendanceWorkplaceServiceBoundaryTest {
      */
     @Test
     void shouldCreateTrimmedWorkplaceAndRejectMissingCode() {
+        // 先创建带前后空格的事业所，验证服务层会在入库前统一裁剪输入值并补默认状态。
         AttendanceOut.WorkplaceOut workplaceOut = attendanceWorkplaceService.createWorkplace(workplaceSaveIn(" TMP-WP ", " Temporary Workplace ", " ", " 03-0000-0000 ", ""));
 
         assertEquals("TMP-WP", workplaceOut.getWorkplaceCode());
         assertEquals("ACTIVE", workplaceOut.getStatus());
 
+        // 再提交空事业所编码，确认必填校验会阻止脏数据进入主数据表。
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
             () -> attendanceWorkplaceService.createWorkplace(workplaceSaveIn("", "Broken", "", "", "ACTIVE"))
@@ -51,12 +53,14 @@ public class AttendanceWorkplaceServiceBoundaryTest {
      */
     @Test
     void shouldRejectDeleteWhenDepartmentsOrEmployeesStillReferenceWorkplace() {
+        // 先验证系统初始化事业所因为仍被部门引用，所以不能直接删除。
         IllegalArgumentException departmentException = assertThrows(
             IllegalArgumentException.class,
             () -> attendanceWorkplaceService.deleteWorkplace(1L)
         );
         assertEquals("该事业所下仍有部门，无法删除", departmentException.getMessage());
 
+        // 再制造一个被员工引用的新事业所，验证员工引用也会阻止删除。
         AttendanceOut.WorkplaceOut workplaceOut = attendanceWorkplaceService.createWorkplace(workplaceSaveIn("EMP-WP", "Employee Workplace", "", "", "ACTIVE"));
         attendanceEmployeeService.createEmployee(employeeSaveIn("E9001", workplaceOut.getId(), 1L));
 
@@ -72,15 +76,17 @@ public class AttendanceWorkplaceServiceBoundaryTest {
      */
     @Test
     void shouldDeleteWorkplaceWhenNoReferencesRemain() {
+        // 创建一个没有部门和员工引用的新事业所，作为可安全删除的目标数据。
         AttendanceOut.WorkplaceOut workplaceOut = attendanceWorkplaceService.createWorkplace(workplaceSaveIn("FREE-WP", "Free Workplace", "", "", "ACTIVE"));
 
         attendanceWorkplaceService.deleteWorkplace(workplaceOut.getId());
 
+        // 删除后直接从 DAO 回读，确认数据库里已经没有残留记录。
         assertNull(attendanceWorkplaceDao.selectById(1L, workplaceOut.getId()));
     }
 
     /**
-     * 辅助目的：为workplaceSaveIn提供测试支撑。
+     * 测试辅助目的：构造事业所保存入参，统一复用边界测试中的基础主数据表单。
      */
     private AttendanceIn.WorkplaceSaveIn workplaceSaveIn(String code, String name, String address, String phone, String status) {
         AttendanceIn.WorkplaceSaveIn saveIn = new AttendanceIn.WorkplaceSaveIn();
@@ -93,7 +99,7 @@ public class AttendanceWorkplaceServiceBoundaryTest {
     }
 
     /**
-     * 辅助目的：为employeeSaveIn提供测试支撑。
+     * 测试辅助目的：构造员工保存入参，便于在事业所删除测试里快速制造员工引用关系。
      */
     private AttendanceIn.EmployeeSaveIn employeeSaveIn(String employeeNo, Long workplaceId, Long departmentId) {
         AttendanceIn.EmployeeSaveIn saveIn = new AttendanceIn.EmployeeSaveIn();

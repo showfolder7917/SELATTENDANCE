@@ -8,18 +8,19 @@ package com.sp.selfsp.attendance.common;
 
 /**
  * 考勤第一阶段单租户上下文常量。
+ *
+ * <p>当前项目仍按单租户样例库运行，所以服务和 DAO 统一从这里取固定租户主键。</p>
  */
-// 定义 考勤租户Context，承接当前文件对应的业务职责。
 public final class AttendanceTenantContext {
 
     /**
      * 第一阶段固定租户主键。
      */
-    // 声明 DEFAULT租户ID 字段，用来保存当前业务状态或依赖。
+    // 所有考勤主数据和排班查询默认都落在示例租户 1 上，便于本地测试数据复用。
     public static final long DEFAULT_TENANT_ID = 1L;
 
-    // 定义 考勤租户Context 处理入口，承接当前业务动作。
     private AttendanceTenantContext() {
+        // 工具类不允许实例化，避免误把租户上下文当成可变对象使用。
     }
 }
 

@@ -11,7 +11,6 @@ import com.sp.selfsp.attendance.domain.out.AttendanceOut;
 /**
  * 考勤首页聚合服务接口。
  */
-// 定义 考勤初始化聚合服务，承接当前文件对应的业务职责。
 public interface AttendanceBootstrapService {
 
     /**
@@ -19,7 +18,6 @@ public interface AttendanceBootstrapService {
      *
      * @return 首页聚合结果
      */
-    // 执行当前业务步骤，推进本行对应的 服务 处理。
     AttendanceOut.BootstrapSummaryOut getBootstrapSummary();
 }
 

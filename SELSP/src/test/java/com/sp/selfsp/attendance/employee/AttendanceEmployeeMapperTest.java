@@ -46,7 +46,7 @@ public class AttendanceEmployeeMapperTest extends AttendanceMapperIntegrationSup
     }
 
     /**
-     * 辅助目的：为externalMappingSaveIn提供测试支撑。
+     * 测试辅助目的：构造外部打卡映射入参，便于 mapper 测试验证映射列回读结果。
      */
     private AttendanceIn.ExternalMappingSaveIn externalMappingSaveIn(
         String sourceSystem,

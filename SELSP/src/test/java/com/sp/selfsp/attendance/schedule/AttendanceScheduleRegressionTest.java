@@ -57,7 +57,7 @@ public class AttendanceScheduleRegressionTest extends AttendanceServiceIntegrati
     }
 
     /**
-     * 辅助目的：为scheduleSaveIn提供测试支撑。
+     * 测试辅助目的：构造单日排班入参，统一复用回归测试里的建数与更新动作。
      */
     private AttendanceScheduleIn.ScheduleSaveIn scheduleSaveIn(Long employeeId, LocalDate workDate, Long shiftTemplateId, String remark) {
         AttendanceScheduleIn.ScheduleSaveIn saveIn = new AttendanceScheduleIn.ScheduleSaveIn();
@@ -69,7 +69,7 @@ public class AttendanceScheduleRegressionTest extends AttendanceServiceIntegrati
     }
 
     /**
-     * 辅助目的：为scheduleCopyIn提供测试支撑。
+     * 测试辅助目的：构造复制排班入参，便于验证上周或上月复制逻辑。
      */
     private AttendanceScheduleIn.ScheduleCopyIn scheduleCopyIn(LocalDate startDate, LocalDate endDate, Boolean overwriteExisting) {
         AttendanceScheduleIn.ScheduleCopyIn saveIn = new AttendanceScheduleIn.ScheduleCopyIn();
@@ -81,7 +81,7 @@ public class AttendanceScheduleRegressionTest extends AttendanceServiceIntegrati
     }
 
     /**
-     * 辅助目的：为boardQueryIn提供测试支撑。
+     * 测试辅助目的：构造排班看板查询条件，便于验证复制后页面读到的看板结果。
      */
     private AttendanceScheduleIn.ScheduleBoardQueryIn boardQueryIn(String month) {
         AttendanceScheduleIn.ScheduleBoardQueryIn queryIn = new AttendanceScheduleIn.ScheduleBoardQueryIn();

@@ -7,17 +7,14 @@ import java.util.List;
 /**
  * 第四阶段日次勤怠输出对象集合。
  */
-// 定义 日次勤怠输出集合，承接当前文件对应的业务职责。
 public final class AttendanceDailyOut {
 
-    // 定义 日次勤怠输出集合 处理入口，承接当前业务动作。
     private AttendanceDailyOut() {
     }
 
     /**
      * 日次列表输出。
      */
-    // 定义 日次列表Out，承接当前文件对应的业务职责。
     public static class DailyListOut {
 
         // 列表项用于渲染当前页日次结果。
@@ -85,7 +82,6 @@ public final class AttendanceDailyOut {
     /**
      * 日次列表项输出。
      */
-    // 定义 日次列表项Out，承接当前文件对应的业务职责。
     public static class DailyItemOut {
 
         private Long id;
@@ -237,7 +233,6 @@ public final class AttendanceDailyOut {
     /**
      * 日次详情输出。
      */
-    // 定义 日次详情Out，承接当前文件对应的业务职责。
     public static class DailyDetailOut extends DailyItemOut {
 
         private ScheduleSnapshotOut schedule;
@@ -281,7 +276,6 @@ public final class AttendanceDailyOut {
     /**
      * 日次汇总输出。
      */
-    // 定义 日次汇总Out，承接当前文件对应的业务职责。
     public static class DailySummaryOut {
 
         private Integer normalCount;
@@ -325,7 +319,6 @@ public final class AttendanceDailyOut {
     /**
      * 排班快照输出。
      */
-    // 定义 排班快照Out，承接当前文件对应的业务职责。
     public static class ScheduleSnapshotOut {
 
         private Long shiftScheduleId;
@@ -387,7 +380,6 @@ public final class AttendanceDailyOut {
     /**
      * 打卡快照输出。
      */
-    // 定义 打卡快照Out，承接当前文件对应的业务职责。
     public static class PunchSnapshotOut {
 
         private Long id;
@@ -440,7 +432,6 @@ public final class AttendanceDailyOut {
     /**
      * 计算步骤输出。
      */
-    // 定义 计算步骤Out，承接当前文件对应的业务职责。
     public static class CalcStepOut {
 
         private String stepName;
@@ -466,7 +457,6 @@ public final class AttendanceDailyOut {
     /**
      * 异常输出。
      */
-    // 定义 异常Out，承接当前文件对应的业务职责。
     public static class ExceptionOut {
 
         private String exceptionType;
@@ -510,7 +500,6 @@ public final class AttendanceDailyOut {
     /**
      * 重算结果输出。
      */
-    // 定义 重算结果Out，承接当前文件对应的业务职责。
     public static class RecalculateResultOut {
 
         private Integer requestedCount;

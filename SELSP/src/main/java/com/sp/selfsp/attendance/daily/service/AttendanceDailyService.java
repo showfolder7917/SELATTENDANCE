@@ -6,7 +6,6 @@ import com.sp.selfsp.attendance.daily.domain.out.AttendanceDailyOut;
 /**
  * 第四阶段日次勤怠服务接口。
  */
-// 定义 日次勤怠服务，承接当前文件对应的业务职责。
 public interface AttendanceDailyService {
 
     // 查询当前筛选范围内的日次结果列表，并在必要时补算缺失结果。

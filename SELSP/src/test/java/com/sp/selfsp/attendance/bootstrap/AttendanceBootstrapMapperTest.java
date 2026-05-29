@@ -57,7 +57,7 @@ public class AttendanceBootstrapMapperTest extends AttendanceMapperIntegrationSu
     }
 
     /**
-     * 辅助目的：为readCount提供测试支撑。
+     * 测试辅助目的：从统计结果列表中按步骤编码读取数量，便于断言初始化向导各步骤计数。
      */
     private long readCount(Map<String, Object> counts, String key) {
         Object value = counts.get(key);

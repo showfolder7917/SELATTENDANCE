@@ -46,7 +46,7 @@ public class AttendanceScheduleServiceBoundaryTest {
     private Long seededWorkplaceId;
 
     /**
-     * 辅助目的：为setUpSeededEmployee提供测试支撑。
+     * 测试辅助目的：补齐种子员工的组织和班次关联，作为后续排班边界测试的基础数据。
      */
     @BeforeEach
     void setUpSeededEmployee() {
@@ -414,7 +414,7 @@ public class AttendanceScheduleServiceBoundaryTest {
     }
 
     /**
-     * 辅助目的：为scheduleSaveIn提供测试支撑。
+     * 测试辅助目的：构造单日排班保存入参，统一复用新增、更新和占坑冲突测试。
      */
     private AttendanceScheduleIn.ScheduleSaveIn scheduleSaveIn(Long employeeId, LocalDate workDate, Long shiftTemplateId, String remark) {
         AttendanceScheduleIn.ScheduleSaveIn saveIn = new AttendanceScheduleIn.ScheduleSaveIn();
@@ -426,7 +426,7 @@ public class AttendanceScheduleServiceBoundaryTest {
     }
 
     /**
-     * 辅助目的：为scheduleBatchAssignIn提供测试支撑。
+     * 测试辅助目的：构造批量排班入参，便于覆盖跳过已有、覆盖已有等批量分支。
      */
     private AttendanceScheduleIn.ScheduleBatchAssignIn scheduleBatchAssignIn(
         List<Long> employeeIds,
@@ -449,7 +449,7 @@ public class AttendanceScheduleServiceBoundaryTest {
     }
 
     /**
-     * 辅助目的：为scheduleCopyIn提供测试支撑。
+     * 测试辅助目的：构造复制排班入参，统一复用上周和上月复制场景。
      */
     private AttendanceScheduleIn.ScheduleCopyIn scheduleCopyIn(
         List<Long> employeeIds,
@@ -466,7 +466,7 @@ public class AttendanceScheduleServiceBoundaryTest {
     }
 
     /**
-     * 辅助目的：为scheduleClearRangeIn提供测试支撑。
+     * 测试辅助目的：构造清空排班区间入参，便于验证区间删除和非法区间校验。
      */
     private AttendanceScheduleIn.ScheduleClearRangeIn scheduleClearRangeIn(
         List<Long> employeeIds,
@@ -481,7 +481,7 @@ public class AttendanceScheduleServiceBoundaryTest {
     }
 
     /**
-     * 辅助目的：为employeeSaveIn提供测试支撑。
+     * 测试辅助目的：构造员工保存入参，便于在排班测试里快速生成额外员工。
      */
     private AttendanceIn.EmployeeSaveIn employeeSaveIn(String employeeNo, String employeeName, Long workplaceId, Long departmentId) {
         AttendanceIn.EmployeeSaveIn saveIn = new AttendanceIn.EmployeeSaveIn();

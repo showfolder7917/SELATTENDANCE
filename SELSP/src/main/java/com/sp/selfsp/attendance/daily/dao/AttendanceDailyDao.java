@@ -12,9 +12,7 @@ import org.apache.ibatis.annotations.Param;
 /**
  * 第四阶段日次勤怠数据访问接口。
  */
-// 把当前接口注册为 MyBatis Mapper，负责数据库读写映射。
 @Mapper
-// 定义 日次勤怠数据访问，承接当前文件对应的业务职责。
 public interface AttendanceDailyDao {
 
     // 读取本次查询涉及的员工日期组合，供列表前自动补算缺失日次结果。

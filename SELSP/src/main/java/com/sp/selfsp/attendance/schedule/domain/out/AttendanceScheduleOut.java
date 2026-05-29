@@ -8,39 +8,29 @@ import java.util.List;
 /**
  * 第二阶段排班模块输出对象集合。
  */
-// 定义 排班输出集合，承接当前文件对应的业务职责。
 public final class AttendanceScheduleOut {
 
-    // 定义 排班输出集合 处理入口，承接当前业务动作。
     private AttendanceScheduleOut() {
     }
 
     /**
      * 排班看板输出。
      */
-    // 定义 排班看板Out，承接当前文件对应的业务职责。
     public static class ScheduleBoardOut {
 
         // 月份用于前端顶部标题和导出文件命名。
-        // 声明 月份 字段，用来承载当前业务对象的传输信息。
         private String month;
         // 开始日期用于前端绘制日历头部。
-        // 声明 开始日期 字段，用来承载当前业务对象的传输信息。
         private LocalDate startDate;
         // 结束日期用于前端绘制日历尾部。
-        // 声明 结束日期 字段，用来承载当前业务对象的传输信息。
         private LocalDate endDate;
         // 日期列表用于让前端稳定生成每一天的列。
-        // 声明 dates 字段，用来承载当前业务对象的传输信息。
         private List<LocalDate> dates;
         // 员工行列表用于绘制左侧固定员工区。
-        // 声明 employeeRows 字段，用来承载当前业务对象的传输信息。
         private List<ScheduleEmployeeRowOut> employeeRows;
         // 排班明细列表用于填充每个员工日期格子。
-        // 声明 scheduleItems 字段，用来承载当前业务对象的传输信息。
         private List<ScheduleItemOut> scheduleItems;
         // 模板列表直接回传给右侧模板面板，避免前端重复拉接口。
-        // 声明 班次Templates 字段，用来承载当前业务对象的传输信息。
         private List<AttendanceOut.ShiftTemplateOut> shiftTemplates;
 
         public String getMonth() { return month; }
@@ -62,29 +52,21 @@ public final class AttendanceScheduleOut {
     /**
      * 左侧员工行输出。
      */
-    // 定义 排班员工行Out，承接当前文件对应的业务职责。
     public static class ScheduleEmployeeRowOut {
 
         // 员工主键用于前端定位整行。
-        // 声明 员工Id 字段，用来承载当前业务对象的传输信息。
         private Long employeeId;
         // 员工编号用于后台快速识别人。
-        // 声明 员工No 字段，用来承载当前业务对象的传输信息。
         private String employeeNo;
         // 员工姓名用于主要展示。
-        // 声明 员工名称 字段，用来承载当前业务对象的传输信息。
         private String employeeName;
         // 假名用于日本场景识别。
-        // 声明 员工名称Kana 字段，用来承载当前业务对象的传输信息。
         private String employeeNameKana;
         // 部门名称用于缩小排班上下文。
-        // 声明 部门名称 字段，用来承载当前业务对象的传输信息。
         private String departmentName;
         // 事业所名称用于跨地点排班时快速辨识。
-        // 声明 事业所名称 字段，用来承载当前业务对象的传输信息。
         private String workplaceName;
         // 未排班天数用于左侧高亮提醒需要优先处理的员工。
-        // 声明 未排班天数 字段，用来承载当前业务对象的传输信息。
         private Integer unassignedCount;
 
         public Long getEmployeeId() { return employeeId; }
@@ -106,7 +88,6 @@ public final class AttendanceScheduleOut {
     /**
      * 单个排班格子输出。
      */
-    // 定义 排班明细Out，承接当前文件对应的业务职责。
     public static class ScheduleItemOut {
 
         private Long id;
@@ -169,7 +150,6 @@ public final class AttendanceScheduleOut {
     /**
      * 批量操作结果输出。
      */
-    // 定义 排班批量结果Out，承接当前文件对应的业务职责。
     public static class ScheduleBatchResultOut {
 
         private Integer createdCount;
@@ -196,7 +176,6 @@ public final class AttendanceScheduleOut {
     /**
      * 未排班检查输出。
      */
-    // 定义 未排班检查Out，承接当前文件对应的业务职责。
     public static class ScheduleUnassignedOut {
 
         private Long employeeId;

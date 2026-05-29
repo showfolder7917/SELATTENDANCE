@@ -59,7 +59,7 @@ public class AttendanceBootstrapServiceBoundaryTest {
     }
 
     /**
-     * 辅助目的：为scheduleSaveIn提供测试支撑。
+     * 测试辅助目的：构造排班保存入参，便于初始化向导测试快速推进排班步骤计数。
      */
     private AttendanceScheduleIn.ScheduleSaveIn scheduleSaveIn(Long employeeId, Long shiftTemplateId, String remark) {
         AttendanceScheduleIn.ScheduleSaveIn saveIn = new AttendanceScheduleIn.ScheduleSaveIn();

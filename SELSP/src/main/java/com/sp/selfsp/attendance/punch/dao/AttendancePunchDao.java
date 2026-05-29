@@ -10,9 +10,7 @@ import org.apache.ibatis.annotations.Param;
 /**
  * 第三阶段打卡数据访问接口。
  */
-// 把当前接口注册为 MyBatis Mapper，负责数据库读写映射。
 @Mapper
-// 定义 考勤打卡数据访问，承接当前文件对应的业务职责。
 public interface AttendancePunchDao {
 
     // 读取打卡记录列表，供第三阶段页面列表和导出摘要复用。
