@@ -12,6 +12,10 @@ body {
 .seladmin-page.selattendance-page-shell {
   width: min(calc(100vw - 32px), 2140px);
   max-width: min(calc(100vw - 32px), 2140px);
+  height: calc(100vh - 16px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
 }
 
 .selattendance-hero-actions {
@@ -35,28 +39,34 @@ body {
 
 .selattendance-workbench {
   margin-top: 20px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .selattendance-workbench-shell {
   align-items: stretch;
+  height: 100%;
+  min-height: 0;
 }
 
-.selattendance-workbench-shell .selattendance-resize-handle,
-.selattendance-overview-split .selattendance-resize-handle {
+.selattendance-workbench-shell > .selattendance-resize-handle,
+.selattendance-overview-split > .selattendance-resize-handle {
   margin: 0 4px;
 }
 
-.selattendance-workbench-shell .selattendance-resize-handle span {
+.selattendance-workbench-shell > .selattendance-resize-handle span {
   height: min(72vh, 840px);
 }
 
-.selattendance-overview-split .selattendance-resize-handle span {
+.selattendance-overview-split > .selattendance-resize-handle span {
   height: min(56vh, 620px);
 }
 
 .selattendance-sidebar-pane,
 .selattendance-sidebar-stick {
   min-width: 0;
+  min-height: 0;
+  height: 100%;
 }
 
 .selattendance-sidebar-stick {
@@ -64,13 +74,14 @@ body {
   top: 20px;
   align-self: start;
   /* 侧栏吸附后最多占满当前视口高度，避免跟着长内容继续整体下滑。 */
-  max-height: calc(100vh - 40px);
+  max-height: none;
 }
 
 .selattendance-sidebar {
   padding: 22px 18px;
-  /* 侧栏内容超过当前视口时改为侧栏内部滚动，而不是把整块导航继续推到页面下方。 */
-  max-height: calc(100vh - 40px);
+  height: 100%;
+  min-height: 0;
+  /* 左侧导航现在跟 workbench 一起收进局部滚动边界，避免继续触发浏览器全局滚动。 */
   overflow: auto;
 }
 
@@ -353,6 +364,41 @@ body {
   color: rgba(216, 226, 255, 0.68);
 }
 
+.selattendance-daily-split {
+  height: 100%;
+  min-height: 0;
+}
+
+.selattendance-master-split {
+  height: 100%;
+  min-height: 0;
+}
+
+.selattendance-punch-split {
+  height: 100%;
+  min-height: 0;
+}
+
+.selattendance-master-split .selattendance-resizable-pane-left,
+.selattendance-master-split .selattendance-resizable-pane-right,
+.selattendance-punch-split .selattendance-resizable-pane-left,
+.selattendance-punch-split .selattendance-resizable-pane-right,
+.selattendance-daily-split .selattendance-resizable-pane-left,
+.selattendance-daily-split .selattendance-resizable-pane-right {
+  overflow: hidden;
+}
+
+.selattendance-master-list-panel,
+.selattendance-master-detail-panel,
+.selattendance-punch-list-panel,
+.selattendance-punch-detail-panel,
+.selattendance-daily-list-panel,
+.selattendance-daily-detail-panel {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
 .selattendance-punch-raw {
   margin-top: 12px;
 }
@@ -389,7 +435,11 @@ body {
 .selattendance-content {
   min-width: 0;
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 20px;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .selattendance-content-header {
@@ -409,6 +459,22 @@ body {
   display: grid;
   gap: 20px;
   min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+}
+
+.selattendance-content-stack-schedule {
+  /* 排班页改成模块自身三栏独立滚动，外层内容栈不再额外抢占同一根滚动条。 */
+  overflow: hidden;
+  padding-right: 0;
+}
+
+.selattendance-content-stack-schedule > .selattendance-schedule-split {
+  /* 排班 section 需要吃满内容区剩余高度，左中右三栏才能各自拥有独立滚动容器。 */
+  height: 100%;
+  min-height: 0;
 }
 
 .selattendance-resizable-split {
@@ -416,6 +482,8 @@ body {
   align-items: stretch;
   gap: 0;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
 }
 
 .selattendance-resizable-split.dragging {
@@ -425,6 +493,8 @@ body {
 
 .selattendance-resizable-pane {
   min-width: 0;
+  min-height: 0;
+  height: 100%;
 }
 
 .selattendance-resizable-pane-left {
@@ -1015,6 +1085,24 @@ body {
   min-height: 12px;
   font-weight: 700;
   line-height: 1;
+}
+
+.selattendance-schedule-split {
+  height: 100%;
+  min-height: 0;
+}
+
+.selattendance-schedule-split .selattendance-resizable-pane-left,
+.selattendance-schedule-split .selattendance-resizable-pane-right {
+  overflow: hidden;
+}
+
+.selattendance-schedule-main-panel,
+.selattendance-schedule-side-panel {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .selattendance-schedule-side {

@@ -1,6 +1,7 @@
 <script setup>
 import EmptyGuide from '../../../shared/components/EmptyGuide.vue'
-import ResizableWorkbenchSplit from './ResizableWorkbenchSplit.vue'
+import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
+import { attendanceMasterDataLayoutPreset } from '../constants/workbenchLayoutPresets'
 
 defineProps({
   visible: { type: Boolean, required: true },
@@ -21,9 +22,16 @@ defineProps({
 </script>
 
 <template>
-  <ResizableWorkbenchSplit v-show="visible" storage-key="attendance-department-split" :default-left-percent="60">
+  <ThreePaneWorkbenchLayout
+    v-show="visible"
+    class="selattendance-master-split"
+    outer-storage-key="attendance-department-split"
+    :outer-default-left-percent="attendanceMasterDataLayoutPreset.outerDefaultLeftPercent"
+    :outer-min-left-percent="attendanceMasterDataLayoutPreset.outerMinLeftPercent"
+    :outer-max-left-percent="attendanceMasterDataLayoutPreset.outerMaxLeftPercent"
+  >
     <template #left>
-      <article class="seladmin-panel seladmin-surface selattendance-data-panel">
+      <article class="seladmin-panel seladmin-surface selattendance-data-panel selattendance-master-list-panel">
         <div class="seladmin-panel-header"><h2>{{ t('departmentTitle') }}</h2></div>
         <div v-if="currentWorkplaceName" class="selattendance-context-strip">
           <span>{{ t('currentWorkplaceFilter').replace('{name}', currentWorkplaceName) }}</span>
@@ -31,7 +39,7 @@ defineProps({
         </div>
         <EmptyGuide v-if="!departments.length" :title="t('departmentTitle')" :description="t('emptyDepartment')" />
         <div v-else class="selattendance-table-shell">
-          <table class="seladmin-table">
+          <table class="seladmin-table selattendance-wide-table">
             <thead><tr><th>{{ t('departmentCode') }}</th><th>{{ t('departmentName') }}</th><th>{{ t('workplace') }}</th><th>{{ t('sortOrder') }}</th><th></th></tr></thead>
             <tbody>
               <tr
@@ -57,8 +65,8 @@ defineProps({
       </article>
     </template>
 
-    <template #right>
-      <article class="seladmin-panel seladmin-surface selattendance-form-panel">
+    <template #main>
+      <article class="seladmin-panel seladmin-surface selattendance-form-panel selattendance-master-detail-panel">
         <div class="seladmin-panel-header"><h2>{{ t('departmentTitle') }}</h2></div>
         <div class="seladmin-form-grid">
           <label class="seladmin-field">
@@ -77,5 +85,5 @@ defineProps({
         </div>
       </article>
     </template>
-  </ResizableWorkbenchSplit>
+  </ThreePaneWorkbenchLayout>
 </template>

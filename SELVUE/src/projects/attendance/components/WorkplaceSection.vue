@@ -1,6 +1,7 @@
 <script setup>
 import EmptyGuide from '../../../shared/components/EmptyGuide.vue'
-import ResizableWorkbenchSplit from './ResizableWorkbenchSplit.vue'
+import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
+import { attendanceMasterDataLayoutPreset } from '../constants/workbenchLayoutPresets'
 
 defineProps({
   visible: { type: Boolean, required: true },
@@ -16,13 +17,20 @@ defineProps({
 </script>
 
 <template>
-  <ResizableWorkbenchSplit v-show="visible" storage-key="attendance-workplace-split" :default-left-percent="60">
+  <ThreePaneWorkbenchLayout
+    v-show="visible"
+    class="selattendance-master-split"
+    outer-storage-key="attendance-workplace-split"
+    :outer-default-left-percent="attendanceMasterDataLayoutPreset.outerDefaultLeftPercent"
+    :outer-min-left-percent="attendanceMasterDataLayoutPreset.outerMinLeftPercent"
+    :outer-max-left-percent="attendanceMasterDataLayoutPreset.outerMaxLeftPercent"
+  >
     <template #left>
-      <article class="seladmin-panel seladmin-surface selattendance-data-panel">
+      <article class="seladmin-panel seladmin-surface selattendance-data-panel selattendance-master-list-panel">
         <div class="seladmin-panel-header"><h2>{{ t('workplaceTitle') }}</h2></div>
         <EmptyGuide v-if="!workplaces.length" :title="t('workplaceTitle')" :description="t('emptyWorkplace')" />
         <div v-else class="selattendance-table-shell">
-          <table class="seladmin-table">
+          <table class="seladmin-table selattendance-wide-table">
             <thead><tr><th>{{ t('workplaceCode') }}</th><th>{{ t('workplaceName') }}</th><th>{{ t('address') }}</th><th>{{ t('phone') }}</th><th>{{ t('status') }}</th><th></th></tr></thead>
             <tbody>
               <tr
@@ -48,8 +56,8 @@ defineProps({
       </article>
     </template>
 
-    <template #right>
-      <article class="seladmin-panel seladmin-surface selattendance-form-panel">
+    <template #main>
+      <article class="seladmin-panel seladmin-surface selattendance-form-panel selattendance-master-detail-panel">
         <div class="seladmin-panel-header"><h2>{{ t('workplaceTitle') }}</h2></div>
         <div class="seladmin-form-grid">
           <label class="seladmin-field"><span>{{ t('workplaceCode') }}</span><input v-model="workplaceForm.workplaceCode" /></label>
@@ -63,5 +71,5 @@ defineProps({
         </div>
       </article>
     </template>
-  </ResizableWorkbenchSplit>
+  </ThreePaneWorkbenchLayout>
 </template>

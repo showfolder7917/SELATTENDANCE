@@ -1,6 +1,7 @@
 <script setup>
 import EmptyGuide from '../../../shared/components/EmptyGuide.vue'
-import ResizableWorkbenchSplit from './ResizableWorkbenchSplit.vue'
+import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
+import { attendanceMasterDataLayoutPreset } from '../constants/workbenchLayoutPresets'
 
 defineProps({
   visible: { type: Boolean, required: true },
@@ -27,9 +28,16 @@ defineProps({
 </script>
 
 <template>
-  <ResizableWorkbenchSplit v-show="visible" storage-key="attendance-employee-split" :default-left-percent="64">
+  <ThreePaneWorkbenchLayout
+    v-show="visible"
+    class="selattendance-master-split"
+    outer-storage-key="attendance-employee-split"
+    :outer-default-left-percent="attendanceMasterDataLayoutPreset.outerDefaultLeftPercent"
+    :outer-min-left-percent="attendanceMasterDataLayoutPreset.outerMinLeftPercent"
+    :outer-max-left-percent="attendanceMasterDataLayoutPreset.outerMaxLeftPercent"
+  >
     <template #left>
-      <article class="seladmin-panel seladmin-surface selattendance-data-panel">
+      <article class="seladmin-panel seladmin-surface selattendance-data-panel selattendance-master-list-panel">
         <div class="seladmin-panel-header"><h2>{{ t('employeeTitle') }}</h2></div>
         <div class="seladmin-filter-row selattendance-filter-row">
           <input v-model="employeeFilters.keyword" :placeholder="t('employeeName')" />
@@ -71,8 +79,8 @@ defineProps({
       </article>
     </template>
 
-    <template #right>
-      <article class="seladmin-panel seladmin-surface selattendance-form-panel">
+    <template #main>
+      <article class="seladmin-panel seladmin-surface selattendance-form-panel selattendance-master-detail-panel">
         <div class="seladmin-panel-header"><h2>{{ t('employeeTitle') }}</h2></div>
         <div class="seladmin-form-grid">
           <label class="seladmin-field"><span>{{ t('employeeNo') }}</span><input v-model="employeeForm.employeeNo" /></label>
@@ -123,5 +131,5 @@ defineProps({
         </div>
       </article>
     </template>
-  </ResizableWorkbenchSplit>
+  </ThreePaneWorkbenchLayout>
 </template>

@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog.vue'
 import FloatingTipBubble from '../../../shared/components/FloatingTipBubble.vue'
 import LanguageSwitch from '../../../shared/components/LanguageSwitch.vue'
+import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
 import ThemeSwitch from '../../../shared/components/ThemeSwitch.vue'
 import AttendanceSectionNav from '../components/AttendanceSectionNav.vue'
 import AttendanceSummaryPanel from '../components/AttendanceSummaryPanel.vue'
@@ -10,12 +11,15 @@ import DailySection from '../components/DailySection.vue'
 import DepartmentSection from '../components/DepartmentSection.vue'
 import EmployeeSection from '../components/EmployeeSection.vue'
 import PunchSection from '../components/PunchSection.vue'
-import ResizableWorkbenchSplit from '../components/ResizableWorkbenchSplit.vue'
 import ScheduleSection from '../components/ScheduleSection.vue'
 import ShiftTemplateSection from '../components/ShiftTemplateSection.vue'
 import TenantPanel from '../components/TenantPanel.vue'
 import WizardSection from '../components/WizardSection.vue'
 import WorkplaceSection from '../components/WorkplaceSection.vue'
+import {
+  attendanceOverviewLayoutPreset,
+  attendanceShellLayoutPreset
+} from '../constants/workbenchLayoutPresets'
 import { useAttendanceWorkbench } from '../composables/useAttendanceWorkbench'
 import { useAttendanceTheme } from '../composables/useAttendanceTheme'
 
@@ -268,6 +272,10 @@ const scheduleTemplateTipMetaText = computed(() =>
 const sidebarPaneRef = ref(null)
 // 左侧导航实际盒子引用用于读取当前高度并在悬浮时保留占位。
 const sidebarStickRef = ref(null)
+// hero 头部引用用于测量当前头部实际高度，再把剩余视口高度分配给 workbench 内部滚动区。
+const heroSectionRef = ref(null)
+// workbench 视口高度单独记录，避免长内容继续把浏览器外层页面撑高。
+const workbenchViewportHeight = ref(null)
 // 侧栏悬浮后的定位数据统一收在这里，供模板层直接绑定样式。
 const sidebarFloatingState = ref({
   active: false,
@@ -275,6 +283,16 @@ const sidebarFloatingState = ref({
   width: 0,
   height: 0
 })
+// hero 高度变化监听器单独保留，离开 attendance 页面时需要主动释放。
+let heroResizeObserver = null
+
+// 用 hero 当前底边和视口高度计算 workbench 可用空间，让下面这整块改成局部滚动容器。
+function syncWorkbenchViewportHeight() {
+  if (!heroSectionRef.value) return
+  const heroBottom = heroSectionRef.value.getBoundingClientRect().bottom
+  // 预留 workbench 顶部间距和底部呼吸空间，避免内部滚动条紧贴浏览器边缘。
+  workbenchViewportHeight.value = Math.max(420, Math.floor(window.innerHeight - heroBottom - 16))
+}
 
 // 根据当前滚动位置和左栏几何信息决定侧栏是否需要固定停留在视口中。
 function syncSidebarFloating() {
@@ -324,21 +342,32 @@ const sidebarStickStyle = computed(() => {
 // 页面挂载后立即计算一次左栏状态，并在滚动和窗口变化时持续同步。
 onMounted(async () => {
   await nextTick()
+  syncWorkbenchViewportHeight()
   syncSidebarFloating()
+  // hero 文案在语言切换、窗口收缩时都可能换行，需要实时回算下面 workbench 的可用高度。
+  heroResizeObserver = new ResizeObserver(() => {
+    syncWorkbenchViewportHeight()
+  })
+  if (heroSectionRef.value) {
+    heroResizeObserver.observe(heroSectionRef.value)
+  }
   window.addEventListener('scroll', syncSidebarFloating, { passive: true })
+  window.addEventListener('resize', syncWorkbenchViewportHeight)
   window.addEventListener('resize', syncSidebarFloating)
 })
 
 // 页面销毁时清理滚动与缩放监听，避免离开页面后残留无效回调。
 onBeforeUnmount(() => {
+  heroResizeObserver?.disconnect()
   window.removeEventListener('scroll', syncSidebarFloating)
+  window.removeEventListener('resize', syncWorkbenchViewportHeight)
   window.removeEventListener('resize', syncSidebarFloating)
 })
 </script>
 
 <template>
   <div class="seladmin-page selattendance-page-shell">
-    <header class="seladmin-hero seladmin-surface">
+    <header ref="heroSectionRef" class="seladmin-hero seladmin-surface">
       <div>
         <p class="seladmin-eyebrow">{{ t('liveTag') }}</p>
         <h1>{{ t('appTitle') }}</h1>
@@ -350,12 +379,13 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <ResizableWorkbenchSplit
+    <ThreePaneWorkbenchLayout
       class="selattendance-workbench selattendance-workbench-shell"
-      storage-key="attendance-shell-split"
-      :default-left-percent="13"
-      :min-left-percent="9"
-      :max-left-percent="22"
+      :style="workbenchViewportHeight ? { height: `${workbenchViewportHeight}px` } : {}"
+      outer-storage-key="attendance-shell-split"
+      :outer-default-left-percent="attendanceShellLayoutPreset.outerDefaultLeftPercent"
+      :outer-min-left-percent="attendanceShellLayoutPreset.outerMinLeftPercent"
+      :outer-max-left-percent="attendanceShellLayoutPreset.outerMaxLeftPercent"
     >
       <template #left>
         <div ref="sidebarPaneRef" class="selattendance-sidebar-pane" :style="sidebarPaneStyle">
@@ -382,7 +412,7 @@ onBeforeUnmount(() => {
         </div>
       </template>
 
-      <template #right>
+      <template #main>
         <main class="selattendance-content">
           <section class="selattendance-content-header seladmin-surface">
             <div>
@@ -393,23 +423,26 @@ onBeforeUnmount(() => {
             <span class="seladmin-chip">{{ activeSectionMeta.badge }}</span>
           </section>
 
-          <div class="selattendance-content-stack">
+          <div
+            class="selattendance-content-stack"
+            :class="{ 'selattendance-content-stack-schedule': activeSection === 'schedule' }"
+          >
             <template v-if="activeSection === 'wizard'">
-              <ResizableWorkbenchSplit
+              <ThreePaneWorkbenchLayout
                 class="selattendance-overview-split"
-                storage-key="attendance-overview-split"
-                :default-left-percent="64"
-                :min-left-percent="42"
-                :max-left-percent="76"
+                outer-storage-key="attendance-overview-split"
+                :outer-default-left-percent="attendanceOverviewLayoutPreset.outerDefaultLeftPercent"
+                :outer-min-left-percent="attendanceOverviewLayoutPreset.outerMinLeftPercent"
+                :outer-max-left-percent="attendanceOverviewLayoutPreset.outerMaxLeftPercent"
               >
                 <template #left>
                   <AttendanceSummaryPanel :steps="state.steps" :recommended-next-label="recommendedNextLabel" :t="t" />
                 </template>
 
-                <template #right>
+                <template #main>
                   <TenantPanel :tenant="state.tenant" :t="t" :on-submit="submitTenant" />
                 </template>
-              </ResizableWorkbenchSplit>
+              </ThreePaneWorkbenchLayout>
               <WizardSection :visible="true" :steps="state.steps" :t="t" />
             </template>
 
@@ -539,7 +572,7 @@ onBeforeUnmount(() => {
           </div>
         </main>
       </template>
-    </ResizableWorkbenchSplit>
+    </ThreePaneWorkbenchLayout>
 
     <div v-if="toast" class="seladmin-toast seladmin-surface" role="status" aria-live="polite">
       {{ toast }}

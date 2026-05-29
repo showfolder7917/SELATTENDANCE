@@ -1,6 +1,7 @@
 <script setup>
 import EmptyGuide from '../../../shared/components/EmptyGuide.vue'
-import ResizableWorkbenchSplit from './ResizableWorkbenchSplit.vue'
+import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
+import { attendanceMasterDataLayoutPreset } from '../constants/workbenchLayoutPresets'
 
 defineProps({
   visible: { type: Boolean, required: true },
@@ -15,13 +16,20 @@ defineProps({
 </script>
 
 <template>
-  <ResizableWorkbenchSplit v-show="visible" storage-key="attendance-shift-split" :default-left-percent="62">
+  <ThreePaneWorkbenchLayout
+    v-show="visible"
+    class="selattendance-master-split"
+    outer-storage-key="attendance-shift-split"
+    :outer-default-left-percent="attendanceMasterDataLayoutPreset.outerDefaultLeftPercent"
+    :outer-min-left-percent="attendanceMasterDataLayoutPreset.outerMinLeftPercent"
+    :outer-max-left-percent="attendanceMasterDataLayoutPreset.outerMaxLeftPercent"
+  >
     <template #left>
-      <article class="seladmin-panel seladmin-surface selattendance-data-panel">
+      <article class="seladmin-panel seladmin-surface selattendance-data-panel selattendance-master-list-panel">
         <div class="seladmin-panel-header"><h2>{{ t('shiftTitle') }}</h2></div>
         <EmptyGuide v-if="!shiftTemplates.length" :title="t('shiftTitle')" :description="t('emptyShift')" />
         <div v-else class="selattendance-table-shell">
-          <table class="seladmin-table">
+          <table class="seladmin-table selattendance-wide-table">
             <thead><tr><th>{{ t('shiftCode') }}</th><th>{{ t('shiftName') }}</th><th>{{ t('shiftType') }}</th><th>{{ t('startTime') }}</th><th>{{ t('endTime') }}</th><th>{{ t('crossDay') }}</th><th></th></tr></thead>
             <tbody>
               <tr
@@ -47,8 +55,8 @@ defineProps({
       </article>
     </template>
 
-    <template #right>
-      <article class="seladmin-panel seladmin-surface selattendance-form-panel">
+    <template #main>
+      <article class="seladmin-panel seladmin-surface selattendance-form-panel selattendance-master-detail-panel">
         <div class="seladmin-panel-header"><h2>{{ t('shiftTitle') }}</h2></div>
         <div class="seladmin-form-grid">
           <label class="seladmin-field"><span>{{ t('shiftCode') }}</span><input v-model="shiftForm.templateCode" /></label>
@@ -66,5 +74,5 @@ defineProps({
         </div>
       </article>
     </template>
-  </ResizableWorkbenchSplit>
+  </ThreePaneWorkbenchLayout>
 </template>

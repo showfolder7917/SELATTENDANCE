@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
-import ResizableWorkbenchSplit from './ResizableWorkbenchSplit.vue'
+import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
+import { attendancePunchLayoutPreset } from '../constants/workbenchLayoutPresets'
 
 const props = defineProps({
   visible: { type: Boolean, required: true },
@@ -65,9 +66,16 @@ function handlePageSizeChange(event) {
 </script>
 
 <template>
-  <ResizableWorkbenchSplit v-show="visible" storage-key="attendance-punch-split" :default-left-percent="65" :min-left-percent="48" :max-left-percent="78">
+  <ThreePaneWorkbenchLayout
+    v-show="visible"
+    class="selattendance-punch-split"
+    outer-storage-key="attendance-punch-split"
+    :outer-default-left-percent="attendancePunchLayoutPreset.outerDefaultLeftPercent"
+    :outer-min-left-percent="attendancePunchLayoutPreset.outerMinLeftPercent"
+    :outer-max-left-percent="attendancePunchLayoutPreset.outerMaxLeftPercent"
+  >
     <template #left>
-      <article class="seladmin-panel seladmin-surface selattendance-data-panel">
+      <article class="seladmin-panel seladmin-surface selattendance-data-panel selattendance-punch-list-panel">
         <div class="seladmin-panel-header">
           <div>
             <h2>{{ t('punchTitle') }}</h2>
@@ -183,8 +191,8 @@ function handlePageSizeChange(event) {
       </article>
     </template>
 
-    <template #right>
-      <article class="seladmin-panel seladmin-surface selattendance-form-panel selattendance-punch-side">
+    <template #main>
+      <article class="seladmin-panel seladmin-surface selattendance-form-panel selattendance-punch-side selattendance-punch-detail-panel">
         <section class="selattendance-schedule-side-block">
           <div class="seladmin-panel-header">
             <div>
@@ -289,5 +297,5 @@ function handlePageSizeChange(event) {
         </section>
       </article>
     </template>
-  </ResizableWorkbenchSplit>
+  </ThreePaneWorkbenchLayout>
 </template>

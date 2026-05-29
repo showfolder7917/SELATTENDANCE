@@ -1,8 +1,9 @@
 <script setup>
 import { computed } from 'vue'
 import EmptyGuide from '../../../shared/components/EmptyGuide.vue'
-import ResizableWorkbenchSplit from './ResizableWorkbenchSplit.vue'
+import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
 import { getJapanCalendarMeta } from '../../../utils/japanHolidayCalendar'
+import { attendanceScheduleLayoutPreset } from '../constants/workbenchLayoutPresets'
 
 const props = defineProps({
   visible: { type: Boolean, required: true },
@@ -94,9 +95,16 @@ const wizardStepLabels = computed(() => [
 </script>
 
 <template>
-  <ResizableWorkbenchSplit v-show="visible" storage-key="attendance-schedule-split" :default-left-percent="72" :min-left-percent="56" :max-left-percent="80">
+  <ThreePaneWorkbenchLayout
+    v-show="visible"
+    class="selattendance-schedule-split"
+    outer-storage-key="attendance-schedule-split"
+    :outer-default-left-percent="attendanceScheduleLayoutPreset.outerDefaultLeftPercent"
+    :outer-min-left-percent="attendanceScheduleLayoutPreset.outerMinLeftPercent"
+    :outer-max-left-percent="attendanceScheduleLayoutPreset.outerMaxLeftPercent"
+  >
     <template #left>
-      <article class="seladmin-panel seladmin-surface selattendance-data-panel">
+      <article class="seladmin-panel seladmin-surface selattendance-data-panel selattendance-schedule-main-panel">
         <div class="seladmin-panel-header">
           <div>
             <h2>{{ t('scheduleTitle') }}</h2>
@@ -217,8 +225,8 @@ const wizardStepLabels = computed(() => [
       </article>
     </template>
 
-    <template #right>
-      <article class="seladmin-panel seladmin-surface selattendance-form-panel selattendance-schedule-side">
+    <template #main>
+      <article class="seladmin-panel seladmin-surface selattendance-form-panel selattendance-schedule-side selattendance-schedule-side-panel">
         <div class="seladmin-panel-header">
           <div>
             <h2>{{ t('scheduleSideTitle') }}</h2>
@@ -356,5 +364,5 @@ const wizardStepLabels = computed(() => [
         </section>
       </article>
     </template>
-  </ResizableWorkbenchSplit>
+  </ThreePaneWorkbenchLayout>
 </template>

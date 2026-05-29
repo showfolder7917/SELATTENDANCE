@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
-import ResizableWorkbenchSplit from './ResizableWorkbenchSplit.vue'
+import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
+import { attendanceDailyLayoutPreset } from '../constants/workbenchLayoutPresets'
 
 const props = defineProps({
   visible: { type: Boolean, required: true },
@@ -85,15 +86,16 @@ function handlePageSizeChange(event) {
 </script>
 
 <template>
-  <ResizableWorkbenchSplit
+  <ThreePaneWorkbenchLayout
     v-show="visible"
-    storage-key="attendance-daily-split"
-    :default-left-percent="67"
-    :min-left-percent="48"
-    :max-left-percent="78"
+    class="selattendance-daily-split"
+    outer-storage-key="attendance-daily-split"
+    :outer-default-left-percent="attendanceDailyLayoutPreset.outerDefaultLeftPercent"
+    :outer-min-left-percent="attendanceDailyLayoutPreset.outerMinLeftPercent"
+    :outer-max-left-percent="attendanceDailyLayoutPreset.outerMaxLeftPercent"
   >
     <template #left>
-      <article class="seladmin-panel seladmin-surface selattendance-data-panel">
+      <article class="seladmin-panel seladmin-surface selattendance-data-panel selattendance-daily-list-panel">
         <div class="seladmin-panel-header">
           <div>
             <h2>{{ t('dailyTitle') }}</h2>
@@ -228,8 +230,8 @@ function handlePageSizeChange(event) {
       </article>
     </template>
 
-    <template #right>
-      <article class="seladmin-panel seladmin-surface selattendance-form-panel selattendance-punch-side">
+    <template #main>
+      <article class="seladmin-panel seladmin-surface selattendance-form-panel selattendance-punch-side selattendance-daily-detail-panel">
         <section class="selattendance-schedule-side-block" v-if="dailyDetail">
           <div class="seladmin-panel-header">
             <div>
@@ -300,5 +302,5 @@ function handlePageSizeChange(event) {
         </section>
       </article>
     </template>
-  </ResizableWorkbenchSplit>
+  </ThreePaneWorkbenchLayout>
 </template>
