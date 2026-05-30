@@ -12,9 +12,9 @@ export const messages = {
   // 执行当前业务步骤，推进本行对应的 constants 处理。
   'zh-CN': {
     // 维护 appTitle 字段，供当前前端状态或配置直接使用。
-    appTitle: '考勤系统第五阶段工作台',
+    appTitle: '考勤系统第六阶段工作台',
     // 维护 appSubtitle 字段，供当前前端状态或配置直接使用。
-    appSubtitle: '基础资料、排班、打卡、日次计算与第五阶段异常审批在一个页面连续完成。',
+    appSubtitle: '基础资料、排班、打卡、日次、异常处理与第六阶段月次汇总月结在一个页面连续完成。',
     // 维护 liveTag 字段，供当前前端状态或配置直接使用。
     liveTag: '中日双语 / 一键启动',
     // 维护 主题Switch 字段，供当前前端状态或配置直接使用。
@@ -51,6 +51,8 @@ export const messages = {
     navDaily: '日次结果',
     // 维护 导航异常处理 字段，供当前前端状态或配置直接使用。
     navCase: '异常处理',
+    // 维护 导航月次汇总 字段，供当前前端状态或配置直接使用。
+    navMonthly: '月次汇总',
     // 维护 workspaceSidebarTitle 字段，供当前前端状态或配置直接使用。
     workspaceSidebarTitle: '功能导航',
     // 维护 workspaceSidebarHint 字段，供当前前端状态或配置直接使用。
@@ -75,10 +77,12 @@ export const messages = {
     sectionDailyHint: '第四阶段开始把排班和打卡计算成每日结果，并集中处理异常。',
     // 维护 section异常处理Hint 字段，供当前前端状态或配置直接使用。
     sectionCaseHint: '第五阶段开始把异常整理成处理单，进入审批、回写和锁定闭环。',
+    // 维护 section月次Hint 字段，供当前前端状态或配置直接使用。
+    sectionMonthlyHint: '第六阶段开始把日次汇总成月结果，并完成月结、反结和导出。',
     // 维护 wizardTitle 字段，供当前前端状态或配置直接使用。
     wizardTitle: '初始化向导',
     // 维护 wizardHint 字段，供当前前端状态或配置直接使用。
-    wizardHint: '基础资料、排班、打卡和日次计算已经接通；当前已进入第五阶段异常处理与审批闭环，月结仍未开始。',
+    wizardHint: '基础资料、排班、打卡、日次和异常审批已经接通；当前已进入第六阶段月次汇总与月结闭环。',
     // 维护 nextAction 字段，供当前前端状态或配置直接使用。
     nextAction: '推荐下一步',
     // 维护 phaseLocked 字段，供当前前端状态或配置直接使用。
@@ -101,6 +105,8 @@ export const messages = {
     punchTitle: '打卡记录',
     // 维护 日次Title 字段，供当前前端状态或配置直接使用。
     dailyTitle: '日次结果',
+    // 维护 月次Title 字段，供当前前端状态或配置直接使用。
+    monthlyTitle: '月次汇总',
     // 维护 保存 字段，供当前前端状态或配置直接使用。
     save: '保存',
     // 维护 新增 字段，供当前前端状态或配置直接使用。
@@ -536,6 +542,55 @@ export const messages = {
     caseToastRejected: '处理单已驳回',
     caseToastLocked: '当前日次已锁定',
     caseToastUnlocked: '当前日次已解除锁定',
+    monthlyLead: '先把已锁定的日次结果按月聚合，再确认能否月结、反结和导出。',
+    monthlyRefresh: '刷新月次',
+    monthlyExport: '导出月次表',
+    monthlyRecalculateRange: '按当前筛选重算',
+    monthlySummaryOpen: '待汇总',
+    monthlySummaryClosable: '可月结',
+    monthlySummaryClosed: '已月结',
+    monthlySummaryReopened: '已反结',
+    monthlyYearMonth: '所属月份',
+    monthlyEmployeeKeywordHint: '输入员工编号或姓名',
+    monthlyCloseStatus: '月结状态',
+    monthlyCloseStatusAll: '全部月结状态',
+    monthlyCloseStatusOpen: '待汇总',
+    monthlyCloseStatusClosable: '可月结',
+    monthlyCloseStatusClosed: '已月结',
+    monthlyCloseStatusReopened: '已反结',
+    monthlyBlockedOnly: '只看仍有阻塞的月次',
+    monthlyUpdatedAt: '最后更新时间',
+    monthlyScheduledDays: '计划出勤天数',
+    monthlyAttendanceDays: '实际出勤天数',
+    monthlyExceptionDays: '异常天数',
+    monthlyDetailTitle: '当前月次详情',
+    monthlyDetailLead: '当前查看 {month} 的月次汇总、阻塞原因和操作记录。',
+    monthlyBlockReasonCount: '阻塞原因数',
+    monthlyMetricTitle: '月次统计快照',
+    monthlyNormalDays: '正常天数',
+    monthlyLateCount: '迟到次数',
+    monthlyEarlyLeaveCount: '早退次数',
+    monthlyMissingPunchCount: '缺卡次数',
+    monthlyAbsenceCount: '缺勤次数',
+    monthlyPaidLeaveDays: '有休天数',
+    monthlyRestDays: '休息天数',
+    monthlyBlockTitle: '月结阻塞项',
+    monthlyNoBlock: '当前月次没有阻塞项，可以继续月结。',
+    monthlyActionLogTitle: '月次动作留痕',
+    monthlyNoActionLog: '当前月次还没有动作日志。',
+    monthlyActionPanelTitle: '月次处理动作',
+    monthlyCloseComment: '月结备注',
+    monthlyReopenReason: '反结原因',
+    monthlyRecalculateOne: '重算当月当前员工',
+    monthlyCloseAction: '确认月结',
+    monthlyReopenAction: '执行反结',
+    monthlyPageInvalid: '请输入正确页码数字',
+    monthlyPageOutOfRange: '页码超出范围，请输入 1 到 {totalPages}',
+    monthlyToastRecalculated: '当前筛选范围月次已重算',
+    monthlyToastOneRecalculated: '当前员工月次已重算',
+    monthlyToastClosed: '当前范围月次已完成月结',
+    monthlyToastReopened: '当前月次已反结',
+    monthlyToastExported: '月次表已导出',
     emptyData: '当前没有可显示的数据。',
     dailyStatusNormal: '正常',
     dailyStatusLate: '迟到',
@@ -595,9 +650,9 @@ export const messages = {
   // 执行当前业务步骤，推进本行对应的 constants 处理。
   'ja-JP': {
     // 维护 appTitle 字段，供当前前端状态或配置直接使用。
-    appTitle: '勤怠システム Phase 5',
+    appTitle: '勤怠システム Phase 6',
     // 维护 appSubtitle 字段，供当前前端状态或配置直接使用。
-    appSubtitle: '基本マスタ、シフト、打刻、日次計算、Phase 5 の異常承認を一画面で連続して管理します。',
+    appSubtitle: '基本マスタ、シフト、打刻、日次、異常処理と Phase 6 の月次集計・月締めを一画面で連続して管理します。',
     // 维护 liveTag 字段，供当前前端状态或配置直接使用。
     liveTag: '中国語 / 日本語 / ワンクリック起動',
     // 维护 主题Switch 字段，供当前前端状态或配置直接使用。
@@ -634,6 +689,8 @@ export const messages = {
     navDaily: '日次結果',
     // 维护 导航异常处理 字段，供当前前端状态或配置直接使用。
     navCase: '異常処理',
+    // 维护 导航月次汇总 字段，供当前前端状态或配置直接使用。
+    navMonthly: '月次集計',
     // 维护 workspaceSidebarTitle 字段，供当前前端状态或配置直接使用。
     workspaceSidebarTitle: '機能ナビ',
     // 维护 workspaceSidebarHint 字段，供当前前端状态或配置直接使用。
@@ -658,10 +715,12 @@ export const messages = {
     sectionDailyHint: 'Phase 4 でシフトと打刻を日次結果へ計算し、異常をまとめて処理します。',
     // 维护 section异常处理Hint 字段，供当前前端状态或配置直接使用。
     sectionCaseHint: 'Phase 5 で異常を処理票へまとめ、承認・反映・ロックまでを閉じます。',
+    // 维护 section月次Hint 字段，供当前前端状态或配置直接使用。
+    sectionMonthlyHint: 'Phase 6 で日次結果を月次へ集計し、月締め・再オープン・出力までを行います。',
     // 维护 wizardTitle 字段，供当前前端状态或配置直接使用。
     wizardTitle: '初期化ウィザード',
     // 维护 wizardHint 字段，供当前前端状态或配置直接使用。
-    wizardHint: '基本マスタ、シフト、打刻、日次計算は接続済みで、現在は Phase 5 の異常処理と承認クローズへ進んでいます。月次締めはまだ対象外です。',
+    wizardHint: '基本マスタ、シフト、打刻、日次、異常承認は接続済みで、現在は Phase 6 の月次集計と月締めクローズへ進んでいます。',
     // 维护 nextAction 字段，供当前前端状态或配置直接使用。
     nextAction: '次の推奨アクション',
     // 维护 phaseLocked 字段，供当前前端状态或配置直接使用。
@@ -684,6 +743,8 @@ export const messages = {
     punchTitle: '打刻記録',
     // 维护 日次Title 字段，供当前前端状态或配置直接使用。
     dailyTitle: '日次結果',
+    // 维护 月次Title 字段，供当前前端状态或配置直接使用。
+    monthlyTitle: '月次集計',
     // 维护 异常处理Title 字段，供当前前端状态或配置直接使用。
     caseTitle: '異常処理',
     // 维护 保存 字段，供当前前端状态或配置直接使用。
@@ -1052,6 +1113,55 @@ export const messages = {
     caseToastRejected: '処理票を却下しました',
     caseToastLocked: '現在の日次をロックしました',
     caseToastUnlocked: '現在の日次のロックを解除しました',
+    monthlyLead: 'ロック済みの日次結果を月単位で集計し、月締め・再オープン・出力へつなげます。',
+    monthlyRefresh: '月次を更新',
+    monthlyExport: '月次表を出力',
+    monthlyRecalculateRange: '現在の条件で再集計',
+    monthlySummaryOpen: '未集計',
+    monthlySummaryClosable: '月締め可能',
+    monthlySummaryClosed: '月締め済み',
+    monthlySummaryReopened: '再オープン済み',
+    monthlyYearMonth: '対象月',
+    monthlyEmployeeKeywordHint: '社員番号または氏名を入力',
+    monthlyCloseStatus: '月締め状態',
+    monthlyCloseStatusAll: 'すべての月締め状態',
+    monthlyCloseStatusOpen: '未集計',
+    monthlyCloseStatusClosable: '月締め可能',
+    monthlyCloseStatusClosed: '月締め済み',
+    monthlyCloseStatusReopened: '再オープン済み',
+    monthlyBlockedOnly: '阻塞が残る月次だけ表示',
+    monthlyUpdatedAt: '最終更新日時',
+    monthlyScheduledDays: '予定出勤日数',
+    monthlyAttendanceDays: '実出勤日数',
+    monthlyExceptionDays: '異常日数',
+    monthlyDetailTitle: '現在の月次詳細',
+    monthlyDetailLead: '{month} の月次集計、阻塞理由、操作履歴を確認します。',
+    monthlyBlockReasonCount: '阻塞件数',
+    monthlyMetricTitle: '月次集計スナップショット',
+    monthlyNormalDays: '正常日数',
+    monthlyLateCount: '遅刻回数',
+    monthlyEarlyLeaveCount: '早退回数',
+    monthlyMissingPunchCount: '打刻不足回数',
+    monthlyAbsenceCount: '欠勤回数',
+    monthlyPaidLeaveDays: '有休日数',
+    monthlyRestDays: '休日日数',
+    monthlyBlockTitle: '月締め阻塞項目',
+    monthlyNoBlock: 'この月次には阻塞がなく、そのまま月締めへ進めます。',
+    monthlyActionLogTitle: '月次アクション履歴',
+    monthlyNoActionLog: 'この月次にはまだアクション履歴がありません。',
+    monthlyActionPanelTitle: '月次処理アクション',
+    monthlyCloseComment: '月締めコメント',
+    monthlyReopenReason: '再オープン理由',
+    monthlyRecalculateOne: '現在社員の当月を再集計',
+    monthlyCloseAction: '月締め確定',
+    monthlyReopenAction: '再オープン',
+    monthlyPageInvalid: '正しいページ番号を入力してください',
+    monthlyPageOutOfRange: 'ページ番号は 1 から {totalPages} の範囲で入力してください',
+    monthlyToastRecalculated: '現在の条件範囲の月次を再集計しました',
+    monthlyToastOneRecalculated: '現在社員の月次を再集計しました',
+    monthlyToastClosed: '現在範囲の月次を月締めしました',
+    monthlyToastReopened: '現在の月次を再オープンしました',
+    monthlyToastExported: '月次表を出力しました',
     emptyData: '表示できるデータがありません。',
     dailyStatusNormal: '正常',
     dailyStatusLate: '遅刻',

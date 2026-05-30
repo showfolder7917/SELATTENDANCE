@@ -22,7 +22,8 @@ export const createSectionLoaders = () => ({
   schedule: false,
   punch: false,
   daily: false,
-  case: false
+  case: false,
+  monthly: false
 })
 
 // 生成 section 级错误状态，供某个区块失败时只影响本区块而不是整页。
@@ -34,7 +35,8 @@ export const createSectionErrors = () => ({
   schedule: '',
   punch: '',
   daily: '',
-  case: ''
+  case: '',
+  monthly: ''
 })
 
 // 生成 section 加载完成标记，供按需懒加载时避免重复首刷同一区块。
@@ -46,7 +48,8 @@ export const createSectionStates = () => ({
   schedule: false,
   punch: false,
   daily: false,
-  case: false
+  case: false,
+  monthly: false
 })
 
 // 生成轻量首页壳状态，承载租户摘要、步骤计数和推荐动作。
@@ -60,7 +63,8 @@ export const createBootstrapShell = () => ({
     schedule: 0,
     punch: 0,
     daily: 0,
-    case: 0
+    case: 0,
+    monthly: 0
   },
   sectionStates: createSectionStates(),
   recommendedNextAction: 'wizard.schedule'
@@ -189,6 +193,35 @@ export const createWorkbenchState = () => ({
     finalClockOut: '',
     finalBreakMinutes: '',
     finalExceptionFlag: false
+  },
+  monthlyFilters: {
+    yearMonth: '2026-05',
+    workplaceId: '',
+    departmentId: '',
+    employeeKeyword: '',
+    closeStatus: '',
+    blockedOnly: false,
+    page: 1,
+    pageSize: 20
+  },
+  monthlyList: {
+    items: [],
+    total: 0,
+    page: 1,
+    pageSize: 20,
+    totalPages: 1,
+    summary: {
+      openCount: 0,
+      closableCount: 0,
+      closedCount: 0,
+      reopenedCount: 0
+    }
+  },
+  monthlyDetail: null,
+  monthlyActionForm: {
+    operatorId: 9001,
+    comment: '',
+    reopenReason: ''
   },
   scheduleFilters: {
     month: currentMonth(),

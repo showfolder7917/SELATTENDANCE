@@ -11,6 +11,7 @@ import CaseSection from '../components/CaseSection.vue'
 import DailySection from '../components/DailySection.vue'
 import DepartmentSection from '../components/DepartmentSection.vue'
 import EmployeeSection from '../components/EmployeeSection.vue'
+import MonthlySection from '../components/MonthlySection.vue'
 import PunchSection from '../components/PunchSection.vue'
 import ScheduleSection from '../components/ScheduleSection.vue'
 import ShiftTemplateSection from '../components/ShiftTemplateSection.vue'
@@ -73,9 +74,11 @@ const {
   loadPunchLogs,
   loadDailyResults,
   loadCases,
+  loadMonthlyResults,
   openPunchDetail,
   openDailyDetail,
   openCaseDetail,
+  openMonthlyDetail,
   submitManualPunch,
   runPunchImportPreview,
   submitPunchImport,
@@ -88,6 +91,11 @@ const {
   submitCaseAction,
   submitCaseLock,
   submitCaseUnlock,
+  submitMonthlyRecalculate,
+  submitMonthlyRecalculateOne,
+  submitMonthlyClose,
+  submitMonthlyReopen,
+  submitMonthlyExport,
   editWorkplace,
   openWorkplaceDepartments,
   editDepartment,
@@ -122,7 +130,8 @@ const workspaceNavItems = computed(() => {
     schedule: state.scheduleBoard.scheduleItems.length,
     punch: state.punchLogList.total,
     daily: state.dailyList.total,
-    case: state.caseList.total
+    case: state.caseList.total,
+    monthly: state.monthlyList.total
   }
 
   const moduleHintMap = {
@@ -135,7 +144,8 @@ const workspaceNavItems = computed(() => {
     schedule: t('sectionScheduleHint'),
     punch: t('sectionPunchHint'),
     daily: t('sectionDailyHint'),
-    case: t('sectionCaseHint')
+    case: t('sectionCaseHint'),
+    monthly: t('sectionMonthlyHint')
   }
 
   return navItems.value.map((item) => ({
@@ -599,6 +609,25 @@ onBeforeUnmount(() => {
               :on-submit-action="submitCaseAction"
               :on-lock="submitCaseLock"
               :on-unlock="submitCaseUnlock"
+              :on-show-toast="showToast"
+            />
+
+            <MonthlySection
+              :visible="activeSection === 'monthly'"
+              :workplaces="state.workplaces"
+              :departments="state.departments"
+              :monthly-list="state.monthlyList"
+              :monthly-filters="state.monthlyFilters"
+              :monthly-detail="state.monthlyDetail"
+              :monthly-action-form="state.monthlyActionForm"
+              :t="t"
+              :on-refresh="loadMonthlyResults"
+              :on-select-monthly="openMonthlyDetail"
+              :on-recalculate-monthly="submitMonthlyRecalculate"
+              :on-recalculate-one="submitMonthlyRecalculateOne"
+              :on-close-monthly="submitMonthlyClose"
+              :on-reopen-monthly="submitMonthlyReopen"
+              :on-export-monthly="submitMonthlyExport"
               :on-show-toast="showToast"
             />
           </div>

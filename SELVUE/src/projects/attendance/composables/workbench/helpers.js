@@ -93,4 +93,6 @@ export const syncShellCounters = (state) => {
   state.bootstrapShell.sectionCounters.daily = state.dailyList.total
   // 用第五阶段处理单总数回填异常处理计数，供导航徽标和工作台状态展示。
   state.bootstrapShell.sectionCounters.case = state.caseList.total
+  // 用第六阶段月次总记录数回填月次汇总计数，供导航徽标和工作台状态展示。
+  state.bootstrapShell.sectionCounters.monthly = state.monthlyList.total
 }

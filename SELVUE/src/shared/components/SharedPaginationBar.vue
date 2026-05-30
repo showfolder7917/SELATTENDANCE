@@ -204,15 +204,23 @@ function submitPageJump() {
 }
 
 .selshared-pagination-size :deep(.shared-mini-select) {
-  min-width: 72px;
+  min-width: 84px;
+  z-index: 2;
+}
+
+.selshared-pagination-size :deep(.shared-mini-select.open) {
+  z-index: 12;
 }
 
 .selshared-pagination-size :deep(.shared-mini-select-trigger) {
+  box-sizing: border-box;
   height: 36px;
 }
 
 .selshared-pagination-size :deep(.shared-mini-select-menu) {
-  min-width: 72px;
+  top: auto;
+  bottom: calc(100% + 8px);
+  min-width: 92px;
 }
 
 .selshared-pagination-pages {

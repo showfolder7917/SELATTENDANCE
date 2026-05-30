@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.attendance.monthly.dao.AttendanceMonthlyDao">
+
+  <resultMap id="MonthlyItemResultMap" type="com.sp.selfsp.attendance.monthly.domain.out.AttendanceMonthlyOut$MonthlyItemOut">
+    <id column="monthly_id" property="monthlyId"/>
+    <result column="year_month" property="yearMonth"/>
+    <result column="employee_id" property="employeeId"/>
+    <result column="employee_code" property="employeeCode"/>
+    <result column="employee_name" property="employeeName"/>
+    <result column="workplace_name" property="workplaceName"/>
+    <result column="department_name" property="departmentName"/>
+    <result column="scheduled_days" property="scheduledDays"/>
+    <result column="attendance_days" property="attendanceDays"/>
+    <result column="normal_days" property="normalDays"/>
+    <result column="late_count" property="lateCount"/>
+    <result column="early_leave_count" property="earlyLeaveCount"/>
+    <result column="missing_punch_count" property="missingPunchCount"/>
+    <result column="absence_count" property="absenceCount"/>
+    <result column="exception_days" property="exceptionDays"/>
+    <result column="paid_leave_days" property="paidLeaveDays"/>
+    <result column="rest_days" property="restDays"/>
+    <result column="close_status" property="closeStatus"/>
+    <result column="block_reason_count" property="blockReasonCount"/>
+    <result column="updated_at" property="updatedAt"/>
+  </resultMap>
+
+  <resultMap id="MonthlyDetailResultMap" type="com.sp.selfsp.attendance.monthly.domain.out.AttendanceMonthlyOut$MonthlyDetailOut" extends="MonthlyItemResultMap">
+    <result column="closed_at" property="closedAt"/>
+    <result column="closed_by" property="closedBy"/>
+    <result column="reopened_at" property="reopenedAt"/>
+    <result column="reopened_by" property="reopenedBy"/>
+    <result column="remark" property="remark"/>
+  </resultMap>
+
+  <resultMap id="MonthlyMetricItemResultMap" type="com.sp.selfsp.attendance.monthly.domain.out.AttendanceMonthlyOut$MonthlyMetricItemOut">
+    <result column="item_code" property="itemCode"/>
+    <result column="item_name" property="itemName"/>
+    <result column="item_value" property="itemValue"/>
+    <result column="item_order" property="itemOrder"/>
+    <result column="source_json" property="sourceJson"/>
+  </resultMap>
+
+  <resultMap id="ActionLogResultMap" type="com.sp.selfsp.attendance.monthly.domain.out.AttendanceMonthlyOut$ActionLogOut">
+    <result column="action_type" property="actionType"/>
+    <result column="operator_id" property="operatorId"/>
+    <result column="action_comment" property="actionComment"/>
+    <result column="snapshot_json" property="snapshotJson"/>
+    <result column="created_at" property="createdAt"/>
+  </resultMap>
+
+  <resultMap id="DailySnapshotResultMap" type="com.sp.selfsp.attendance.monthly.domain.out.AttendanceMonthlyOut$DailySnapshotOut">
+    <id column="daily_id" property="dailyId"/>
+    <result column="work_date" property="workDate"/>
+    <result column="work_day_type" property="workDayType"/>
+    <result column="schedule_label" property="scheduleLabel"/>
+    <result column="status" property="status"/>
+    <result column="final_status" property="finalStatus"/>
+    <result column="handling_status" property="handlingStatus"/>
+    <result column="exception_flag" property="exceptionFlag"/>
+    <result column="locked_flag" property="lockedFlag"/>
+  </resultMap>
+
+  <sql id="MonthlyWhere">
+    m.tenant_id = #{tenantId}
+    <if test="query != null and query.yearMonth != null and query.yearMonth != ''">
+      AND m.year_month = #{query.yearMonth}
+    </if>
+    <if test="query != null and query.workplaceId != null">
+      AND m.workplace_id = #{query.workplaceId}
+    </if>
+    <if test="query != null and query.departmentId != null">
+      AND m.department_id = #{query.departmentId}
+    </if>
+    <if test="query != null and query.employeeKeyword != null and query.employeeKeyword != ''">
+      AND (
+        e.employee_no LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+        OR e.employee_name LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+      )
+    </if>
+    <if test="query != null and query.closeStatus != null and query.closeStatus != ''">
+      AND m.close_status = #{query.closeStatus}
+    </if>
+    <if test="query != null and query.blockedOnly != null and query.blockedOnly">
+      AND m.block_reason_count &gt; 0
+    </if>
+  </sql>
+
+  <select id="selectMonthlyAggregationRows" resultType="java.util.HashMap">
+    SELECT
+      d.id AS dailyId,
+      d.employee_id AS employeeId,
+      e.employee_no AS employeeCode,
+      e.employee_name AS employeeName,
+      e.workplace_id AS workplaceId,
+      w.workplace_name AS workplaceName,
+      e.department_id AS departmentId,
+      dept.department_name AS departmentName,
+      d.work_date AS workDate,
+      d.shift_schedule_id AS shiftScheduleId,
+      d.work_day_type AS workDayType,
+      d.status AS status,
+      d.final_status AS finalStatus,
+      d.handling_status AS handlingStatus,
+      d.approval_status AS approvalStatus,
+      d.exception_flag AS exceptionFlag,
+      d.locked_flag AS lockedFlag,
+      d.updated_at AS updatedAt
+    FROM attendance_daily d
+    INNER JOIN employee e ON e.id = d.employee_id AND e.tenant_id = d.tenant_id
+    LEFT JOIN workplace w ON w.id = e.workplace_id AND w.tenant_id = e.tenant_id
+    LEFT JOIN department dept ON dept.id = e.department_id AND dept.tenant_id = e.tenant_id
+    WHERE d.tenant_id = #{tenantId}
+      AND FORMATDATETIME(d.work_date, 'yyyy-MM') = #{query.yearMonth}
+      <if test="query.workplaceId != null">
+        AND e.workplace_id = #{query.workplaceId}
+      </if>
+      <if test="query.departmentId != null">
+        AND e.department_id = #{query.departmentId}
+      </if>
+      <if test="query.employeeKeyword != null and query.employeeKeyword != ''">
+        AND (
+          e.employee_no LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+          OR e.employee_name LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+        )
+      </if>
+      <if test="query.employeeId != null">
+        AND d.employee_id = #{query.employeeId}
+      </if>
+    ORDER BY d.employee_id, d.work_date, d.id
+  </select>
+
+  <select id="selectMonthlyList" resultMap="MonthlyItemResultMap">
+    SELECT
+      m.id AS monthly_id,
+      m.year_month,
+      m.employee_id,
+      e.employee_no AS employee_code,
+      e.employee_name,
+      w.workplace_name,
+      dept.department_name,
+      m.scheduled_days,
+      m.attendance_days,
+      m.normal_days,
+      m.late_count,
+      m.early_leave_count,
+      m.missing_punch_count,
+      m.absence_count,
+      m.exception_days,
+      m.paid_leave_days,
+      m.rest_days,
+      m.close_status,
+      m.block_reason_count,
+      m.updated_at
+    FROM attendance_monthly m
+    INNER JOIN employee e ON e.id = m.employee_id AND e.tenant_id = m.tenant_id
+    LEFT JOIN workplace w ON w.id = m.workplace_id AND w.tenant_id = m.tenant_id
+    LEFT JOIN department dept ON dept.id = m.department_id AND dept.tenant_id = m.tenant_id
+    WHERE <include refid="MonthlyWhere"/>
+    ORDER BY m.employee_id ASC, m.year_month ASC
+    LIMIT #{pageSize} OFFSET #{offset}
+  </select>
+
+  <select id="countMonthlyList" resultType="java.lang.Integer">
+    SELECT COUNT(1)
+    FROM attendance_monthly m
+    INNER JOIN employee e ON e.id = m.employee_id AND e.tenant_id = m.tenant_id
+    WHERE <include refid="MonthlyWhere"/>
+  </select>
+
+  <select id="countMonthlySummary" resultType="java.util.HashMap">
+    SELECT m.close_status AS closeStatus, COUNT(1) AS total
+    FROM attendance_monthly m
+    INNER JOIN employee e ON e.id = m.employee_id AND e.tenant_id = m.tenant_id
+    WHERE <include refid="MonthlyWhere"/>
+    GROUP BY m.close_status
+  </select>
+
+  <select id="selectMonthlyDetailById" resultMap="MonthlyDetailResultMap">
+    SELECT
+      m.id AS monthly_id,
+      m.year_month,
+      m.employee_id,
+      e.employee_no AS employee_code,
+      e.employee_name,
+      w.workplace_name,
+      dept.department_name,
+      m.scheduled_days,
+      m.attendance_days,
+      m.normal_days,
+      m.late_count,
+      m.early_leave_count,
+      m.missing_punch_count,
+      m.absence_count,
+      m.exception_days,
+      m.paid_leave_days,
+      m.rest_days,
+      m.close_status,
+      m.block_reason_count,
+      m.closed_at,
+      m.closed_by,
+      m.reopened_at,
+      m.reopened_by,
+      m.remark,
+      m.updated_at
+    FROM attendance_monthly m
+    INNER JOIN employee e ON e.id = m.employee_id AND e.tenant_id = m.tenant_id
+    LEFT JOIN workplace w ON w.id = m.workplace_id AND w.tenant_id = m.tenant_id
+    LEFT JOIN department dept ON dept.id = m.department_id AND dept.tenant_id = m.tenant_id
+    WHERE m.tenant_id = #{tenantId}
+      AND m.id = #{id}
+  </select>
+
+  <select id="selectMonthlyItems" resultMap="MonthlyMetricItemResultMap">
+    SELECT item_code, item_name, item_value, item_order, source_json
+    FROM attendance_monthly_item
+    WHERE tenant_id = #{tenantId}
+      AND monthly_id = #{monthlyId}
+      AND deleted_flag = 0
+    ORDER BY item_order ASC, id ASC
+  </select>
+
+  <select id="selectMonthlyActionLogs" resultMap="ActionLogResultMap">
+    SELECT action_type, operator_id, action_comment, snapshot_json, created_at
+    FROM attendance_monthly_action_log
+    WHERE tenant_id = #{tenantId}
+      AND monthly_id = #{monthlyId}
+      AND deleted_flag = 0
+    ORDER BY id DESC
+  </select>
+
+  <select id="selectMonthlyDailySnapshots" resultMap="DailySnapshotResultMap">
+    SELECT
+      d.id AS daily_id,
+      d.work_date,
+      d.work_day_type,
+      CONCAT(COALESCE(st.template_name, ''), CASE WHEN st.start_time IS NULL THEN '' ELSE CONCAT(' ', st.start_time, '-', st.end_time) END) AS schedule_label,
+      d.status,
+      d.final_status,
+      d.handling_status,
+      d.exception_flag,
+      d.locked_flag
+    FROM attendance_monthly m
+    INNER JOIN attendance_daily d
+      ON d.tenant_id = m.tenant_id
+      AND d.employee_id = m.employee_id
+      AND FORMATDATETIME(d.work_date, 'yyyy-MM') = m.year_month
+    LEFT JOIN shift_schedule ss ON ss.id = d.shift_schedule_id AND ss.tenant_id = d.tenant_id
+    LEFT JOIN shift_template st ON st.id = ss.shift_template_id AND st.tenant_id = ss.tenant_id
+    WHERE m.tenant_id = #{tenantId}
+      AND m.id = #{monthlyId}
+    ORDER BY d.work_date ASC, d.id ASC
+  </select>
+
+  <select id="selectMonthlyBlockRows" resultType="java.util.HashMap">
+    SELECT
+      d.work_date AS workDate,
+      d.handling_status AS handlingStatus,
+      d.exception_flag AS exceptionFlag,
+      d.locked_flag AS lockedFlag,
+      d.final_status AS finalStatus
+    FROM attendance_monthly m
+    INNER JOIN attendance_daily d
+      ON d.tenant_id = m.tenant_id
+      AND d.employee_id = m.employee_id
+      AND FORMATDATETIME(d.work_date, 'yyyy-MM') = m.year_month
+    WHERE m.tenant_id = #{tenantId}
+      AND m.id = #{monthlyId}
+    ORDER BY d.work_date ASC
+  </select>
+
+  <select id="selectMonthlyIdentity" resultType="java.util.HashMap">
+    SELECT id, close_status AS closeStatus, closed_at AS closedAt, closed_by AS closedBy, reopened_at AS reopenedAt, reopened_by AS reopenedBy, remark
+    FROM attendance_monthly
+    WHERE tenant_id = #{tenantId}
+      AND year_month = #{yearMonth}
+      AND employee_id = #{employeeId}
+      AND deleted_flag = 0
+  </select>
+
+  <insert id="mergeMonthly">
+    MERGE INTO attendance_monthly (
+      tenant_id, year_month, employee_id, workplace_id, department_id,
+      scheduled_days, attendance_days, normal_days, late_count, early_leave_count,
+      missing_punch_count, absence_count, exception_days, paid_leave_days, rest_days,
+      close_status, block_reason_count, closed_at, closed_by, reopened_at, reopened_by, remark,
+      created_at, updated_at, deleted_flag
+    ) KEY (tenant_id, year_month, employee_id)
+    VALUES (
+      #{tenantId}, #{yearMonth}, #{employeeId}, #{workplaceId}, #{departmentId},
+      #{scheduledDays}, #{attendanceDays}, #{normalDays}, #{lateCount}, #{earlyLeaveCount},
+      #{missingPunchCount}, #{absenceCount}, #{exceptionDays}, #{paidLeaveDays}, #{restDays},
+      #{closeStatus}, #{blockReasonCount}, #{closedAt}, #{closedBy}, #{reopenedAt}, #{reopenedBy}, #{remark},
+      #{createdAt}, #{updatedAt}, 0
+    )
+  </insert>
+
+  <delete id="deleteMonthlyItems">
+    DELETE FROM attendance_monthly_item
+    WHERE tenant_id = #{tenantId}
+      AND monthly_id = #{monthlyId}
+  </delete>
+
+  <insert id="insertMonthlyItem">
+    INSERT INTO attendance_monthly_item (
+      tenant_id, monthly_id, item_code, item_name, item_value, item_order, source_json, created_at, updated_at, deleted_flag
+    ) VALUES (
+      #{tenantId}, #{monthlyId}, #{itemCode}, #{itemName}, #{itemValue}, #{itemOrder}, #{sourceJson},
+      CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0
+    )
+  </insert>
+
+  <insert id="insertMonthlyActionLog">
+    INSERT INTO attendance_monthly_action_log (
+      tenant_id, monthly_id, action_type, operator_id, action_comment, snapshot_json, created_at, deleted_flag
+    ) VALUES (
+      #{tenantId}, #{monthlyId}, #{actionType}, #{operatorId}, #{actionComment}, #{snapshotJson}, CURRENT_TIMESTAMP, 0
+    )
+  </insert>
+
+  <update id="updateMonthlyCloseState">
+    UPDATE attendance_monthly
+    SET close_status = #{closeStatus},
+        closed_at = #{closedAt},
+        closed_by = #{closedBy},
+        reopened_at = #{reopenedAt},
+        reopened_by = #{reopenedBy},
+        remark = #{remark},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+
+  <select id="selectMonthlyScopeRows" resultType="java.util.HashMap">
+    SELECT id, close_status AS closeStatus, block_reason_count AS blockReasonCount
+    FROM attendance_monthly
+    WHERE tenant_id = #{tenantId}
+      AND year_month = #{yearMonth}
+      AND deleted_flag = 0
+      <if test="scopeType == 'WORKPLACE' and scopeId != null">
+        AND workplace_id = #{scopeId}
+      </if>
+      <if test="scopeType == 'DEPARTMENT' and scopeId != null">
+        AND department_id = #{scopeId}
+      </if>
+      <if test="scopeType == 'EMPLOYEE' and scopeId != null">
+        AND employee_id = #{scopeId}
+      </if>
+    ORDER BY employee_id ASC
+  </select>
+</mapper>

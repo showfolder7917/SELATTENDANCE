@@ -42,6 +42,13 @@ export const attendanceCaseLayoutPreset = {
   outerMaxLeftPercent: 80
 }
 
+// 月次汇总列表和右侧详情面板沿用打卡记录的共享两栏模式，但左侧还要容纳更多统计列。
+export const attendanceMonthlyLayoutPreset = {
+  outerDefaultLeftPercent: 68,
+  outerMinLeftPercent: 50,
+  outerMaxLeftPercent: 80
+}
+
 // 排班页中间是超宽月历主区，因此左侧主区默认占比和允许范围都要比其他频道更大。
 export const attendanceScheduleLayoutPreset = {
   outerDefaultLeftPercent: 72,

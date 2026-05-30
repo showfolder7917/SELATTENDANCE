@@ -26,13 +26,15 @@ import { createPunchSection } from './punchSection'
 import { createDailySection } from './dailySection'
 // 异常处理区块模块负责第五阶段处理单、审批和锁定动作。
 import { createCaseSection } from './caseSection'
+// 月次汇总区块模块负责第六阶段月汇总、月结、反结和导出动作。
+import { createMonthlySection } from './monthlySection'
 
 // 统一暴露工作台 composable，保持页面视图仍从一个入口拿状态和动作。
 export function useAttendanceWorkbench() {
   // 先从 URL 中读取初始 section，支持直接带 section 参数进入某个区块。
   const initialSection = new URLSearchParams(window.location.search).get('section')
   // 限定可用区块集合，避免 URL 传入未知值污染工作台状态。
-  const allowedSections = ['wizard', 'workplace', 'department', 'employee', 'shift', 'schedule', 'punch', 'daily', 'case']
+  const allowedSections = ['wizard', 'workplace', 'department', 'employee', 'shift', 'schedule', 'punch', 'daily', 'case', 'monthly']
   // 从 URL 中读取当前语言，没有时回退到中文环境。
   const locale = ref(new URLSearchParams(window.location.search).get('locale') || 'zh-CN')
   // 用 section 参数或默认向导区块作为工作台当前激活区块。
@@ -71,7 +73,8 @@ export function useAttendanceWorkbench() {
     { key: 'schedule', label: t('navSchedule') },
     { key: 'punch', label: t('navPunch') },
     { key: 'daily', label: t('navDaily') },
-    { key: 'case', label: t('navCase') }
+    { key: 'case', label: t('navCase') },
+    { key: 'monthly', label: t('navMonthly') }
   ])
 
   // 继续提供推荐下一动作文案，优先使用轻量壳给出的推荐动作。
@@ -293,6 +296,17 @@ export function useAttendanceWorkbench() {
     refreshShell
   })
 
+  // 组装第六阶段月次汇总区块动作，供工作台入口和月结页面复用。
+  const monthlySection = createMonthlySection({
+    state,
+    setSectionLoading,
+    setSectionError,
+    pushToast: showToast,
+    t,
+    refreshShell,
+    downloadCsv
+  })
+
   // 保障场所主数据已加载，供部门、员工和排班等依赖场所的区块复用。
   const ensureWorkplacesLoaded = async (force = false) => {
     if (!force && state.bootstrapShell.sectionStates.workplace) return
@@ -349,6 +363,13 @@ export function useAttendanceWorkbench() {
     syncDerivedState()
   }
 
+  // 保障第六阶段月次结果已加载，供月次区块展示分页结果与详情。
+  const ensureMonthlyLoaded = async (force = false) => {
+    if (!force && state.bootstrapShell.sectionStates.monthly) return
+    await monthlySection.loadMonthlyResults()
+    syncDerivedState()
+  }
+
   // 根据当前激活区块按需加载所需数据，形成轻量壳 + section 独立加载模式。
   const ensureActiveSectionLoaded = async (sectionKey, force = false) => {
     if (sectionKey === 'wizard') {
@@ -396,6 +417,12 @@ export function useAttendanceWorkbench() {
       await ensureWorkplacesLoaded(force)
       await ensureDepartmentsLoaded(force)
       await ensureCasesLoaded(force)
+      return
+    }
+    if (sectionKey === 'monthly') {
+      await ensureWorkplacesLoaded(force)
+      await ensureDepartmentsLoaded(force)
+      await ensureMonthlyLoaded(force)
     }
   }
 
@@ -543,6 +570,42 @@ export function useAttendanceWorkbench() {
     { deep: true }
   )
 
+  // 第六阶段筛选条件变化时先回到第 1 页，再按新的数据库条件重查月次列表。
+  watch(
+    () => ({
+      yearMonth: state.monthlyFilters.yearMonth,
+      workplaceId: state.monthlyFilters.workplaceId,
+      departmentId: state.monthlyFilters.departmentId,
+      employeeKeyword: state.monthlyFilters.employeeKeyword,
+      closeStatus: state.monthlyFilters.closeStatus,
+      blockedOnly: state.monthlyFilters.blockedOnly
+    }),
+    async () => {
+      if (activeSection.value !== 'monthly') return
+      if (state.monthlyFilters.page !== 1) {
+        state.monthlyFilters.page = 1
+        return
+      }
+      await monthlySection.loadMonthlyResults()
+      syncDerivedState()
+    },
+    { deep: true }
+  )
+
+  // 第六阶段页码或每页条数变化时只重查当前分页，不再重置其他筛选条件。
+  watch(
+    () => ({
+      page: state.monthlyFilters.page,
+      pageSize: state.monthlyFilters.pageSize
+    }),
+    async () => {
+      if (activeSection.value !== 'monthly') return
+      await monthlySection.loadMonthlyResults()
+      syncDerivedState()
+    },
+    { deep: true }
+  )
+
   // 返回与原页面兼容的状态和动作接口，保证视图层无需整体重写。
   return {
     locale,
@@ -577,6 +640,7 @@ export function useAttendanceWorkbench() {
     loadPunchLogs: punchSection.loadPunchLogs,
     loadDailyResults: dailySection.loadDailyResults,
     loadCases: caseSection.loadCases,
+    loadMonthlyResults: monthlySection.loadMonthlyResults,
     selectScheduleTemplate: scheduleSection.selectScheduleTemplate,
     closeScheduleTemplateTip: scheduleSection.closeScheduleTemplateTip,
     applySchedule: scheduleSection.applySchedule,
@@ -605,6 +669,12 @@ export function useAttendanceWorkbench() {
     submitCaseAction: caseSection.submitCaseAction,
     submitCaseLock: caseSection.submitCaseLock,
     submitCaseUnlock: caseSection.submitCaseUnlock,
+    openMonthlyDetail: monthlySection.openMonthlyDetail,
+    submitMonthlyRecalculate: monthlySection.submitMonthlyRecalculate,
+    submitMonthlyRecalculateOne: monthlySection.submitMonthlyRecalculateOne,
+    submitMonthlyClose: monthlySection.submitMonthlyClose,
+    submitMonthlyReopen: monthlySection.submitMonthlyReopen,
+    submitMonthlyExport: monthlySection.submitMonthlyExport,
     submitShiftTemplate: shiftSection.submitShiftTemplate,
     generateRecommended: shiftSection.generateRecommended,
     removeShiftTemplate: shiftSection.removeShiftTemplate,
