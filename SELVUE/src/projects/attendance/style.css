@@ -511,6 +511,19 @@ body {
   margin: 6px 0 8px;
 }
 
+.selattendance-monthly-workbench-header {
+  --shared-workbench-copy-min: 420px;
+  /* 月次标题说明区只保留可读上限，剩余宽度优先让右侧统计卡继续自适应吃满。 */
+  --shared-workbench-copy-max: clamp(420px, 50%, 560px);
+  --shared-workbench-metrics-min: 520px;
+  padding: 0;
+}
+
+.selattendance-monthly-header-summary {
+  --shared-metric-card-columns: 4;
+  --shared-metric-card-gap: 12px;
+}
+
 .selattendance-content-stack {
   display: grid;
   gap: 20px;
@@ -744,6 +757,61 @@ body {
   gap: 14px;
   align-items: end;
   margin-bottom: 18px;
+}
+
+.selattendance-monthly-header-toolbar {
+  grid-template-columns:
+    minmax(150px, 0.95fr)
+    minmax(150px, 0.9fr)
+    minmax(150px, 0.9fr)
+    minmax(180px, 1fr)
+    minmax(150px, 0.85fr)
+    max-content;
+  gap: 12px;
+}
+
+.selattendance-monthly-search-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.selattendance-monthly-search-button {
+  min-width: 48px;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  font-size: 1.05rem;
+}
+
+.selattendance-monthly-search-button svg[aria-hidden='true'] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+
+.selattendance-monthly-header-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  grid-column: auto;
+  justify-self: start;
+  align-self: center;
+  min-height: auto;
+  padding-top: 0;
+  white-space: nowrap;
+}
+
+.selattendance-monthly-header-checkbox span {
+  white-space: nowrap;
 }
 
 .selattendance-schedule-actionbar {
@@ -1273,6 +1341,10 @@ body {
   .selattendance-schedule-toolbar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .selattendance-monthly-header-toolbar {
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
+  }
 }
 
 @media (max-width: 900px) {
@@ -1298,6 +1370,14 @@ body {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .selattendance-monthly-header-toolbar {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+
+  .selattendance-monthly-header-summary {
+    --shared-metric-card-columns: 2;
+  }
 }
 
 @media (max-width: 720px) {
@@ -1314,6 +1394,14 @@ body {
   .selattendance-schedule-toolbar,
   .selattendance-schedule-actionbar {
     grid-template-columns: 1fr;
+  }
+
+  .selattendance-monthly-header-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .selattendance-monthly-header-summary {
+    --shared-metric-card-columns: 1;
   }
 
   .selattendance-schedule-grid {

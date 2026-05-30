@@ -3,6 +3,8 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog.vue'
 import FloatingTipBubble from '../../../shared/components/FloatingTipBubble.vue'
 import LanguageSwitch from '../../../shared/components/LanguageSwitch.vue'
+import SharedMetricCards from '../../../shared/components/SharedMetricCards.vue'
+import SharedWorkbenchHeader from '../../../shared/components/SharedWorkbenchHeader.vue'
 import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
 import ThemeSwitch from '../../../shared/components/ThemeSwitch.vue'
 import AttendanceSectionNav from '../components/AttendanceSectionNav.vue'
@@ -75,6 +77,7 @@ const {
   loadDailyResults,
   loadCases,
   loadMonthlyResults,
+  runMonthlySearch,
   openPunchDetail,
   openDailyDetail,
   openCaseDetail,
@@ -159,6 +162,34 @@ const workspaceNavItems = computed(() => {
 const activeSectionMeta = computed(
   () => workspaceNavItems.value.find((item) => item.key === activeSection.value) || workspaceNavItems.value[0]
 )
+
+// 月次头部的四个指标先在页面层整理成共享卡片配置，后续其他模块接入时可直接复用同一数据结构。
+const monthlyHeaderMetricItems = computed(() => [
+  {
+    key: 'open',
+    value: state.monthlyList.summary?.openCount || 0,
+    label: t('monthlySummaryOpen'),
+    tone: 'default'
+  },
+  {
+    key: 'closable',
+    value: state.monthlyList.summary?.closableCount || 0,
+    label: t('monthlySummaryClosable'),
+    tone: 'warm'
+  },
+  {
+    key: 'closed',
+    value: state.monthlyList.summary?.closedCount || 0,
+    label: t('monthlySummaryClosed'),
+    tone: 'default'
+  },
+  {
+    key: 'reopened',
+    value: state.monthlyList.summary?.reopenedCount || 0,
+    label: t('monthlySummaryReopened'),
+    tone: 'muted'
+  }
+])
 
 // 页面层继续只负责拼删除文案，再复用工作台统一确认入口，不再维护独立删除弹窗状态。
 async function requestDeleteConfirm(targetLabel, targetName, onConfirm) {
@@ -434,7 +465,81 @@ onBeforeUnmount(() => {
 
       <template #main>
         <main class="selattendance-content">
-          <section class="selattendance-content-header seladmin-surface">
+          <SharedWorkbenchHeader
+            v-if="activeSection === 'monthly'"
+            class="selattendance-content-header seladmin-surface selattendance-monthly-workbench-header"
+            :title="t('monthlyTitle')"
+            :lead="t('monthlyLead')"
+            split-mode="left-summary-right-metrics"
+          >
+            <template #metrics>
+              <!-- 月次先作为 shared 指标卡的样板模块，后续 punch/daily/case 可以直接复用同样入口。 -->
+              <SharedMetricCards
+                class="selattendance-monthly-header-summary"
+                :items="monthlyHeaderMetricItems"
+              />
+            </template>
+
+            <template #filters>
+              <!-- 月次搜索条件继续放在头部，但改成显式点击放大镜后才走后台月次查询。 -->
+              <div class="selattendance-schedule-toolbar selattendance-monthly-header-toolbar">
+                <label class="seladmin-field">
+                  <span>{{ t('monthlyYearMonth') }}</span>
+                  <input v-model="state.monthlyFilters.yearMonth" type="month" />
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('workplace') }}</span>
+                  <select v-model="state.monthlyFilters.workplaceId">
+                    <option value="">{{ t('allWorkplaces') }}</option>
+                    <option v-for="item in state.workplaces" :key="item.id" :value="item.id">{{ item.workplaceName }}</option>
+                  </select>
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('departmentName') }}</span>
+                  <select v-model="state.monthlyFilters.departmentId">
+                    <option value="">{{ t('allDepartments') }}</option>
+                    <option v-for="item in state.departments" :key="item.id" :value="item.id">{{ item.departmentName }}</option>
+                  </select>
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('employeeName') }}</span>
+                  <div class="selattendance-monthly-search-field">
+                    <input v-model="state.monthlyFilters.employeeKeyword" :placeholder="t('monthlyEmployeeKeywordHint')" />
+                    <!-- 搜索按钮与员工关键字输入框同组展示，提醒用户需要点击后才真正向后台检索。 -->
+                    <button
+                      class="seladmin-button seladmin-button-secondary selattendance-monthly-search-button"
+                      type="button"
+                      :aria-label="t('monthlySearchAction')"
+                      :title="t('monthlySearchAction')"
+                      @click="runMonthlySearch()"
+                    >
+                      <!-- 改用 SVG 放大镜图标，保证在同样按钮尺寸下比字符图标更清晰醒目。 -->
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="5.5" />
+                        <path d="M16 16l4 4" />
+                      </svg>
+                    </button>
+                  </div>
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('monthlyCloseStatus') }}</span>
+                  <select v-model="state.monthlyFilters.closeStatus">
+                    <option value="">{{ t('monthlyCloseStatusAll') }}</option>
+                    <option value="OPEN">{{ t('monthlyCloseStatusOpen') }}</option>
+                    <option value="CLOSABLE">{{ t('monthlyCloseStatusClosable') }}</option>
+                    <option value="CLOSED">{{ t('monthlyCloseStatusClosed') }}</option>
+                    <option value="REOPENED">{{ t('monthlyCloseStatusReopened') }}</option>
+                  </select>
+                </label>
+                <label class="selattendance-daily-checkbox selattendance-monthly-header-checkbox">
+                  <input v-model="state.monthlyFilters.blockedOnly" type="checkbox" />
+                  <span>{{ t('monthlyBlockedOnly') }}</span>
+                </label>
+              </div>
+            </template>
+          </SharedWorkbenchHeader>
+
+          <section v-else class="selattendance-content-header seladmin-surface">
             <div>
               <p class="seladmin-eyebrow">{{ t('workspaceStatus') }}</p>
               <h2>{{ activeSectionMeta.label }}</h2>

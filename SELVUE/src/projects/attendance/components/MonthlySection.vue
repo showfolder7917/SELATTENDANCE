@@ -97,74 +97,13 @@ function goToPage(page) {
   >
     <template #left>
       <article class="seladmin-panel seladmin-surface selattendance-data-panel selattendance-monthly-list-panel">
+        <!-- 月次按钮仍保留在列表区原位置，只把标题说明与筛选条件移交给上层工作台头部。 -->
         <div class="seladmin-panel-header">
-          <div>
-            <h2>{{ t('monthlyTitle') }}</h2>
-            <p class="seladmin-copy">{{ t('monthlyLead') }}</p>
-          </div>
           <div class="selattendance-punch-actions">
             <button class="seladmin-button seladmin-button-secondary" type="button" @click="onRefresh()">{{ t('monthlyRefresh') }}</button>
             <button class="seladmin-button seladmin-button-secondary" type="button" @click="onExportMonthly()">{{ t('monthlyExport') }}</button>
             <button class="seladmin-button seladmin-button-primary" type="button" @click="onRecalculateMonthly()">{{ t('monthlyRecalculateRange') }}</button>
           </div>
-        </div>
-
-        <div class="selattendance-punch-summary">
-          <div class="selattendance-punch-summary-card">
-            <strong>{{ monthlyList.summary?.openCount || 0 }}</strong>
-            <small>{{ t('monthlySummaryOpen') }}</small>
-          </div>
-          <div class="selattendance-punch-summary-card warm">
-            <strong>{{ monthlyList.summary?.closableCount || 0 }}</strong>
-            <small>{{ t('monthlySummaryClosable') }}</small>
-          </div>
-          <div class="selattendance-punch-summary-card">
-            <strong>{{ monthlyList.summary?.closedCount || 0 }}</strong>
-            <small>{{ t('monthlySummaryClosed') }}</small>
-          </div>
-          <div class="selattendance-punch-summary-card muted">
-            <strong>{{ monthlyList.summary?.reopenedCount || 0 }}</strong>
-            <small>{{ t('monthlySummaryReopened') }}</small>
-          </div>
-        </div>
-
-        <div class="selattendance-schedule-toolbar">
-          <label class="seladmin-field">
-            <span>{{ t('monthlyYearMonth') }}</span>
-            <input v-model="monthlyFilters.yearMonth" type="month" />
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('workplace') }}</span>
-            <select v-model="monthlyFilters.workplaceId">
-              <option value="">{{ t('allWorkplaces') }}</option>
-              <option v-for="item in workplaces" :key="item.id" :value="item.id">{{ item.workplaceName }}</option>
-            </select>
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('departmentName') }}</span>
-            <select v-model="monthlyFilters.departmentId">
-              <option value="">{{ t('allDepartments') }}</option>
-              <option v-for="item in departments" :key="item.id" :value="item.id">{{ item.departmentName }}</option>
-            </select>
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('employeeName') }}</span>
-            <input v-model="monthlyFilters.employeeKeyword" :placeholder="t('monthlyEmployeeKeywordHint')" />
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('monthlyCloseStatus') }}</span>
-            <select v-model="monthlyFilters.closeStatus">
-              <option value="">{{ t('monthlyCloseStatusAll') }}</option>
-              <option value="OPEN">{{ t('monthlyCloseStatusOpen') }}</option>
-              <option value="CLOSABLE">{{ t('monthlyCloseStatusClosable') }}</option>
-              <option value="CLOSED">{{ t('monthlyCloseStatusClosed') }}</option>
-              <option value="REOPENED">{{ t('monthlyCloseStatusReopened') }}</option>
-            </select>
-          </label>
-          <label class="selattendance-daily-checkbox">
-            <input v-model="monthlyFilters.blockedOnly" type="checkbox" />
-            <span>{{ t('monthlyBlockedOnly') }}</span>
-          </label>
         </div>
 
         <SharedDataTable

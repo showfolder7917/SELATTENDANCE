@@ -54,6 +54,8 @@ export function useAttendanceWorkbench() {
     confirmVariant: 'primary',
     resolver: null
   })
+  // 月次筛选改成手动搜索后，需要区分“筛选项导致的回第一页”和“用户主动翻页”两种场景。
+  const skipNextMonthlyPageReload = ref(false)
 
   // 基于当前语言环境翻译文案 key，保持页面原有 `t()` 调用方式不变。
   const t = (key) => messages[locale.value][key] || key
@@ -370,6 +372,20 @@ export function useAttendanceWorkbench() {
     syncDerivedState()
   }
 
+  // 月次筛选改成显式搜索后，只有用户点击搜索按钮时才重置到第一页并发起后端查询。
+  const runMonthlySearch = async () => {
+    // 新条件必须从第一页开始查，避免沿用旧分页导致用户误以为结果没有变化。
+    if (state.monthlyFilters.page !== 1) {
+      // 点击搜索按钮时允许分页监听继续发请求，因此这里显式关闭跳过标记。
+      skipNextMonthlyPageReload.value = false
+      state.monthlyFilters.page = 1
+      return
+    }
+    // 已经位于第一页时立即调用月次后台接口，保证点击搜索按钮就能拿到最新结果。
+    await monthlySection.loadMonthlyResults()
+    syncDerivedState()
+  }
+
   // 根据当前激活区块按需加载所需数据，形成轻量壳 + section 独立加载模式。
   const ensureActiveSectionLoaded = async (sectionKey, force = false) => {
     if (sectionKey === 'wizard') {
@@ -570,7 +586,7 @@ export function useAttendanceWorkbench() {
     { deep: true }
   )
 
-  // 第六阶段筛选条件变化时先回到第 1 页，再按新的数据库条件重查月次列表。
+  // 第六阶段筛选条件现在只改本地待检索条件，不再在输入或切换筛选项时自动触发后台查询。
   watch(
     () => ({
       yearMonth: state.monthlyFilters.yearMonth,
@@ -580,14 +596,14 @@ export function useAttendanceWorkbench() {
       closeStatus: state.monthlyFilters.closeStatus,
       blockedOnly: state.monthlyFilters.blockedOnly
     }),
-    async () => {
+    () => {
       if (activeSection.value !== 'monthly') return
+      // 只把分页游标重置回第一页，真正查询交给搜索按钮或分页动作显式触发。
       if (state.monthlyFilters.page !== 1) {
+        // 这里的回第一页只是同步待检索状态，不应该让分页监听误判成用户主动翻页。
+        skipNextMonthlyPageReload.value = true
         state.monthlyFilters.page = 1
-        return
       }
-      await monthlySection.loadMonthlyResults()
-      syncDerivedState()
     },
     { deep: true }
   )
@@ -600,6 +616,11 @@ export function useAttendanceWorkbench() {
     }),
     async () => {
       if (activeSection.value !== 'monthly') return
+      // 若本次分页变化只是筛选项联动回第一页，则跳过自动查询，等待用户点击搜索按钮。
+      if (skipNextMonthlyPageReload.value) {
+        skipNextMonthlyPageReload.value = false
+        return
+      }
       await monthlySection.loadMonthlyResults()
       syncDerivedState()
     },
@@ -641,6 +662,7 @@ export function useAttendanceWorkbench() {
     loadDailyResults: dailySection.loadDailyResults,
     loadCases: caseSection.loadCases,
     loadMonthlyResults: monthlySection.loadMonthlyResults,
+    runMonthlySearch,
     selectScheduleTemplate: scheduleSection.selectScheduleTemplate,
     closeScheduleTemplateTip: scheduleSection.closeScheduleTemplateTip,
     applySchedule: scheduleSection.applySchedule,
