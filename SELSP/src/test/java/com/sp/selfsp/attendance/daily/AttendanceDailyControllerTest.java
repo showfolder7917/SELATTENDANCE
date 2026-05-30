@@ -94,4 +94,59 @@ public class AttendanceDailyControllerTest extends AttendanceControllerIntegrati
             .andExpect(jsonPath("$.data.successCount").value(3))
             .andExpect(jsonPath("$.data.failedCount").value(0));
     }
+
+    /**
+     * 测试目的：验证第七阶段正式规则已经接入日次算法，可稳定输出残业、深夜和法定休日结果。
+     */
+    @Test
+    public void shouldApplyPhase7RuleCalculationToDailyResults() throws Exception {
+        // 先加载 7 月日次，让服务自动生成带规则增强字段的结果。
+        JsonNode juneListData = readData(mockMvc.perform(get("/api/attendance/daily")
+                .param("startDate", "2026-07-01")
+                .param("endDate", "2026-07-05")
+                .param("page", "1")
+                .param("pageSize", "20"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.total").value(3))
+            .andReturn());
+
+        // 7 月 3 日应按自动休息和标准工时算出 30 分钟残业。
+        JsonNode overtimeDaily = findDailyByWorkDate(juneListData, "2026-07-03");
+        mockMvc.perform(get("/api/attendance/daily/{id}", overtimeDaily.get("id").asLong()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.appliedRuleName").value("日本标准规则"))
+            .andExpect(jsonPath("$.data.actualWorkMinutes").value(510))
+            .andExpect(jsonPath("$.data.overtimeMinutes").value(30))
+            .andExpect(jsonPath("$.data.legalOvertimeMinutes").value(30))
+            .andExpect(jsonPath("$.data.nightWorkMinutes").value(0))
+            .andExpect(jsonPath("$.data.holidayType").isEmpty());
+
+        // 7 月 4 日应命中深夜窗口，把 22:00 之后的分钟沉淀进深夜工时。
+        JsonNode nightDaily = findDailyByWorkDate(juneListData, "2026-07-04");
+        mockMvc.perform(get("/api/attendance/daily/{id}", nightDaily.get("id").asLong()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.actualWorkMinutes").value(600))
+            .andExpect(jsonPath("$.data.overtimeMinutes").value(120))
+            .andExpect(jsonPath("$.data.nightWorkMinutes").value(115))
+            .andExpect(jsonPath("$.data.status").value("NORMAL"));
+
+        // 7 月 5 日法定休日样本应把全部工时记入休日工时，并标记法定休日类型。
+        JsonNode legalHolidayDaily = findDailyByWorkDate(juneListData, "2026-07-05");
+        mockMvc.perform(get("/api/attendance/daily/{id}", legalHolidayDaily.get("id").asLong()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("HOLIDAY_WORK"))
+            .andExpect(jsonPath("$.data.holidayType").value("LEGAL_HOLIDAY"))
+            .andExpect(jsonPath("$.data.holidayWorkMinutes").value(240))
+            .andExpect(jsonPath("$.data.legalOvertimeMinutes").value(240));
+    }
+
+    // 从当前列表结果里按工作日找到目标日次，避免依赖数据库自增主键顺序。
+    private JsonNode findDailyByWorkDate(JsonNode listData, String workDate) {
+        for (JsonNode item : listData.get("items")) {
+            if (workDate.equals(item.get("workDate").asText())) {
+                return item;
+            }
+        }
+        throw new IllegalArgumentException("未找到工作日：" + workDate);
+    }
 }

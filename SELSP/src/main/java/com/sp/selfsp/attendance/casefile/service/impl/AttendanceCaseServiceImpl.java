@@ -7,7 +7,6 @@ import com.sp.selfsp.attendance.casefile.domain.in.AttendanceCaseIn;
 import com.sp.selfsp.attendance.casefile.domain.out.AttendanceCaseOut;
 import com.sp.selfsp.attendance.casefile.service.AttendanceCaseService;
 import com.sp.selfsp.attendance.common.AttendanceTenantContext;
-import com.sp.selfsp.attendance.daily.dao.AttendanceDailyDao;
 import com.sp.selfsp.attendance.daily.domain.in.AttendanceDailyIn;
 import com.sp.selfsp.attendance.daily.domain.out.AttendanceDailyOut;
 import com.sp.selfsp.attendance.daily.service.AttendanceDailyService;
@@ -43,8 +42,6 @@ public class AttendanceCaseServiceImpl implements AttendanceCaseService {
     private final AttendanceCaseDao attendanceCaseDao;
     // 读取第四阶段日次详情，供第五阶段详情页复用。
     private final AttendanceDailyService attendanceDailyService;
-    // 直接更新日次最终结果和状态回写。
-    private final AttendanceDailyDao attendanceDailyDao;
     // JSON 序列化器用于记录审批前后快照和补丁。
     private final ObjectMapper objectMapper;
 
@@ -52,12 +49,10 @@ public class AttendanceCaseServiceImpl implements AttendanceCaseService {
     public AttendanceCaseServiceImpl(
         AttendanceCaseDao attendanceCaseDao,
         AttendanceDailyService attendanceDailyService,
-        AttendanceDailyDao attendanceDailyDao,
         ObjectMapper objectMapper
     ) {
         this.attendanceCaseDao = attendanceCaseDao;
         this.attendanceDailyService = attendanceDailyService;
-        this.attendanceDailyDao = attendanceDailyDao;
         this.objectMapper = objectMapper;
     }
 
@@ -139,12 +134,7 @@ public class AttendanceCaseServiceImpl implements AttendanceCaseService {
             createIn.getAttendanceDailyId()
         );
         // 建单后立刻把日次状态推进入审核中，列表第一眼就能看出已提交审批。
-        attendanceDailyDao.updateDailyHandlingState(
-            AttendanceTenantContext.DEFAULT_TENANT_ID,
-            createIn.getAttendanceDailyId(),
-            "IN_REVIEW",
-            "SUBMITTED"
-        );
+        attendanceDailyService.markDailyInReview(createIn.getAttendanceDailyId());
         attendanceCaseDao.insertActionLog(
             AttendanceTenantContext.DEFAULT_TENANT_ID,
             caseDetail.getCaseId(),
@@ -345,17 +335,14 @@ public class AttendanceCaseServiceImpl implements AttendanceCaseService {
             null,
             null
         );
-        attendanceDailyDao.updateDailyFinalResult(
-            AttendanceTenantContext.DEFAULT_TENANT_ID,
+        attendanceDailyService.applyApprovedResolution(
             attendanceDailyId,
-            "RESOLVED",
-            "APPROVED",
-            finalStatus,
+            caseId,
             finalClockIn,
             finalClockOut,
             finalBreakMinutes,
+            finalStatus,
             normalizeText(actionIn.getComment()),
-            caseId,
             finalExceptionFlag
         );
     }
@@ -372,12 +359,7 @@ public class AttendanceCaseServiceImpl implements AttendanceCaseService {
             null,
             null
         );
-        attendanceDailyDao.updateDailyHandlingState(
-            AttendanceTenantContext.DEFAULT_TENANT_ID,
-            attendanceDailyId,
-            "IN_REVIEW",
-            "RETURNED"
-        );
+        attendanceDailyService.markDailyReturned(attendanceDailyId);
     }
 
     // 驳回后把日次重新放回待处理，保留异常继续等待重新申请。
@@ -392,12 +374,7 @@ public class AttendanceCaseServiceImpl implements AttendanceCaseService {
             LocalDateTime.now(),
             null
         );
-        attendanceDailyDao.updateDailyHandlingState(
-            AttendanceTenantContext.DEFAULT_TENANT_ID,
-            attendanceDailyId,
-            "UNHANDLED",
-            "REJECTED"
-        );
+        attendanceDailyService.markDailyRejected(attendanceDailyId);
     }
 
     // 第五阶段详情页根据当前状态显示下一步可点动作，避免用户自己猜。
@@ -426,10 +403,7 @@ public class AttendanceCaseServiceImpl implements AttendanceCaseService {
         if (dailyId == null || dailyId <= 0) {
             throw new IllegalArgumentException("attendanceDailyId 不能为空");
         }
-        Map<String, Object> dailyMeta = attendanceDailyDao.selectDailyMetaById(
-            AttendanceTenantContext.DEFAULT_TENANT_ID,
-            dailyId
-        );
+        Map<String, Object> dailyMeta = attendanceDailyService.getDailyMeta(dailyId);
         if (dailyMeta == null || dailyMeta.isEmpty()) {
             throw new IllegalArgumentException("未找到对应日次结果");
         }

@@ -16,6 +16,8 @@ import { createWorkplaceSection } from './workplaceSection'
 import { createDepartmentSection } from './departmentSection'
 // 员工区块模块负责员工列表、映射、导入导出和部门到员工的跳转。
 import { createEmployeeSection } from './employeeSection'
+// 日本规则区块模块负责第七阶段规则配置、员工适用和预警看板。
+import { createRuleSection } from './ruleSection'
 // 班次区块模块负责模板列表、模板表单和推荐模板生成。
 import { createShiftSection } from './shiftSection'
 // 排班区块模块负责看板加载、单条排班和批量排班流程。
@@ -34,7 +36,7 @@ export function useAttendanceWorkbench() {
   // 先从 URL 中读取初始 section，支持直接带 section 参数进入某个区块。
   const initialSection = new URLSearchParams(window.location.search).get('section')
   // 限定可用区块集合，避免 URL 传入未知值污染工作台状态。
-  const allowedSections = ['wizard', 'workplace', 'department', 'employee', 'shift', 'schedule', 'punch', 'daily', 'case', 'monthly']
+  const allowedSections = ['wizard', 'workplace', 'department', 'employee', 'rule', 'shift', 'schedule', 'punch', 'daily', 'case', 'monthly']
   // 从 URL 中读取当前语言，没有时回退到中文环境。
   const locale = ref(new URLSearchParams(window.location.search).get('locale') || 'zh-CN')
   // 用 section 参数或默认向导区块作为工作台当前激活区块。
@@ -77,6 +79,7 @@ export function useAttendanceWorkbench() {
     { key: 'workplace', label: t('navWorkplace') },
     { key: 'department', label: t('navDepartment') },
     { key: 'employee', label: t('navEmployee') },
+    { key: 'rule', label: t('navRule') },
     { key: 'shift', label: t('navShift') },
     { key: 'schedule', label: t('navSchedule') },
     { key: 'punch', label: t('navPunch') },
@@ -252,6 +255,17 @@ export function useAttendanceWorkbench() {
     downloadCsv
   })
 
+  // 组装第七阶段日本规则区块动作，供规则配置、员工适用和预警看板复用。
+  const ruleSection = createRuleSection({
+    state,
+    setSectionLoading,
+    setSectionError,
+    pushToast: showToast,
+    t,
+    refreshShell,
+    requestConfirm
+  })
+
   // 组装班次模板区块动作，供工作台入口和排班流程复用。
   const shiftSection = createShiftSection({
     state,
@@ -312,7 +326,8 @@ export function useAttendanceWorkbench() {
     pushToast: showToast,
     t,
     refreshShell,
-    downloadCsv
+    downloadCsv,
+    requestConfirm
   })
 
   // 保障场所主数据已加载，供部门、员工和排班等依赖场所的区块复用。
@@ -333,6 +348,13 @@ export function useAttendanceWorkbench() {
   const ensureEmployeesLoaded = async (force = false) => {
     if (!force && state.bootstrapShell.sectionStates.employee) return
     await employeeSection.loadEmployees()
+    syncDerivedState()
+  }
+
+  // 保障第七阶段规则工作台已加载，供规则页展示规则、适用和预警聚合结果。
+  const ensureRuleLoaded = async (force = false) => {
+    if (!force && state.bootstrapShell.sectionStates.rule) return
+    await ruleSection.loadRuleWorkbench()
     syncDerivedState()
   }
 
@@ -392,6 +414,12 @@ export function useAttendanceWorkbench() {
     syncDerivedState()
   }
 
+  // 第七阶段规则筛选走显式搜索，避免用户调参数时不断刷新整块规则工作台。
+  const runRuleSearch = async () => {
+    await ruleSection.loadRuleWorkbench()
+    syncDerivedState()
+  }
+
   // 打卡记录改成显式搜索后，只有点击搜索按钮时才重置分页并查询后台打卡列表。
   const runPunchSearch = async () => {
     // 搜索新条件时优先回到第一页，避免旧分页让用户误以为结果没有刷新。
@@ -434,14 +462,6 @@ export function useAttendanceWorkbench() {
     syncDerivedState()
   }
 
-  // 排班管理把筛选条上收到头部后，继续沿用“点搜索按钮才真正刷新看板”的显式查询方式。
-  const runScheduleSearch = async () => {
-    // 排班看板没有分页游标，因此点击搜索时直接按当前筛选条件重读后台看板即可。
-    await scheduleSection.loadScheduleBoard()
-    // 看板刷新后同步壳层计数和默认引用，保证导航角标与依赖表单状态一起更新。
-    syncDerivedState()
-  }
-
   // 根据当前激活区块按需加载所需数据，形成轻量壳 + section 独立加载模式。
   const ensureActiveSectionLoaded = async (sectionKey, force = false) => {
     if (sectionKey === 'wizard') {
@@ -461,6 +481,11 @@ export function useAttendanceWorkbench() {
       await ensureWorkplacesLoaded(force)
       await ensureDepartmentsLoaded(force)
       await ensureEmployeesLoaded(force)
+      return
+    }
+    if (sectionKey === 'rule') {
+      await ensureEmployeesLoaded(force)
+      await ensureRuleLoaded(force)
       return
     }
     if (sectionKey === 'shift') {
@@ -723,11 +748,18 @@ export function useAttendanceWorkbench() {
     submitMapping: employeeSection.submitMapping,
     submitImport: employeeSection.submitImport,
     handleExport: employeeSection.handleExport,
+    loadRuleWorkbench: ruleSection.loadRuleWorkbench,
+    runRuleSearch,
+    submitRule: ruleSection.submitRule,
+    editRule: ruleSection.editRule,
+    resetRuleForm: ruleSection.resetRuleForm,
+    submitRuleAssignment: ruleSection.submitRuleAssignment,
+    editRuleAssignment: ruleSection.editAssignment,
+    resetRuleAssignmentForm: ruleSection.resetRuleAssignmentForm,
     requestConfirm,
     cancelConfirmDialog,
     submitConfirmDialog,
     loadScheduleBoard: scheduleSection.loadScheduleBoard,
-    runScheduleSearch,
     loadPunchLogs: punchSection.loadPunchLogs,
     loadDailyResults: dailySection.loadDailyResults,
     loadCases: caseSection.loadCases,

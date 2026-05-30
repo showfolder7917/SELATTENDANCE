@@ -17,8 +17,16 @@
     <result column="actual_clock_out" property="actualClockOut"/>
     <result column="actual_break_minutes" property="actualBreakMinutes"/>
     <result column="actual_work_minutes" property="actualWorkMinutes"/>
+    <result column="normal_work_minutes" property="normalWorkMinutes"/>
+    <result column="overtime_minutes" property="overtimeMinutes"/>
+    <result column="legal_overtime_minutes" property="legalOvertimeMinutes"/>
+    <result column="night_work_minutes" property="nightWorkMinutes"/>
+    <result column="holiday_work_minutes" property="holidayWorkMinutes"/>
     <result column="late_minutes" property="lateMinutes"/>
     <result column="early_leave_minutes" property="earlyLeaveMinutes"/>
+    <result column="holiday_type" property="holidayType"/>
+    <result column="applied_rule_id" property="appliedRuleId"/>
+    <result column="applied_rule_name" property="appliedRuleName"/>
     <result column="status" property="status"/>
     <result column="exception_flag" property="exceptionFlag"/>
   </resultMap>
@@ -220,6 +228,37 @@
     ORDER BY punch_time ASC, id ASC
   </select>
 
+  <select id="selectApplicableRule" resultType="java.util.HashMap">
+    SELECT
+      wr.rule_id AS ruleId,
+      wr.standard_daily_minutes AS standardDailyMinutes,
+      wr.standard_weekly_minutes AS standardWeeklyMinutes,
+      wr.overtime_enabled AS overtimeEnabled,
+      wr.night_work_enabled AS nightWorkEnabled,
+      wr.holiday_work_enabled AS holidayWorkEnabled,
+      r.rule_code AS ruleCode,
+      r.rule_name AS ruleName,
+      r.auto_break_enabled AS autoBreakEnabled,
+      r.auto_break_threshold_minutes AS autoBreakThresholdMinutes,
+      r.auto_break_deduct_minutes AS autoBreakDeductMinutes,
+      r.night_work_start AS nightWorkStart,
+      r.night_work_end AS nightWorkEnd,
+      r.rounding_unit_minutes AS roundingUnitMinutes,
+      r.rounding_mode AS roundingMode
+    FROM employee_work_rule wr
+    LEFT JOIN attendance_rule_config r
+      ON r.tenant_id = wr.tenant_id
+      AND r.id = wr.rule_id
+      AND r.deleted_flag = 0
+      AND r.active_flag = 1
+    WHERE wr.tenant_id = #{tenantId}
+      AND wr.employee_id = #{employeeId}
+      AND wr.effective_start_date <![CDATA[ <= ]]> #{workDate}
+      AND (wr.effective_end_date IS NULL OR wr.effective_end_date <![CDATA[ >= ]]> #{workDate})
+    ORDER BY wr.effective_start_date DESC, wr.id DESC
+    LIMIT 1
+  </select>
+
   <select id="selectDailyIdentity" resultType="java.util.HashMap">
     SELECT id, employee_id, work_date, approval_status, handling_status, locked_flag
     FROM attendance_daily
@@ -255,6 +294,7 @@
       actual_clock_in, actual_clock_out, actual_break_minutes, actual_work_minutes,
       late_minutes, early_leave_minutes, absence_minutes,
       normal_work_minutes, overtime_minutes, legal_overtime_minutes, night_work_minutes, holiday_work_minutes,
+      holiday_type, applied_rule_id,
       status, approval_status, handling_status, exception_flag, locked,
       calculated_at, calc_version, calc_message, created_at, updated_at
     ) KEY (tenant_id, employee_id, work_date)
@@ -264,6 +304,7 @@
       #{actualClockIn}, #{actualClockOut}, #{actualBreakMinutes}, #{actualWorkMinutes},
       #{lateMinutes}, #{earlyLeaveMinutes}, #{absenceMinutes},
       #{normalWorkMinutes}, #{overtimeMinutes}, #{legalOvertimeMinutes}, #{nightWorkMinutes}, #{holidayWorkMinutes},
+      #{holidayType}, #{appliedRuleId},
       #{status}, #{approvalStatus}, #{handlingStatus}, #{exceptionFlag}, #{locked},
       #{calculatedAt}, #{calcVersion}, #{calcMessage}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
     )
@@ -311,13 +352,25 @@
       COALESCE(d.final_clock_out, d.actual_clock_out) AS actual_clock_out,
       COALESCE(d.final_break_minutes, d.actual_break_minutes) AS actual_break_minutes,
       d.actual_work_minutes,
-      d.late_minutes, d.early_leave_minutes, COALESCE(d.final_status, d.status) AS status, d.exception_flag
+      d.normal_work_minutes,
+      d.overtime_minutes,
+      d.legal_overtime_minutes,
+      d.night_work_minutes,
+      d.holiday_work_minutes,
+      d.late_minutes,
+      d.early_leave_minutes,
+      d.holiday_type,
+      d.applied_rule_id,
+      rc.rule_name AS applied_rule_name,
+      COALESCE(d.final_status, d.status) AS status,
+      d.exception_flag
     FROM attendance_daily d
     INNER JOIN employee e ON e.id = d.employee_id AND e.tenant_id = d.tenant_id
     LEFT JOIN department dept ON dept.id = e.department_id AND dept.tenant_id = e.tenant_id
     LEFT JOIN workplace wp ON wp.id = e.workplace_id AND wp.tenant_id = e.tenant_id
     LEFT JOIN shift_schedule ss ON ss.id = d.shift_schedule_id AND ss.tenant_id = d.tenant_id
     LEFT JOIN shift_template st ON st.id = ss.shift_template_id AND st.tenant_id = d.tenant_id
+    LEFT JOIN attendance_rule_config rc ON rc.id = d.applied_rule_id AND rc.tenant_id = d.tenant_id
     WHERE <include refid="DailyWhere"/>
     ORDER BY d.work_date DESC, e.employee_no ASC
     LIMIT #{pageSize} OFFSET #{offset}
@@ -347,13 +400,25 @@
       COALESCE(d.final_clock_out, d.actual_clock_out) AS actual_clock_out,
       COALESCE(d.final_break_minutes, d.actual_break_minutes) AS actual_break_minutes,
       d.actual_work_minutes,
-      d.late_minutes, d.early_leave_minutes, COALESCE(d.final_status, d.status) AS status, d.exception_flag
+      d.normal_work_minutes,
+      d.overtime_minutes,
+      d.legal_overtime_minutes,
+      d.night_work_minutes,
+      d.holiday_work_minutes,
+      d.late_minutes,
+      d.early_leave_minutes,
+      d.holiday_type,
+      d.applied_rule_id,
+      rc.rule_name AS applied_rule_name,
+      COALESCE(d.final_status, d.status) AS status,
+      d.exception_flag
     FROM attendance_daily d
     INNER JOIN employee e ON e.id = d.employee_id AND e.tenant_id = d.tenant_id
     LEFT JOIN department dept ON dept.id = e.department_id AND dept.tenant_id = e.tenant_id
     LEFT JOIN workplace wp ON wp.id = e.workplace_id AND wp.tenant_id = e.tenant_id
     LEFT JOIN shift_schedule ss ON ss.id = d.shift_schedule_id AND ss.tenant_id = d.tenant_id
     LEFT JOIN shift_template st ON st.id = ss.shift_template_id AND st.tenant_id = d.tenant_id
+    LEFT JOIN attendance_rule_config rc ON rc.id = d.applied_rule_id AND rc.tenant_id = d.tenant_id
     WHERE d.tenant_id = #{tenantId}
       AND d.id = #{id}
   </select>
@@ -386,6 +451,28 @@
         final_remark = #{finalRemark},
         approved_case_id = #{approvedCaseId},
         exception_flag = #{exceptionFlag},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+
+  <update id="updateDailyResolvedMetrics">
+    UPDATE attendance_daily
+    SET actual_break_minutes = #{actualBreakMinutes},
+        actual_work_minutes = #{actualWorkMinutes},
+        late_minutes = #{lateMinutes},
+        early_leave_minutes = #{earlyLeaveMinutes},
+        normal_work_minutes = #{normalWorkMinutes},
+        overtime_minutes = #{overtimeMinutes},
+        legal_overtime_minutes = #{legalOvertimeMinutes},
+        night_work_minutes = #{nightWorkMinutes},
+        holiday_work_minutes = #{holidayWorkMinutes},
+        holiday_type = #{holidayType},
+        applied_rule_id = #{appliedRuleId},
+        status = #{status},
+        exception_flag = #{exceptionFlag},
+        calc_version = #{calcVersion},
+        calc_message = #{calcMessage},
         updated_at = CURRENT_TIMESTAMP
     WHERE tenant_id = #{tenantId}
       AND id = #{id}

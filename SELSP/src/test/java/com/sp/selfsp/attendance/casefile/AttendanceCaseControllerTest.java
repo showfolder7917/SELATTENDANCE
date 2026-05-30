@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -103,5 +104,69 @@ public class AttendanceCaseControllerTest extends AttendanceControllerIntegratio
             .andExpect(status().isOk());
         mockMvc.perform(post("/api/attendance/daily/{id}/unlock", attendanceDailyId))
             .andExpect(status().isOk());
+    }
+
+    /**
+     * 测试目的：验证审批修改 final 时间后，日次增强分钟会同步刷新。
+     */
+    @Test
+    public void shouldRefreshEnhancedMinutesAfterApproveFinalPatch() throws Exception {
+        // 只看 5 月 18 日，锁定一个确定的缺下班卡样本，避免从整月异常池里拿到不稳定数据。
+        JsonNode listData = readData(mockMvc.perform(get("/api/attendance/cases")
+                .param("startDate", "2026-05-18")
+                .param("endDate", "2026-05-18")
+                .param("page", "1")
+                .param("pageSize", "20"))
+            .andExpect(status().isOk())
+            .andReturn());
+        assertEquals(1, listData.get("items").size());
+        JsonNode targetCaseCandidate = listData.get("items").get(0);
+        long attendanceDailyId = targetCaseCandidate.get("attendanceDailyId").asLong();
+
+        // 先建单，让第五阶段审批链路进入可回写最终业务时间的状态。
+        JsonNode createData = readData(mockMvc.perform(post("/api/attendance/cases")
+                .contentType(JSON)
+                .content(writeJson(Map.of(
+                    "attendanceDailyId", attendanceDailyId,
+                    "caseType", targetCaseCandidate.get("caseType").asText(),
+                    "applicantId", 9001,
+                    "applicantRole", "MANAGER",
+                    "reasonCategory", "MANUAL_CONFIRM",
+                    "reasonText", "补录最终下班时间并同步增强分钟。",
+                    "expectedResolution", "按人工修正后的最终时间重算。"
+                ))))
+            .andExpect(status().isOk())
+            .andReturn());
+        long caseId = createData.get("caseId").asLong();
+
+        // 审批时补写最终上下班和休息分钟，验证第七阶段增强字段会一起变化。
+        mockMvc.perform(post("/api/attendance/cases/{id}/actions", caseId)
+                .contentType(JSON)
+                .content(writeJson(Map.of(
+                    "actionType", "APPROVE",
+                    "approverId", 9001,
+                    "comment", "补录最终下班时间后同步刷新增强分钟。",
+                    "patchPayload", Map.of(
+                        "actualClockIn", "2026-05-18T09:00:00",
+                        "actualClockOut", "2026-05-18T18:45:00",
+                        "finalBreakMinutes", 60,
+                        "finalStatus", "NORMAL",
+                        "finalExceptionFlag", false
+                    )
+                ))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.caseStatus").value("APPROVED"));
+
+        // 审批完成后，日次详情里的工时、残业和规则字段都应已经联动刷新。
+        mockMvc.perform(get("/api/attendance/daily/{id}", attendanceDailyId))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("NORMAL"))
+            .andExpect(jsonPath("$.data.actualWorkMinutes").value(525))
+            .andExpect(jsonPath("$.data.normalWorkMinutes").value(480))
+            .andExpect(jsonPath("$.data.overtimeMinutes").value(45))
+            .andExpect(jsonPath("$.data.legalOvertimeMinutes").value(45))
+            .andExpect(jsonPath("$.data.nightWorkMinutes").value(0))
+            .andExpect(jsonPath("$.data.holidayWorkMinutes").value(0))
+            .andExpect(jsonPath("$.data.appliedRuleName").value("日本标准规则"));
     }
 }

@@ -26,17 +26,29 @@ VALUES
   (3, 1, 2, 3, 'E0003', '鈴木一郎', 'スズキイチロウ', 'MALE', 'CONTRACT', DATE '2026-05-01', NULL, 'ichiro.suzuki@example.jp', '090-3333-3333', 'ACTIVE'),
   (4, 1, 2, 3, 'E0004', '高橋美咲', 'タカハシミサキ', 'FEMALE', 'ARBEIT', DATE '2026-05-10', NULL, 'misaki.takahashi@example.jp', '090-4444-4444', 'INACTIVE');
 
-MERGE INTO employee_work_rule (
-    id, tenant_id, employee_id, work_rule_type, standard_daily_minutes, standard_weekly_minutes,
-    overtime_enabled, night_work_enabled, holiday_work_enabled, rounding_rule_id,
-    effective_start_date, effective_end_date
+MERGE INTO attendance_rule_config (
+    id, tenant_id, rule_code, rule_name, standard_daily_minutes, standard_weekly_minutes,
+    auto_break_enabled, auto_break_threshold_minutes, auto_break_deduct_minutes,
+    night_work_start, night_work_end, rounding_unit_minutes, rounding_mode,
+    monthly_overtime_alert_hours, yearly_overtime_alert_hours,
+    paid_leave_reminder_enabled, active_flag, note, deleted_flag
 )
 KEY (id)
 VALUES
-  (1, 1, 1, 'STANDARD', 480, 2400, 1, 1, 1, NULL, DATE '2026-04-01', NULL),
-  (2, 1, 2, 'PART_TIME', 300, 1500, 1, 0, 0, NULL, DATE '2026-04-15', NULL),
-  (3, 1, 3, 'STANDARD', 480, 2400, 1, 1, 1, NULL, DATE '2026-05-01', NULL),
-  (4, 1, 4, 'PART_TIME', 240, 1200, 0, 0, 0, NULL, DATE '2026-05-10', NULL);
+  (1, 1, 'JP_STANDARD', '日本标准规则', 480, 2400, 1, 360, 60, '22:00', '05:00', 15, 'ROUND_NEAREST', 45, 360, 1, 1, '适用于常规全职员工', 0),
+  (2, 1, 'JP_PART_TIME', '日本兼职规则', 300, 1500, 0, 0, 0, '22:00', '05:00', 15, 'ROUND_DOWN', 30, 240, 1, 1, '适用于兼职和短时雇员', 0);
+
+MERGE INTO employee_work_rule (
+    id, tenant_id, employee_id, rule_id, work_rule_type, standard_daily_minutes, standard_weekly_minutes,
+    overtime_enabled, night_work_enabled, holiday_work_enabled, rounding_rule_id,
+    effective_start_date, effective_end_date, rule_note
+)
+KEY (id)
+VALUES
+  (1, 1, 1, 1, 'JP_STANDARD', 480, 2400, 1, 1, 1, NULL, DATE '2026-04-01', NULL, '默认日本标准规则'),
+  (2, 1, 2, 2, 'JP_PART_TIME', 300, 1500, 1, 0, 0, NULL, DATE '2026-04-15', NULL, '默认日本兼职规则'),
+  (3, 1, 3, 1, 'JP_STANDARD', 480, 2400, 1, 1, 1, NULL, DATE '2026-05-01', NULL, '默认日本标准规则'),
+  (4, 1, 4, 2, 'JP_PART_TIME', 240, 1200, 0, 0, 0, NULL, DATE '2026-05-10', NULL, '停用员工保留既有规则');
 
 MERGE INTO employee_external_mapping (
     id, tenant_id, employee_id, source_system, external_employee_id, external_employee_no, status

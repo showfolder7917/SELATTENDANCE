@@ -2,6 +2,8 @@ package com.sp.selfsp.attendance.daily.service;
 
 import com.sp.selfsp.attendance.daily.domain.in.AttendanceDailyIn;
 import com.sp.selfsp.attendance.daily.domain.out.AttendanceDailyOut;
+import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * 第四阶段日次勤怠服务接口。
@@ -25,4 +27,38 @@ public interface AttendanceDailyService {
 
     // 第五阶段管理员解锁指定日次结果，供审批修正后重新开放少量调整窗口。
     void unlockDaily(Long dailyId);
+
+    // 第五阶段审批流需要读取日次元数据，但不应直接碰 DAO，统一走日次服务读取。
+    Map<String, Object> getDailyMeta(Long dailyId);
+
+    // 第五阶段创建处理单后，把日次推进到审核中状态。
+    void markDailyInReview(Long dailyId);
+
+    // 第五阶段审批退回后，日次继续停留在审核中等待申请方补充。
+    void markDailyReturned(Long dailyId);
+
+    // 第五阶段审批驳回后，把日次重新放回待处理状态。
+    void markDailyRejected(Long dailyId);
+
+    // 第五阶段审批通过后，由日次服务统一回写最终结果并联动刷新增强分钟。
+    void applyApprovedResolution(
+        Long dailyId,
+        Long approvedCaseId,
+        LocalDateTime finalClockIn,
+        LocalDateTime finalClockOut,
+        Integer finalBreakMinutes,
+        String finalStatus,
+        String finalRemark,
+        Boolean finalExceptionFlag
+    );
+
+    // 第五阶段审批改动最终上下班或休息后，联动刷新第七阶段增强分钟和状态字段。
+    void refreshResolvedDailyMetrics(
+        Long dailyId,
+        LocalDateTime finalClockIn,
+        LocalDateTime finalClockOut,
+        Integer finalBreakMinutes,
+        String finalStatus,
+        Boolean finalExceptionFlag
+    );
 }

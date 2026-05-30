@@ -18,7 +18,8 @@ export const createMonthlySection = ({
   pushToast,
   t,
   refreshShell,
-  downloadCsv
+  downloadCsv,
+  requestConfirm
 }) => {
   // 独立读取第六阶段列表，供月次汇总区块按当前筛选和分页局部刷新。
   const loadMonthlyResults = async () => {
@@ -132,6 +133,27 @@ export const createMonthlySection = ({
 
   // 导出当前筛选范围的月次 CSV，供管理员直接拿去对账和留档。
   const submitMonthlyExport = async () => {
+    // 导出前先统计当前筛选范围里还有多少未锁定月次，给用户明确的业务风险判断。
+    const unlockedMonthlyCount =
+      Number(state.monthlyList.summary?.openCount || 0) +
+      Number(state.monthlyList.summary?.closableCount || 0) +
+      Number(state.monthlyList.summary?.reopenedCount || 0)
+    // 无论是否存在风险，都先走一轮导出确认，让用户先理解当前导出口径和范围。
+    const confirmed = await requestConfirm({
+      title: unlockedMonthlyCount > 0 ? t('monthlyExportRiskTitle') : t('monthlyExportGuideTitle'),
+      message:
+        unlockedMonthlyCount > 0
+          ? t('monthlyExportRiskMessage')
+              .replace('{count}', String(unlockedMonthlyCount))
+              .replace('{month}', String(state.monthlyFilters.yearMonth || '-'))
+          : t('monthlyExportGuideMessage').replace('{month}', String(state.monthlyFilters.yearMonth || '-')),
+      confirmLabel: unlockedMonthlyCount > 0 ? t('monthlyExportRiskConfirm') : t('monthlyExportGuideConfirm'),
+      confirmVariant: unlockedMonthlyCount > 0 ? 'danger' : 'primary'
+    })
+    // 用户取消时直接终止导出，避免未确认的月次结果流出到薪资或对账流程。
+    if (!confirmed) {
+      return
+    }
     const payload = await exportMonthly({
       yearMonth: state.monthlyFilters.yearMonth,
       workplaceId: state.monthlyFilters.workplaceId || null,

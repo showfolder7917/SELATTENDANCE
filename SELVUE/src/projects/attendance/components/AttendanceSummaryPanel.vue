@@ -11,11 +11,12 @@ defineProps({
   <section class="seladmin-panel seladmin-surface seladmin-surface-accent">
     <div class="seladmin-panel-header">
       <div>
-        <p class="seladmin-eyebrow">{{ t('wizardTitle') }}</p>
-        <h2>{{ t('nextAction') }}</h2>
+        <p class="seladmin-eyebrow">{{ t('nextAction') }}</p>
+        <h2>{{ t('wizardTitle') }}</h2>
       </div>
       <span class="seladmin-chip">{{ recommendedNextLabel }}</span>
     </div>
+    <p class="seladmin-copy">{{ t('sectionWizardHint') }}</p>
     <p class="seladmin-copy">{{ t('wizardHint') }}</p>
     <div class="seladmin-kpi-grid">
       <article v-for="step in steps" :key="step.stepCode" class="seladmin-kpi-card seladmin-surface">
@@ -31,4 +32,3 @@ defineProps({
     </div>
   </section>
 </template>
-

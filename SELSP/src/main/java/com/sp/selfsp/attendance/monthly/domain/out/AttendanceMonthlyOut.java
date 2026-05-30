@@ -100,6 +100,11 @@ public final class AttendanceMonthlyOut {
         private Integer missingPunchCount;
         private Integer absenceCount;
         private Integer exceptionDays;
+        private Integer totalWorkMinutes;
+        private Integer overtimeMinutes;
+        private Integer legalOvertimeMinutes;
+        private Integer nightWorkMinutes;
+        private Integer holidayWorkMinutes;
         private BigDecimal paidLeaveDays;
         private BigDecimal restDays;
         private String closeStatus;
@@ -224,6 +229,46 @@ public final class AttendanceMonthlyOut {
 
         public void setExceptionDays(Integer exceptionDays) {
             this.exceptionDays = exceptionDays;
+        }
+
+        public Integer getTotalWorkMinutes() {
+            return totalWorkMinutes;
+        }
+
+        public void setTotalWorkMinutes(Integer totalWorkMinutes) {
+            this.totalWorkMinutes = totalWorkMinutes;
+        }
+
+        public Integer getOvertimeMinutes() {
+            return overtimeMinutes;
+        }
+
+        public void setOvertimeMinutes(Integer overtimeMinutes) {
+            this.overtimeMinutes = overtimeMinutes;
+        }
+
+        public Integer getLegalOvertimeMinutes() {
+            return legalOvertimeMinutes;
+        }
+
+        public void setLegalOvertimeMinutes(Integer legalOvertimeMinutes) {
+            this.legalOvertimeMinutes = legalOvertimeMinutes;
+        }
+
+        public Integer getNightWorkMinutes() {
+            return nightWorkMinutes;
+        }
+
+        public void setNightWorkMinutes(Integer nightWorkMinutes) {
+            this.nightWorkMinutes = nightWorkMinutes;
+        }
+
+        public Integer getHolidayWorkMinutes() {
+            return holidayWorkMinutes;
+        }
+
+        public void setHolidayWorkMinutes(Integer holidayWorkMinutes) {
+            this.holidayWorkMinutes = holidayWorkMinutes;
         }
 
         public BigDecimal getPaidLeaveDays() {
@@ -699,6 +744,9 @@ public final class AttendanceMonthlyOut {
 
         private String fileName;
         private String content;
+        private Boolean riskDetected;
+        private Integer unlockedMonthlyCount;
+        private String riskMessage;
 
         public String getFileName() {
             return fileName;
@@ -714,6 +762,30 @@ public final class AttendanceMonthlyOut {
 
         public void setContent(String content) {
             this.content = content;
+        }
+
+        public Boolean getRiskDetected() {
+            return riskDetected;
+        }
+
+        public void setRiskDetected(Boolean riskDetected) {
+            this.riskDetected = riskDetected;
+        }
+
+        public Integer getUnlockedMonthlyCount() {
+            return unlockedMonthlyCount;
+        }
+
+        public void setUnlockedMonthlyCount(Integer unlockedMonthlyCount) {
+            this.unlockedMonthlyCount = unlockedMonthlyCount;
+        }
+
+        public String getRiskMessage() {
+            return riskMessage;
+        }
+
+        public void setRiskMessage(String riskMessage) {
+            this.riskMessage = riskMessage;
         }
     }
 }

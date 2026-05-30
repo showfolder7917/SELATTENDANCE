@@ -96,8 +96,16 @@ public final class AttendanceDailyOut {
         private LocalDateTime actualClockOut;
         private Integer actualBreakMinutes;
         private Integer actualWorkMinutes;
+        private Integer normalWorkMinutes;
+        private Integer overtimeMinutes;
+        private Integer legalOvertimeMinutes;
+        private Integer nightWorkMinutes;
+        private Integer holidayWorkMinutes;
         private Integer lateMinutes;
         private Integer earlyLeaveMinutes;
+        private String holidayType;
+        private Long appliedRuleId;
+        private String appliedRuleName;
         private String status;
         private Boolean exceptionFlag;
 
@@ -197,6 +205,46 @@ public final class AttendanceDailyOut {
             this.actualWorkMinutes = actualWorkMinutes;
         }
 
+        public Integer getNormalWorkMinutes() {
+            return normalWorkMinutes;
+        }
+
+        public void setNormalWorkMinutes(Integer normalWorkMinutes) {
+            this.normalWorkMinutes = normalWorkMinutes;
+        }
+
+        public Integer getOvertimeMinutes() {
+            return overtimeMinutes;
+        }
+
+        public void setOvertimeMinutes(Integer overtimeMinutes) {
+            this.overtimeMinutes = overtimeMinutes;
+        }
+
+        public Integer getLegalOvertimeMinutes() {
+            return legalOvertimeMinutes;
+        }
+
+        public void setLegalOvertimeMinutes(Integer legalOvertimeMinutes) {
+            this.legalOvertimeMinutes = legalOvertimeMinutes;
+        }
+
+        public Integer getNightWorkMinutes() {
+            return nightWorkMinutes;
+        }
+
+        public void setNightWorkMinutes(Integer nightWorkMinutes) {
+            this.nightWorkMinutes = nightWorkMinutes;
+        }
+
+        public Integer getHolidayWorkMinutes() {
+            return holidayWorkMinutes;
+        }
+
+        public void setHolidayWorkMinutes(Integer holidayWorkMinutes) {
+            this.holidayWorkMinutes = holidayWorkMinutes;
+        }
+
         public Integer getLateMinutes() {
             return lateMinutes;
         }
@@ -211,6 +259,30 @@ public final class AttendanceDailyOut {
 
         public void setEarlyLeaveMinutes(Integer earlyLeaveMinutes) {
             this.earlyLeaveMinutes = earlyLeaveMinutes;
+        }
+
+        public String getHolidayType() {
+            return holidayType;
+        }
+
+        public void setHolidayType(String holidayType) {
+            this.holidayType = holidayType;
+        }
+
+        public Long getAppliedRuleId() {
+            return appliedRuleId;
+        }
+
+        public void setAppliedRuleId(Long appliedRuleId) {
+            this.appliedRuleId = appliedRuleId;
+        }
+
+        public String getAppliedRuleName() {
+            return appliedRuleName;
+        }
+
+        public void setAppliedRuleName(String appliedRuleName) {
+            this.appliedRuleName = appliedRuleName;
         }
 
         public String getStatus() {

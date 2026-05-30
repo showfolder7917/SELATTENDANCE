@@ -15,6 +15,7 @@ import DepartmentSection from '../components/DepartmentSection.vue'
 import EmployeeSection from '../components/EmployeeSection.vue'
 import MonthlySection from '../components/MonthlySection.vue'
 import PunchSection from '../components/PunchSection.vue'
+import RuleSection from '../components/RuleSection.vue'
 import ScheduleSection from '../components/ScheduleSection.vue'
 import ShiftTemplateSection from '../components/ShiftTemplateSection.vue'
 import TenantPanel from '../components/TenantPanel.vue'
@@ -53,12 +54,18 @@ const {
   submitMapping,
   submitImport,
   handleExport,
+  runRuleSearch,
+  submitRule,
+  editRule,
+  resetRuleForm,
+  submitRuleAssignment,
+  editRuleAssignment,
+  resetRuleAssignmentForm,
   requestConfirm,
   cancelConfirmDialog,
   submitConfirmDialog,
   submitShiftTemplate,
   loadScheduleBoard,
-  runScheduleSearch,
   generateRecommended,
   removeShiftTemplate,
   selectScheduleTemplate,
@@ -132,6 +139,7 @@ const workspaceNavItems = computed(() => {
     workplace: state.workplaces.length,
     department: state.departments.length,
     employee: state.employees.length,
+    rule: state.ruleWorkbench.rules.length,
     shift: state.shiftTemplates.length
     ,
     schedule: state.scheduleBoard.scheduleItems.length,
@@ -146,6 +154,7 @@ const workspaceNavItems = computed(() => {
     workplace: t('sectionWorkplaceHint'),
     department: t('sectionDepartmentHint'),
     employee: t('sectionEmployeeHint'),
+    rule: t('sectionRuleHint'),
     shift: t('sectionShiftHint')
     ,
     schedule: t('sectionScheduleHint'),
@@ -192,6 +201,28 @@ const monthlyHeaderMetricItems = computed(() => [
     value: state.monthlyList.summary?.reopenedCount || 0,
     label: t('monthlySummaryReopened'),
     tone: 'muted'
+  }
+])
+
+// 第七阶段规则区块把高风险、轻提醒和已绑定员工汇总成卡片，方便管理员先看风险再改规则。
+const ruleHeaderMetricItems = computed(() => [
+  {
+    key: 'highRisk',
+    value: state.ruleWorkbench.summary?.highRiskCount || 0,
+    label: t('ruleHighRiskCount'),
+    tone: 'danger'
+  },
+  {
+    key: 'reminder',
+    value: state.ruleWorkbench.summary?.reminderCount || 0,
+    label: t('ruleReminderCount'),
+    tone: 'warm'
+  },
+  {
+    key: 'bound',
+    value: state.ruleWorkbench.summary?.boundEmployeeCount || 0,
+    label: t('ruleBoundEmployeeCount'),
+    tone: 'default'
   }
 ])
 
@@ -560,60 +591,6 @@ onBeforeUnmount(() => {
       <template #main>
         <main class="selattendance-content">
           <SharedWorkbenchHeader
-            v-if="activeSection === 'schedule'"
-            class="selattendance-content-header seladmin-surface"
-            :title="t('scheduleTitle')"
-            :lead="t('scheduleLead')"
-          >
-            <template #filters>
-              <!-- 排班头部只承接筛选条件，真正刷新看板的查询动作由放大镜按钮显式触发。 -->
-              <div class="selattendance-workbench-header-toolbar selattendance-workbench-header-toolbar--schedule">
-                <label class="seladmin-field">
-                  <span>{{ t('scheduleMonth') }}</span>
-                  <input v-model="state.scheduleFilters.month" type="month" />
-                </label>
-                <label class="seladmin-field">
-                  <span>{{ t('workplace') }}</span>
-                  <select v-model="state.scheduleFilters.workplaceId">
-                    <option value="">{{ t('scheduleWorkplaceFilterHint') }}</option>
-                    <option v-for="item in state.workplaces" :key="item.id" :value="item.id">{{ item.workplaceName }}</option>
-                  </select>
-                </label>
-                <label class="seladmin-field">
-                  <span>{{ t('departmentName') }}</span>
-                  <select v-model="state.scheduleFilters.departmentId">
-                    <option value="">{{ t('scheduleDepartmentFilterHint') }}</option>
-                    <option v-for="item in state.departments" :key="item.id" :value="item.id">{{ item.departmentName }}</option>
-                  </select>
-                </label>
-                <label class="seladmin-field">
-                  <span>{{ t('scheduleKeyword') }}</span>
-                  <div class="selattendance-header-search-field">
-                    <input v-model="state.scheduleFilters.employeeKeyword" :placeholder="t('scheduleKeywordHint')" />
-                    <!-- 排班筛选也改成统一的手动搜索入口，避免用户编辑关键字时频繁重刷整张排班看板。 -->
-                    <button
-                      class="seladmin-button seladmin-button-secondary selattendance-header-search-button"
-                      type="button"
-                      :aria-label="t('searchAction')"
-                      :title="t('searchAction')"
-                      @click="runScheduleSearch()"
-                    >
-                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="5.5" />
-                        <path d="M16 16l4 4" />
-                      </svg>
-                    </button>
-                  </div>
-                </label>
-                <label class="selattendance-header-inline-checkbox">
-                  <input v-model="state.scheduleFilters.onlyUnassigned" type="checkbox" />
-                  <span>{{ t('scheduleOnlyUnassigned') }}</span>
-                </label>
-              </div>
-            </template>
-          </SharedWorkbenchHeader>
-
-          <SharedWorkbenchHeader
             v-if="activeSection === 'monthly'"
             class="selattendance-content-header seladmin-surface selattendance-monthly-workbench-header"
             :title="t('monthlyTitle')"
@@ -682,6 +659,51 @@ onBeforeUnmount(() => {
                 <label class="selattendance-daily-checkbox selattendance-header-inline-checkbox">
                   <input v-model="state.monthlyFilters.blockedOnly" type="checkbox" />
                   <span>{{ t('monthlyBlockedOnly') }}</span>
+                </label>
+              </div>
+            </template>
+          </SharedWorkbenchHeader>
+
+          <SharedWorkbenchHeader
+            v-else-if="activeSection === 'rule'"
+            class="selattendance-content-header seladmin-surface selattendance-generic-workbench-header"
+            :title="t('ruleTitle')"
+            :lead="t('sectionRuleHint')"
+            split-mode="left-summary-right-metrics"
+          >
+            <template #metrics>
+              <!-- 第七阶段规则页正式接入 shared header，让风险卡、筛选条和列表区按统一工作台结构分层。 -->
+              <SharedMetricCards class="selattendance-rule-header-summary" :items="ruleHeaderMetricItems" />
+            </template>
+
+            <template #filters>
+              <div class="selattendance-workbench-header-toolbar selattendance-workbench-header-toolbar--rule">
+                <label class="seladmin-field">
+                  <span>{{ t('monthlyYearMonth') }}</span>
+                  <input v-model="state.ruleFilters.yearMonth" type="month" />
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('search') }}</span>
+                  <div class="selattendance-header-search-field">
+                    <input v-model="state.ruleFilters.keyword" :placeholder="t('ruleKeywordHint')" />
+                    <!-- 规则页的搜索同样改成显式点击放大镜后才向后台拉规则、适用和预警聚合结果。 -->
+                    <button
+                      class="seladmin-button seladmin-button-secondary selattendance-header-search-button"
+                      type="button"
+                      :aria-label="t('searchAction')"
+                      :title="t('searchAction')"
+                      @click="runRuleSearch()"
+                    >
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="5.5" />
+                        <path d="M16 16l4 4" />
+                      </svg>
+                    </button>
+                  </div>
+                </label>
+                <label class="selattendance-daily-checkbox selattendance-header-inline-checkbox">
+                  <input v-model="state.ruleFilters.activeOnly" type="checkbox" />
+                  <span>{{ t('ruleActiveOnly') }}</span>
                 </label>
               </div>
             </template>
@@ -906,7 +928,7 @@ onBeforeUnmount(() => {
             </template>
           </SharedWorkbenchHeader>
 
-          <section v-else class="selattendance-content-header seladmin-surface">
+          <section v-else-if="activeSection !== 'wizard'" class="selattendance-content-header seladmin-surface">
             <div>
               <p class="seladmin-eyebrow">{{ t('workspaceStatus') }}</p>
               <h2>{{ activeSectionMeta.label }}</h2>
@@ -988,6 +1010,21 @@ onBeforeUnmount(() => {
               :on-edit-employee="editEmployee"
               :on-edit-mapping="editMapping"
               :on-delete-employee="requestEmployeeDelete"
+            />
+
+            <RuleSection
+              :visible="activeSection === 'rule'"
+              :employees="state.employees"
+              :rule-workbench="state.ruleWorkbench"
+              :rule-form="state.ruleForm"
+              :rule-assignment-form="state.ruleAssignmentForm"
+              :t="t"
+              :on-submit-rule="submitRule"
+              :on-reset-rule="resetRuleForm"
+              :on-edit-rule="editRule"
+              :on-submit-assignment="submitRuleAssignment"
+              :on-reset-assignment="resetRuleAssignmentForm"
+              :on-edit-assignment="editRuleAssignment"
             />
 
             <ShiftTemplateSection

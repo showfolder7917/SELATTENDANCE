@@ -41,6 +41,13 @@ public interface AttendanceDailyDao {
         @Param("workDate") LocalDate workDate
     );
 
+    // 按员工与业务日期读取当天生效的正式规则，供第七阶段增强算法计算深夜、残业和自动休息。
+    Map<String, Object> selectApplicableRule(
+        @Param("tenantId") Long tenantId,
+        @Param("employeeId") Long employeeId,
+        @Param("workDate") LocalDate workDate
+    );
+
     // 读取当前员工日期已有日次结果，供重算时判断是更新还是首次生成。
     Map<String, Object> selectDailyIdentity(
         @Param("tenantId") Long tenantId,
@@ -74,6 +81,8 @@ public interface AttendanceDailyDao {
         @Param("legalOvertimeMinutes") Integer legalOvertimeMinutes,
         @Param("nightWorkMinutes") Integer nightWorkMinutes,
         @Param("holidayWorkMinutes") Integer holidayWorkMinutes,
+        @Param("holidayType") String holidayType,
+        @Param("appliedRuleId") Long appliedRuleId,
         @Param("status") String status,
         @Param("approvalStatus") String approvalStatus,
         @Param("handlingStatus") String handlingStatus,
@@ -161,6 +170,27 @@ public interface AttendanceDailyDao {
         @Param("finalRemark") String finalRemark,
         @Param("approvedCaseId") Long approvedCaseId,
         @Param("exceptionFlag") Boolean exceptionFlag
+    );
+
+    // 第五阶段审批改 final 时间后，把日次基础分钟和第七阶段增强字段一起刷新成最终业务结论。
+    int updateDailyResolvedMetrics(
+        @Param("tenantId") Long tenantId,
+        @Param("id") Long id,
+        @Param("actualBreakMinutes") Integer actualBreakMinutes,
+        @Param("actualWorkMinutes") Integer actualWorkMinutes,
+        @Param("lateMinutes") Integer lateMinutes,
+        @Param("earlyLeaveMinutes") Integer earlyLeaveMinutes,
+        @Param("normalWorkMinutes") Integer normalWorkMinutes,
+        @Param("overtimeMinutes") Integer overtimeMinutes,
+        @Param("legalOvertimeMinutes") Integer legalOvertimeMinutes,
+        @Param("nightWorkMinutes") Integer nightWorkMinutes,
+        @Param("holidayWorkMinutes") Integer holidayWorkMinutes,
+        @Param("holidayType") String holidayType,
+        @Param("appliedRuleId") Long appliedRuleId,
+        @Param("status") String status,
+        @Param("exceptionFlag") Boolean exceptionFlag,
+        @Param("calcVersion") String calcVersion,
+        @Param("calcMessage") String calcMessage
     );
 
     // 第五阶段创建处理单或退回补充时更新日次处理状态，让列表第一眼就看出卡在哪一步。

@@ -51,6 +51,11 @@ public class AttendanceMonthlyServiceImpl implements AttendanceMonthlyService {
         "MISSING_PUNCH_COUNT",
         "ABSENCE_COUNT",
         "EXCEPTION_DAYS",
+        "TOTAL_WORK_MINUTES",
+        "OVERTIME_MINUTES",
+        "LEGAL_OVERTIME_MINUTES",
+        "NIGHT_WORK_MINUTES",
+        "HOLIDAY_WORK_MINUTES",
         "PAID_LEAVE_DAYS",
         "REST_DAYS"
     );
@@ -94,11 +99,16 @@ public class AttendanceMonthlyServiceImpl implements AttendanceMonthlyService {
         );
         Integer total = attendanceMonthlyDao.countMonthlyList(AttendanceTenantContext.DEFAULT_TENANT_ID, normalizedQuery);
         AttendanceMonthlyOut.MonthlyListOut listOut = new AttendanceMonthlyOut.MonthlyListOut();
+        // 月次列表主体直接返回当前页结果，供第六阶段左侧表格展示员工当月汇总。
         listOut.setItems(items);
+        // 总条数统一转成非空整数，避免分页栏和顶部摘要再做 null 兼容。
         listOut.setTotal(total == null ? 0 : total);
+        // 当前页码和每页条数沿用规范化查询，保证前后端分页口径一致。
         listOut.setPage(normalizedQuery.getPage());
         listOut.setPageSize(normalizedQuery.getPageSize());
+        // 总页数在服务层一次算好，避免多个前端区块各自复制分页算法。
         listOut.setTotalPages(calculateTotalPages(total == null ? 0 : total, normalizedQuery.getPageSize()));
+        // 顶部摘要与当前列表使用同一筛选条件聚合，避免卡片和表格口径错位。
         listOut.setSummary(buildSummary(
             attendanceMonthlyDao.countMonthlySummary(AttendanceTenantContext.DEFAULT_TENANT_ID, normalizedQuery)
         ));
@@ -115,10 +125,13 @@ public class AttendanceMonthlyServiceImpl implements AttendanceMonthlyService {
         if (detailOut == null) {
             throw new IllegalArgumentException("月次记录不存在");
         }
+        // 月次指标项列表单独挂到详情，供右侧详情按文档顺序展示完整统计口径。
         detailOut.setItems(attendanceMonthlyDao.selectMonthlyItems(AttendanceTenantContext.DEFAULT_TENANT_ID, monthlyId));
+        // 阻塞原因统一转成前端可直接显示的说明，供月结前定位为什么不能结。
         detailOut.setBlockReasons(buildBlockReasons(
             attendanceMonthlyDao.selectMonthlyBlockRows(AttendanceTenantContext.DEFAULT_TENANT_ID, monthlyId)
         ));
+        // 动作日志和日次快照都在详情阶段拼齐，供审核、反结和导出前追溯来源。
         detailOut.setActionLogs(attendanceMonthlyDao.selectMonthlyActionLogs(AttendanceTenantContext.DEFAULT_TENANT_ID, monthlyId));
         detailOut.setDailySnapshots(attendanceMonthlyDao.selectMonthlyDailySnapshots(AttendanceTenantContext.DEFAULT_TENANT_ID, monthlyId));
         return detailOut;
@@ -261,9 +274,12 @@ public class AttendanceMonthlyServiceImpl implements AttendanceMonthlyService {
             10000
         );
         StringBuilder builder = new StringBuilder();
+        // CSV 统一带 UTF-8 BOM，避免 Excel 打开中日双语列头时出现乱码。
         builder.append('\uFEFF');
-        builder.append("yearMonth,employeeCode,employeeName,workplaceName,departmentName,scheduledDays,attendanceDays,normalDays,lateCount,earlyLeaveCount,missingPunchCount,absenceCount,exceptionDays,paidLeaveDays,restDays,closeStatus,blockReasonCount\n");
+        // 第六阶段导出列头直接覆盖月次主表关键字段，供工资和对账系统直接消费。
+        builder.append("yearMonth,employeeCode,employeeName,workplaceName,departmentName,scheduledDays,attendanceDays,normalDays,lateCount,earlyLeaveCount,missingPunchCount,absenceCount,exceptionDays,totalWorkMinutes,overtimeMinutes,legalOvertimeMinutes,nightWorkMinutes,holidayWorkMinutes,paidLeaveDays,restDays,closeStatus,blockReasonCount\n");
         for (AttendanceMonthlyOut.MonthlyItemOut item : items) {
+            // 每条月次结果按固定列顺序写出，保证导出的 CSV 能稳定被下游模板解析。
             builder.append(csvValue(item.getYearMonth())).append(',')
                 .append(csvValue(item.getEmployeeCode())).append(',')
                 .append(csvValue(item.getEmployeeName())).append(',')
@@ -277,15 +293,31 @@ public class AttendanceMonthlyServiceImpl implements AttendanceMonthlyService {
                 .append(csvValue(item.getMissingPunchCount())).append(',')
                 .append(csvValue(item.getAbsenceCount())).append(',')
                 .append(csvValue(item.getExceptionDays())).append(',')
+                .append(csvValue(item.getTotalWorkMinutes())).append(',')
+                .append(csvValue(item.getOvertimeMinutes())).append(',')
+                .append(csvValue(item.getLegalOvertimeMinutes())).append(',')
+                .append(csvValue(item.getNightWorkMinutes())).append(',')
+                .append(csvValue(item.getHolidayWorkMinutes())).append(',')
                 .append(csvValue(item.getPaidLeaveDays())).append(',')
                 .append(csvValue(item.getRestDays())).append(',')
                 .append(csvValue(item.getCloseStatus())).append(',')
                 .append(csvValue(item.getBlockReasonCount()))
                 .append('\n');
         }
+        int unlockedMonthlyCount = countUnlockedMonthly(items);
         AttendanceMonthlyOut.MonthlyExportOut exportOut = new AttendanceMonthlyOut.MonthlyExportOut();
+        // 文件名统一带月份，方便财务和管理员按月归档导出件。
         exportOut.setFileName("attendance-monthly-" + normalizedQuery.getYearMonth() + ".csv");
+        // CSV 内容直接回传给前端下载能力，避免浏览器侧再拼接文本。
         exportOut.setContent(builder.toString());
+        // 未锁定月次数单独回传，供前端导出前后都能提示风险。
+        exportOut.setUnlockedMonthlyCount(unlockedMonthlyCount);
+        exportOut.setRiskDetected(unlockedMonthlyCount > 0);
+        exportOut.setRiskMessage(
+            unlockedMonthlyCount > 0
+                ? "当前导出范围仍有未锁定月次，导出结果可能在后续月结前继续变化。"
+                : ""
+        );
         return exportOut;
     }
 
@@ -411,6 +443,23 @@ public class AttendanceMonthlyServiceImpl implements AttendanceMonthlyService {
                 aggregation.exceptionDays += 1;
                 aggregation.metricSources.computeIfAbsent("EXCEPTION_DAYS", ignored -> new ArrayList<>()).add(workDate + ":" + handlingStatus);
             }
+            // 总工时优先根据最终确认后的打卡时间重算；若没有最终时间，再回退第四阶段已落库的工作分钟。
+            int totalWorkMinutes = resolveDailyWorkMinutes(row);
+            aggregation.totalWorkMinutes += totalWorkMinutes;
+            aggregation.metricSources.computeIfAbsent("TOTAL_WORK_MINUTES", ignored -> new ArrayList<>()).add(workDate + ":" + totalWorkMinutes);
+            // 第四阶段已经产出了残业、法定外残业、深夜和休日分钟，这里直接按稳定日次结果聚合进月次层。
+            int overtimeMinutes = intValue(mapValue(row, "overtimeMinutes"));
+            aggregation.overtimeMinutes += overtimeMinutes;
+            aggregation.metricSources.computeIfAbsent("OVERTIME_MINUTES", ignored -> new ArrayList<>()).add(workDate + ":" + overtimeMinutes);
+            int legalOvertimeMinutes = intValue(mapValue(row, "legalOvertimeMinutes"));
+            aggregation.legalOvertimeMinutes += legalOvertimeMinutes;
+            aggregation.metricSources.computeIfAbsent("LEGAL_OVERTIME_MINUTES", ignored -> new ArrayList<>()).add(workDate + ":" + legalOvertimeMinutes);
+            int nightWorkMinutes = intValue(mapValue(row, "nightWorkMinutes"));
+            aggregation.nightWorkMinutes += nightWorkMinutes;
+            aggregation.metricSources.computeIfAbsent("NIGHT_WORK_MINUTES", ignored -> new ArrayList<>()).add(workDate + ":" + nightWorkMinutes);
+            int holidayWorkMinutes = intValue(mapValue(row, "holidayWorkMinutes"));
+            aggregation.holidayWorkMinutes += holidayWorkMinutes;
+            aggregation.metricSources.computeIfAbsent("HOLIDAY_WORK_MINUTES", ignored -> new ArrayList<>()).add(workDate + ":" + holidayWorkMinutes);
             if ("PAID_LEAVE".equals(workDayType) || "PAID_LEAVE".equals(effectiveStatus)) {
                 aggregation.paidLeaveDays = aggregation.paidLeaveDays.add(BigDecimal.ONE);
                 aggregation.metricSources.computeIfAbsent("PAID_LEAVE_DAYS", ignored -> new ArrayList<>()).add(workDate.toString());
@@ -438,6 +487,11 @@ public class AttendanceMonthlyServiceImpl implements AttendanceMonthlyService {
             aggregation.missingPunchCount,
             aggregation.absenceCount,
             aggregation.exceptionDays,
+            aggregation.totalWorkMinutes,
+            aggregation.overtimeMinutes,
+            aggregation.legalOvertimeMinutes,
+            aggregation.nightWorkMinutes,
+            aggregation.holidayWorkMinutes,
             aggregation.paidLeaveDays.setScale(2, RoundingMode.HALF_UP),
             aggregation.restDays.setScale(2, RoundingMode.HALF_UP),
             nextCloseStatus,
@@ -475,17 +529,22 @@ public class AttendanceMonthlyServiceImpl implements AttendanceMonthlyService {
 
     // 把本次聚合生成的指标快照写入月次明细表，供右侧详情直接解释统计来源。
     private void insertMetricItems(Long monthlyId, MonthlyAggregation aggregation) {
-        Map<String, String> itemNameMap = Map.of(
-            "SCHEDULED_DAYS", "排班天数",
-            "ATTENDANCE_DAYS", "出勤天数",
-            "NORMAL_DAYS", "正常天数",
-            "LATE_COUNT", "迟到次数",
-            "EARLY_LEAVE_COUNT", "早退次数",
-            "MISSING_PUNCH_COUNT", "缺卡次数",
-            "ABSENCE_COUNT", "缺勤次数",
-            "EXCEPTION_DAYS", "异常天数",
-            "PAID_LEAVE_DAYS", "有休日数",
-            "REST_DAYS", "休息日数"
+        Map<String, String> itemNameMap = Map.ofEntries(
+            Map.entry("SCHEDULED_DAYS", "排班天数"),
+            Map.entry("ATTENDANCE_DAYS", "出勤天数"),
+            Map.entry("NORMAL_DAYS", "正常天数"),
+            Map.entry("LATE_COUNT", "迟到次数"),
+            Map.entry("EARLY_LEAVE_COUNT", "早退次数"),
+            Map.entry("MISSING_PUNCH_COUNT", "缺卡次数"),
+            Map.entry("ABSENCE_COUNT", "缺勤次数"),
+            Map.entry("EXCEPTION_DAYS", "异常天数"),
+            Map.entry("TOTAL_WORK_MINUTES", "总工时(分钟)"),
+            Map.entry("OVERTIME_MINUTES", "残业分钟数"),
+            Map.entry("LEGAL_OVERTIME_MINUTES", "法定外残业分钟数"),
+            Map.entry("NIGHT_WORK_MINUTES", "深夜劳动分钟数"),
+            Map.entry("HOLIDAY_WORK_MINUTES", "休日出勤分钟数"),
+            Map.entry("PAID_LEAVE_DAYS", "有休日数"),
+            Map.entry("REST_DAYS", "休息日数")
         );
         Map<String, String> itemValueMap = new LinkedHashMap<>();
         itemValueMap.put("SCHEDULED_DAYS", String.valueOf(aggregation.scheduledDays));
@@ -496,6 +555,11 @@ public class AttendanceMonthlyServiceImpl implements AttendanceMonthlyService {
         itemValueMap.put("MISSING_PUNCH_COUNT", String.valueOf(aggregation.missingPunchCount));
         itemValueMap.put("ABSENCE_COUNT", String.valueOf(aggregation.absenceCount));
         itemValueMap.put("EXCEPTION_DAYS", String.valueOf(aggregation.exceptionDays));
+        itemValueMap.put("TOTAL_WORK_MINUTES", String.valueOf(aggregation.totalWorkMinutes));
+        itemValueMap.put("OVERTIME_MINUTES", String.valueOf(aggregation.overtimeMinutes));
+        itemValueMap.put("LEGAL_OVERTIME_MINUTES", String.valueOf(aggregation.legalOvertimeMinutes));
+        itemValueMap.put("NIGHT_WORK_MINUTES", String.valueOf(aggregation.nightWorkMinutes));
+        itemValueMap.put("HOLIDAY_WORK_MINUTES", String.valueOf(aggregation.holidayWorkMinutes));
         itemValueMap.put("PAID_LEAVE_DAYS", aggregation.paidLeaveDays.setScale(2, RoundingMode.HALF_UP).toPlainString());
         itemValueMap.put("REST_DAYS", aggregation.restDays.setScale(2, RoundingMode.HALF_UP).toPlainString());
         int order = 1;
@@ -534,6 +598,17 @@ public class AttendanceMonthlyServiceImpl implements AttendanceMonthlyService {
             }
         }
         return summaryOut;
+    }
+
+    // 导出风险统一按“是否还有未 CLOSED 月次”判断，保证前后端对未锁定口径一致。
+    private int countUnlockedMonthly(List<AttendanceMonthlyOut.MonthlyItemOut> items) {
+        int count = 0;
+        for (AttendanceMonthlyOut.MonthlyItemOut item : items) {
+            if (!CLOSE_STATUS_CLOSED.equals(item.getCloseStatus())) {
+                count += 1;
+            }
+        }
+        return count;
     }
 
     // 阻塞原因从日次原始行重建成可读清单，保证前端能直接展示给用户。
@@ -599,6 +674,22 @@ public class AttendanceMonthlyServiceImpl implements AttendanceMonthlyService {
     private String resolveEffectiveStatus(Map<String, Object> row) {
         String finalStatus = stringValue(mapValue(row, "finalStatus"));
         return StringUtils.hasText(finalStatus) ? finalStatus : stringValue(mapValue(row, "status"));
+    }
+
+    // 总工时优先按最终确认后的打卡时间重算，避免审批修正后仍沿用旧工作分钟。
+    private int resolveDailyWorkMinutes(Map<String, Object> row) {
+        LocalDateTime finalClockIn = localDateTimeValue(mapValue(row, "finalClockIn"));
+        LocalDateTime finalClockOut = localDateTimeValue(mapValue(row, "finalClockOut"));
+        if (finalClockIn != null && finalClockOut != null && !finalClockOut.isBefore(finalClockIn)) {
+            int breakMinutes = intValue(
+                mapValue(row, "finalBreakMinutes") != null
+                    ? mapValue(row, "finalBreakMinutes")
+                    : mapValue(row, "actualBreakMinutes")
+            );
+            int workedMinutes = (int) java.time.Duration.between(finalClockIn, finalClockOut).toMinutes() - breakMinutes;
+            return Math.max(workedMinutes, 0);
+        }
+        return intValue(mapValue(row, "actualWorkMinutes"));
     }
 
     // 兼容 MyBatis HashMap 在不同数据库和驱动下返回驼峰、下划线或大写键名，避免服务层直接读空。
@@ -750,6 +841,11 @@ public class AttendanceMonthlyServiceImpl implements AttendanceMonthlyService {
         private int missingPunchCount;
         private int absenceCount;
         private int exceptionDays;
+        private int totalWorkMinutes;
+        private int overtimeMinutes;
+        private int legalOvertimeMinutes;
+        private int nightWorkMinutes;
+        private int holidayWorkMinutes;
         private BigDecimal paidLeaveDays = BigDecimal.ZERO;
         private BigDecimal restDays = BigDecimal.ZERO;
         private Map<String, List<String>> metricSources = new LinkedHashMap<>();

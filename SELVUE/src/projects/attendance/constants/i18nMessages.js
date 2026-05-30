@@ -41,6 +41,8 @@ export const messages = {
     navDepartment: '部门',
     // 维护 导航员工 字段，供当前前端状态或配置直接使用。
     navEmployee: '员工',
+    // 维护 导航规则 字段，供当前前端状态或配置直接使用。
+    navRule: '日本规则',
     // 维护 导航班次 字段，供当前前端状态或配置直接使用。
     navShift: '班次模板',
     // 维护 导航排班 字段，供当前前端状态或配置直接使用。
@@ -67,6 +69,8 @@ export const messages = {
     sectionDepartmentHint: '维护组织部门，供员工主数据和后续排班关联。',
     // 维护 section员工Hint 字段，供当前前端状态或配置直接使用。
     sectionEmployeeHint: '处理员工主数据、CSV 导入导出和打卡 ID 绑定。',
+    // 维护 section规则Hint 字段，供当前前端状态或配置直接使用。
+    sectionRuleHint: '配置日本勤怠规则、绑定员工适用关系，并查看残业和有休预警。',
     // 维护 section班次Hint 字段，供当前前端状态或配置直接使用。
     sectionShiftHint: '维护班次模板，为下一阶段排班复用做准备。',
     // 维护 section排班Hint 字段，供当前前端状态或配置直接使用。
@@ -97,6 +101,8 @@ export const messages = {
     departmentTitle: '部门管理',
     // 维护 员工Title 字段，供当前前端状态或配置直接使用。
     employeeTitle: '员工管理',
+    // 维护 规则Title 字段，供当前前端状态或配置直接使用。
+    ruleTitle: '日本规则增强',
     // 维护 班次Title 字段，供当前前端状态或配置直接使用。
     shiftTitle: '班次模板',
     // 维护 排班Title 字段，供当前前端状态或配置直接使用。
@@ -137,6 +143,8 @@ export const messages = {
     importCsv: '导入 CSV',
     // 维护 导出Csv 字段，供当前前端状态或配置直接使用。
     exportCsv: '导出 CSV',
+    // 维护 搜索 字段，供当前前端状态或配置直接使用。
+    search: '搜索',
     // 维护 生成推荐 字段，供当前前端状态或配置直接使用。
     generateRecommended: '一键生成推荐模板',
     // 维护 绑定映射 字段，供当前前端状态或配置直接使用。
@@ -179,6 +187,120 @@ export const messages = {
     employeeName: '员工姓名',
     // 维护 员工名称Kana 字段，供当前前端状态或配置直接使用。
     employeeNameKana: '员工假名',
+    // 维护 生效开始日 字段，供当前前端状态或配置直接使用。
+    effectiveStartDate: '生效开始日',
+    // 维护 生效结束日 字段，供当前前端状态或配置直接使用。
+    effectiveEndDate: '生效结束日',
+    // 维护 备注 字段，供当前前端状态或配置直接使用。
+    remark: '备注',
+    // 维护 启用状态 字段，供当前前端状态或配置直接使用。
+    activeStatus: '启用',
+    // 维护 停用状态 字段，供当前前端状态或配置直接使用。
+    inactiveStatus: '停用',
+    // 维护 规则表单标题 字段，供当前前端状态或配置直接使用。
+    ruleFormTitle: '规则配置',
+    // 维护 规则编码 字段，供当前前端状态或配置直接使用。
+    ruleCode: '规则编码',
+    // 维护 规则名称 字段，供当前前端状态或配置直接使用。
+    ruleName: '规则名称',
+    // 维护 标准日工时 字段，供当前前端状态或配置直接使用。
+    ruleStandardDailyMinutes: '标准日工时',
+    // 维护 标准周工时 字段，供当前前端状态或配置直接使用。
+    ruleStandardWeeklyMinutes: '标准周工时',
+    // 维护 深夜开始 字段，供当前前端状态或配置直接使用。
+    ruleNightStart: '深夜开始',
+    // 维护 深夜结束 字段，供当前前端状态或配置直接使用。
+    ruleNightEnd: '深夜结束',
+    // 维护 月残业阈值 字段，供当前前端状态或配置直接使用。
+    ruleMonthlyAlertHours: '月残业阈值(小时)',
+    // 维护 年残业阈值 字段，供当前前端状态或配置直接使用。
+    ruleYearlyAlertHours: '年残业阈值(小时)',
+    // 维护 取整粒度 字段，供当前前端状态或配置直接使用。
+    ruleRoundingUnitMinutes: '取整粒度(分钟)',
+    // 维护 取整方式 字段，供当前前端状态或配置直接使用。
+    ruleRoundingMode: '取整方式',
+    // 维护 自动休息开关 字段，供当前前端状态或配置直接使用。
+    ruleAutoBreakEnabled: '启用自动休息',
+    // 维护 自动休息阈值 字段，供当前前端状态或配置直接使用。
+    ruleAutoBreakThreshold: '自动休息阈值',
+    // 维护 自动休息扣减 字段，供当前前端状态或配置直接使用。
+    ruleAutoBreakDeduct: '自动休息扣减',
+    // 维护 有休提醒开关 字段，供当前前端状态或配置直接使用。
+    rulePaidLeaveReminderEnabled: '启用有休提醒',
+    // 维护 规则启用开关 字段，供当前前端状态或配置直接使用。
+    ruleActiveFlag: '规则启用',
+    // 维护 仅看启用 字段，供当前前端状态或配置直接使用。
+    ruleActiveOnly: '仅看启用规则',
+    // 维护 规则空状态 字段，供当前前端状态或配置直接使用。
+    ruleEmpty: '还没有正式规则，请先创建至少一条日本规则。',
+    // 维护 规则列表标题 字段，供当前前端状态或配置直接使用。
+    ruleListTitle: '当前规则清单',
+    // 维护 规则关键字提示 字段，供当前前端状态或配置直接使用。
+    ruleKeywordHint: '输入规则编码、规则名或员工关键字',
+    // 维护 规则适用标题 字段，供当前前端状态或配置直接使用。
+    ruleAssignmentTitle: '员工适用规则',
+    // 维护 规则适用列表标题 字段，供当前前端状态或配置直接使用。
+    ruleAssignmentListTitle: '当前适用清单',
+    // 维护 规则适用空状态 字段，供当前前端状态或配置直接使用。
+    ruleAssignmentEmpty: '当前没有员工适用记录。',
+    // 维护 规则选择员工 字段，供当前前端状态或配置直接使用。
+    ruleSelectEmployee: '先选择员工',
+    // 维护 规则选择规则 字段，供当前前端状态或配置直接使用。
+    ruleSelectRule: '再选择规则',
+    // 维护 已分配规则 字段，供当前前端状态或配置直接使用。
+    ruleAssignedRule: '适用规则',
+    // 维护 未分配规则 字段，供当前前端状态或配置直接使用。
+    ruleUnassigned: '未分配规则',
+    // 维护 月残业 字段，供当前前端状态或配置直接使用。
+    ruleMonthlyOvertime: '当月残业',
+    // 维护 年累计有休 字段，供当前前端状态或配置直接使用。
+    ruleYearlyPaidLeaveDays: '年累计有休',
+    // 维护 预警标题 字段，供当前前端状态或配置直接使用。
+    ruleAlertBoardTitle: '预警看板',
+    // 维护 预警空状态 字段，供当前前端状态或配置直接使用。
+    ruleAlertEmpty: '当前没有触发残业或有休提醒。',
+    // 维护 月预警标题 字段，供当前前端状态或配置直接使用。
+    ruleAlertMonthly: '月残业预警',
+    // 维护 年预警标题 字段，供当前前端状态或配置直接使用。
+    ruleAlertYearly: '年残业预警',
+    // 维护 有休提醒标题 字段，供当前前端状态或配置直接使用。
+    ruleAlertPaidLeave: '有休提醒',
+    // 维护 高风险卡片 字段，供当前前端状态或配置直接使用。
+    ruleHighRiskCount: '高风险提醒',
+    // 维护 轻提醒卡片 字段，供当前前端状态或配置直接使用。
+    ruleReminderCount: '轻提醒',
+    // 维护 已绑定员工卡片 字段，供当前前端状态或配置直接使用。
+    ruleBoundEmployeeCount: '已绑定员工',
+    // 维护 规则载入失败 字段，供当前前端状态或配置直接使用。
+    ruleLoadFailed: '规则工作台加载失败',
+    // 维护 规则保存失败 字段，供当前前端状态或配置直接使用。
+    ruleSaveFailed: '规则保存失败',
+    // 维护 规则保存成功 字段，供当前前端状态或配置直接使用。
+    ruleToastSaved: '规则已保存',
+    // 维护 高级规则标题 字段，供当前前端状态或配置直接使用。
+    ruleAdvancedTitle: '高级规则',
+    // 维护 高级规则说明 字段，供当前前端状态或配置直接使用。
+    ruleAdvancedHint: '自动休息、取整和有休提醒默认折叠，只有需要细调时再展开。',
+    // 维护 展开高级规则 按钮 字段，供当前前端状态或配置直接使用。
+    ruleAdvancedExpand: '展开高级规则',
+    // 维护 收起高级规则 按钮 字段，供当前前端状态或配置直接使用。
+    ruleAdvancedCollapse: '收起高级规则',
+    // 维护 规则修改提示标题 字段，供当前前端状态或配置直接使用。
+    ruleImpactTitle: '确认更新规则',
+    // 维护 规则修改确认文案 字段，供当前前端状态或配置直接使用。
+    ruleImpactMessage: '即将更新规则「{name}」。这会影响后续日次和月次重算口径，已产出的历史结果不会自动回刷，请确认后再保存。',
+    // 维护 规则修改确认动作 字段，供当前前端状态或配置直接使用。
+    ruleImpactConfirm: '确认更新',
+    // 维护 规则编辑态内联提示 字段，供当前前端状态或配置直接使用。
+    ruleImpactInlineMessage: '当前正在编辑规则「{name}」。保存后只影响后续计算口径，如需让历史结果同步变化，请另行执行重算。',
+    // 维护 适用未选员工 字段，供当前前端状态或配置直接使用。
+    ruleAssignmentNeedEmployee: '请先选择员工',
+    // 维护 适用未选规则 字段，供当前前端状态或配置直接使用。
+    ruleAssignmentNeedRule: '请先选择规则',
+    // 维护 适用保存失败 字段，供当前前端状态或配置直接使用。
+    ruleAssignmentSaveFailed: '员工适用保存失败',
+    // 维护 适用保存成功 字段，供当前前端状态或配置直接使用。
+    ruleAssignmentToastSaved: '员工适用已保存',
     // 维护 employmentType 字段，供当前前端状态或配置直接使用。
     employmentType: '雇佣类型',
     // 维护 入社Date 字段，供当前前端状态或配置直接使用。
@@ -490,8 +612,18 @@ export const messages = {
     dailyNoExceptions: '当前日次没有异常。',
     dailyNoCalcSteps: '当前没有可展示的计算步骤。',
     dailyActualWorkMinutes: '实际工时分钟',
+    dailyNormalWorkMinutes: '正常工时分钟',
+    dailyOvertimeMinutes: '残业分钟',
+    dailyLegalOvertimeMinutes: '法定外残业分钟',
+    dailyNightWorkMinutes: '深夜工时分钟',
+    dailyHolidayWorkMinutes: '休日工时分钟',
     dailyLateMinutes: '迟到分钟',
     dailyEarlyLeaveMinutes: '早退分钟',
+    dailyAppliedRule: '适用规则',
+    dailyHolidayType: '休日类型',
+    dailyHolidayTypeWorkday: '工作日',
+    dailyHolidayTypeLegal: '法定休日',
+    dailyHolidayTypeScheduled: '所定休日',
     caseTitle: '异常处理',
     caseLead: '把异常日次整理成处理单，完成审批、回写和锁定，避免月结前结果反复漂移。',
     caseRefresh: '刷新处理单',
@@ -574,8 +706,15 @@ export const messages = {
     monthlyEarlyLeaveCount: '早退次数',
     monthlyMissingPunchCount: '缺卡次数',
     monthlyAbsenceCount: '缺勤次数',
+    monthlyTotalWorkMinutes: '总工时',
+    monthlyOvertimeMinutes: '残业时长',
+    monthlyLegalOvertimeMinutes: '法定外残业',
+    monthlyNightWorkMinutes: '深夜劳动',
+    monthlyHolidayWorkMinutes: '休日出勤',
     monthlyPaidLeaveDays: '有休天数',
     monthlyRestDays: '休息天数',
+    monthlyHourUnit: '小时',
+    monthlyMinuteUnit: '分钟',
     monthlyBlockTitle: '月结阻塞项',
     monthlyNoBlock: '当前月次没有阻塞项，可以继续月结。',
     monthlyActionLogTitle: '月次动作留痕',
@@ -593,6 +732,12 @@ export const messages = {
     monthlyToastClosed: '当前范围月次已完成月结',
     monthlyToastReopened: '当前月次已反结',
     monthlyToastExported: '月次表已导出',
+    monthlyExportGuideTitle: '确认导出月次表',
+    monthlyExportGuideMessage: '即将导出 {month} 的月次汇总结果。请先确认当前筛选范围和导出口径无误，再继续下载。',
+    monthlyExportGuideConfirm: '确认导出',
+    monthlyExportRiskTitle: '未锁定月次导出风险提示',
+    monthlyExportRiskMessage: '{month} 当前仍有 {count} 条未锁定月次。现在导出可能在后续月结前继续变化，请确认是否仍要导出。',
+    monthlyExportRiskConfirm: '仍然导出',
     emptyData: '当前没有可显示的数据。',
     dailyStatusNormal: '正常',
     dailyStatusLate: '迟到',
@@ -681,6 +826,8 @@ export const messages = {
     navDepartment: '部署',
     // 维护 导航员工 字段，供当前前端状态或配置直接使用。
     navEmployee: '社員',
+    // 维护 导航规则 字段，供当前前端状态或配置直接使用。
+    navRule: '日本ルール',
     // 维护 导航班次 字段，供当前前端状态或配置直接使用。
     navShift: 'シフトテンプレート',
     // 维护 导航排班 字段，供当前前端状态或配置直接使用。
@@ -707,6 +854,8 @@ export const messages = {
     sectionDepartmentHint: '組織部署を整備し、社員主データと後続シフトの紐付けに備えます。',
     // 维护 section员工Hint 字段，供当前前端状态或配置直接使用。
     sectionEmployeeHint: '社員主データ、CSV 取込 / 出力、打刻 ID 連携を処理します。',
+    // 维护 section规则Hint 字段，供当前前端状态或配置直接使用。
+    sectionRuleHint: '日本勤怠ルールを設定し、社員への適用と残業・有休アラートを確認します。',
     // 维护 section班次Hint 字段，供当前前端状态或配置直接使用。
     sectionShiftHint: 'シフトテンプレートを整備し、次フェーズのシフト作成に備えます。',
     // 维护 section排班Hint 字段，供当前前端状态或配置直接使用。
@@ -737,6 +886,8 @@ export const messages = {
     departmentTitle: '部署管理',
     // 维护 员工Title 字段，供当前前端状态或配置直接使用。
     employeeTitle: '社員管理',
+    // 维护 规则Title 字段，供当前前端状态或配置直接使用。
+    ruleTitle: '日本ルール強化',
     // 维护 班次Title 字段，供当前前端状态或配置直接使用。
     shiftTitle: 'シフトテンプレート',
     // 维护 排班Title 字段，供当前前端状态或配置直接使用。
@@ -779,6 +930,8 @@ export const messages = {
     importCsv: 'CSV 取込',
     // 维护 导出Csv 字段，供当前前端状态或配置直接使用。
     exportCsv: 'CSV 出力',
+    // 维护 搜索 字段，供当前前端状态或配置直接使用。
+    search: '検索',
     // 维护 生成推荐 字段，供当前前端状态或配置直接使用。
     generateRecommended: '推奨テンプレート生成',
     // 维护 绑定映射 字段，供当前前端状态或配置直接使用。
@@ -821,6 +974,120 @@ export const messages = {
     employeeName: '社員名',
     // 维护 员工名称Kana 字段，供当前前端状态或配置直接使用。
     employeeNameKana: '社員カナ',
+    // 维护 生效开始日 字段，供当前前端状态或配置直接使用。
+    effectiveStartDate: '適用開始日',
+    // 维护 生效结束日 字段，供当前前端状态或配置直接使用。
+    effectiveEndDate: '適用終了日',
+    // 维护 备注 字段，供当前前端状态或配置直接使用。
+    remark: '備考',
+    // 维护 启用状态 字段，供当前前端状态或配置直接使用。
+    activeStatus: '有効',
+    // 维护 停用状态 字段，供当前前端状态或配置直接使用。
+    inactiveStatus: '無効',
+    // 维护 规则表单标题 字段，供当前前端状态或配置直接使用。
+    ruleFormTitle: 'ルール設定',
+    // 维护 规则编码 字段，供当前前端状态或配置直接使用。
+    ruleCode: 'ルールコード',
+    // 维护 规则名称 字段，供当前前端状态或配置直接使用。
+    ruleName: 'ルール名',
+    // 维护 标准日工时 字段，供当前前端状态或配置直接使用。
+    ruleStandardDailyMinutes: '所定日労働時間',
+    // 维护 标准周工时 字段，供当前前端状态或配置直接使用。
+    ruleStandardWeeklyMinutes: '所定週労働時間',
+    // 维护 深夜开始 字段，供当前前端状态或配置直接使用。
+    ruleNightStart: '深夜開始',
+    // 维护 深夜结束 字段，供当前前端状态或配置直接使用。
+    ruleNightEnd: '深夜終了',
+    // 维护 月残业阈值 字段，供当前前端状态或配置直接使用。
+    ruleMonthlyAlertHours: '月残業閾値(時間)',
+    // 维护 年残业阈值 字段，供当前前端状态或配置直接使用。
+    ruleYearlyAlertHours: '年残業閾値(時間)',
+    // 维护 取整粒度 字段，供当前前端状态或配置直接使用。
+    ruleRoundingUnitMinutes: '丸め単位(分)',
+    // 维护 取整方式 字段，供当前前端状态或配置直接使用。
+    ruleRoundingMode: '丸め方式',
+    // 维护 自动休息开关 字段，供当前前端状态或配置直接使用。
+    ruleAutoBreakEnabled: '自動休憩を有効化',
+    // 维护 自动休息阈值 字段，供当前前端状态或配置直接使用。
+    ruleAutoBreakThreshold: '自動休憩の開始閾値',
+    // 维护 自动休息扣减 字段，供当前前端状态或配置直接使用。
+    ruleAutoBreakDeduct: '自動休憩控除',
+    // 维护 有休提醒开关 字段，供当前前端状态或配置直接使用。
+    rulePaidLeaveReminderEnabled: '有休リマインドを有効化',
+    // 维护 规则启用开关 字段，供当前前端状态或配置直接使用。
+    ruleActiveFlag: 'ルールを有効化',
+    // 维护 仅看启用 字段，供当前前端状态或配置直接使用。
+    ruleActiveOnly: '有効ルールのみ表示',
+    // 维护 规则空状态 字段，供当前前端状态或配置直接使用。
+    ruleEmpty: '正式な日本ルールがまだありません。先に 1 件以上作成してください。',
+    // 维护 规则列表标题 字段，供当前前端状态或配置直接使用。
+    ruleListTitle: '現在のルール一覧',
+    // 维护 规则关键字提示 字段，供当前前端状态或配置直接使用。
+    ruleKeywordHint: 'ルールコード・ルール名・社員キーワードを入力',
+    // 维护 规则适用标题 字段，供当前前端状态或配置直接使用。
+    ruleAssignmentTitle: '社員への適用ルール',
+    // 维护 规则适用列表标题 字段，供当前前端状态或配置直接使用。
+    ruleAssignmentListTitle: '現在の適用一覧',
+    // 维护 规则适用空状态 字段，供当前前端状态或配置直接使用。
+    ruleAssignmentEmpty: '現在、社員への適用記録はありません。',
+    // 维护 规则选择员工 字段，供当前前端状态或配置直接使用。
+    ruleSelectEmployee: '先に社員を選択',
+    // 维护 规则选择规则 字段，供当前前端状态或配置直接使用。
+    ruleSelectRule: '次にルールを選択',
+    // 维护 已分配规则 字段，供当前前端状态或配置直接使用。
+    ruleAssignedRule: '適用ルール',
+    // 维护 未分配规则 字段，供当前前端状态或配置直接使用。
+    ruleUnassigned: '未割当',
+    // 维护 月残业 字段，供当前前端状态或配置直接使用。
+    ruleMonthlyOvertime: '当月残業',
+    // 维护 年累计有休 字段，供当前前端状态或配置直接使用。
+    ruleYearlyPaidLeaveDays: '年累計有休',
+    // 维护 预警标题 字段，供当前前端状态或配置直接使用。
+    ruleAlertBoardTitle: 'アラートボード',
+    // 维护 预警空状态 字段，供当前前端状态或配置直接使用。
+    ruleAlertEmpty: '現在、残業または有休アラートはありません。',
+    // 维护 月预警标题 字段，供当前前端状态或配置直接使用。
+    ruleAlertMonthly: '月残業アラート',
+    // 维护 年预警标题 字段，供当前前端状态或配置直接使用。
+    ruleAlertYearly: '年残業アラート',
+    // 维护 有休提醒标题 字段，供当前前端状态或配置直接使用。
+    ruleAlertPaidLeave: '有休リマインド',
+    // 维护 高风险卡片 字段，供当前前端状态或配置直接使用。
+    ruleHighRiskCount: '高リスク',
+    // 维护 轻提醒卡片 字段，供当前前端状态或配置直接使用。
+    ruleReminderCount: 'リマインド',
+    // 维护 已绑定员工卡片 字段，供当前前端状态或配置直接使用。
+    ruleBoundEmployeeCount: '適用済み社員',
+    // 维护 规则载入失败 字段，供当前前端状态或配置直接使用。
+    ruleLoadFailed: 'ルールワークベンチの読込に失敗しました',
+    // 维护 规则保存失败 字段，供当前前端状态或配置直接使用。
+    ruleSaveFailed: 'ルール保存に失敗しました',
+    // 维护 规则保存成功 字段，供当前前端状态或配置直接使用。
+    ruleToastSaved: 'ルールを保存しました',
+    // 维护 高级规则标题 字段，供当前前端状态或配置直接使用。
+    ruleAdvancedTitle: '詳細ルール',
+    // 维护 高级规则说明 字段，供当前前端状态或配置直接使用。
+    ruleAdvancedHint: '自動休憩、丸め、有休リマインドは初期表示では折りたたみ、必要なときだけ開きます。',
+    // 维护 展开高级规则 按钮 字段，供当前前端状态或配置直接使用。
+    ruleAdvancedExpand: '詳細ルールを開く',
+    // 维护 收起高级规则 按钮 字段，供当前前端状态或配置直接使用。
+    ruleAdvancedCollapse: '詳細ルールを閉じる',
+    // 维护 规则修改提示标题 字段，供当前前端状态或配置直接使用。
+    ruleImpactTitle: 'ルール更新確認',
+    // 维护 规则修改确认文案 字段，供当前前端状态或配置直接使用。
+    ruleImpactMessage: 'ルール「{name}」を更新します。今後の日次・月次再計算の判定口径に影響しますが、既に出力済みの履歴結果は自動で再反映されません。確認して保存してください。',
+    // 维护 规则修改确认动作 字段，供当前前端状态或配置直接使用。
+    ruleImpactConfirm: '更新する',
+    // 维护 规则编辑态内联提示 字段，供当前前端状态或配置直接使用。
+    ruleImpactInlineMessage: '現在ルール「{name}」を編集中です。保存後は今後の計算口径だけが変わり、過去結果を揃えるには別途再計算が必要です。',
+    // 维护 适用未选员工 字段，供当前前端状态或配置直接使用。
+    ruleAssignmentNeedEmployee: '先に社員を選択してください',
+    // 维护 适用未选规则 字段，供当前前端状态或配置直接使用。
+    ruleAssignmentNeedRule: '先にルールを選択してください',
+    // 维护 适用保存失败 字段，供当前前端状态或配置直接使用。
+    ruleAssignmentSaveFailed: '社員適用の保存に失敗しました',
+    // 维护 适用保存成功 字段，供当前前端状态或配置直接使用。
+    ruleAssignmentToastSaved: '社員適用を保存しました',
     // 维护 employmentType 字段，供当前前端状态或配置直接使用。
     employmentType: '雇用区分',
     // 维护 入社Date 字段，供当前前端状态或配置直接使用。
@@ -1064,8 +1331,18 @@ export const messages = {
     dailyNoExceptions: '現在の日次に異常はありません。',
     dailyNoCalcSteps: '表示できる計算ステップはありません。',
     dailyActualWorkMinutes: '実働分',
+    dailyNormalWorkMinutes: '通常労働分',
+    dailyOvertimeMinutes: '残業分',
+    dailyLegalOvertimeMinutes: '法定外残業分',
+    dailyNightWorkMinutes: '深夜労働分',
+    dailyHolidayWorkMinutes: '休日労働分',
     dailyLateMinutes: '遅刻分',
     dailyEarlyLeaveMinutes: '早退分',
+    dailyAppliedRule: '適用ルール',
+    dailyHolidayType: '休日種別',
+    dailyHolidayTypeWorkday: '平日',
+    dailyHolidayTypeLegal: '法定休日',
+    dailyHolidayTypeScheduled: '所定休日',
     caseLead: '異常日次を処理票へまとめ、承認、反映、ロックまで進めて月次前の揺れを止めます。',
     caseRefresh: '処理票を更新',
     caseSummaryPending: '未起票',
@@ -1147,8 +1424,15 @@ export const messages = {
     monthlyEarlyLeaveCount: '早退回数',
     monthlyMissingPunchCount: '打刻不足回数',
     monthlyAbsenceCount: '欠勤回数',
+    monthlyTotalWorkMinutes: '総労働時間',
+    monthlyOvertimeMinutes: '残業時間',
+    monthlyLegalOvertimeMinutes: '法定外残業',
+    monthlyNightWorkMinutes: '深夜労働',
+    monthlyHolidayWorkMinutes: '休日出勤',
     monthlyPaidLeaveDays: '有休日数',
     monthlyRestDays: '休日日数',
+    monthlyHourUnit: '時間',
+    monthlyMinuteUnit: '分',
     monthlyBlockTitle: '月締め阻塞項目',
     monthlyNoBlock: 'この月次には阻塞がなく、そのまま月締めへ進めます。',
     monthlyActionLogTitle: '月次アクション履歴',
@@ -1166,6 +1450,12 @@ export const messages = {
     monthlyToastClosed: '現在範囲の月次を月締めしました',
     monthlyToastReopened: '現在の月次を再オープンしました',
     monthlyToastExported: '月次表を出力しました',
+    monthlyExportGuideTitle: '月次表出力の確認',
+    monthlyExportGuideMessage: '{month} の月次集計を出力します。現在の絞り込み条件と出力対象を確認してから続行してください。',
+    monthlyExportGuideConfirm: '出力する',
+    monthlyExportRiskTitle: '未ロック月次の出力リスク',
+    monthlyExportRiskMessage: '{month} には未ロックの月次が {count} 件あります。今出力すると月締め前に内容が変わる可能性があります。それでも出力しますか。',
+    monthlyExportRiskConfirm: 'リスクを理解して出力',
     emptyData: '表示できるデータがありません。',
     dailyStatusNormal: '正常',
     dailyStatusLate: '遅刻',

@@ -55,9 +55,14 @@ public class AttendanceMonthlyControllerTest extends AttendanceControllerIntegra
         JsonNode mayDetail = readData(mockMvc.perform(get("/api/attendance/monthly/{id}", mayMonthlyId))
             .andExpect(status().isOk())
             .andReturn());
-        assertTrue(mayDetail.get("items").size() >= 10);
+        assertTrue(mayDetail.get("items").size() >= 15);
         assertTrue(mayDetail.get("dailySnapshots").size() >= 1);
         assertTrue(mayDetail.get("blockReasons").size() >= 1);
+        // 第六阶段补齐后，月次详情还要能直接给出总工时、残业、深夜和休日分钟。
+        assertTrue(mayDetail.get("totalWorkMinutes").asInt() >= 0);
+        assertTrue(mayDetail.get("overtimeMinutes").asInt() >= 0);
+        assertTrue(mayDetail.get("nightWorkMinutes").asInt() >= 0);
+        assertTrue(mayDetail.get("holidayWorkMinutes").asInt() >= 0);
 
         // 先验证存在阻塞时月结会被拒绝，防止未闭环数据误进入已结状态。
         assertThrows(ServletException.class, () ->
@@ -132,6 +137,8 @@ public class AttendanceMonthlyControllerTest extends AttendanceControllerIntegra
                 ))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.fileName").value("attendance-monthly-2026-06.csv"))
-            .andExpect(jsonPath("$.data.content").isString());
+            .andExpect(jsonPath("$.data.content").isString())
+            .andExpect(jsonPath("$.data.riskDetected").value(true))
+            .andExpect(jsonPath("$.data.unlockedMonthlyCount").value(1));
     }
 }

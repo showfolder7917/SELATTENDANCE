@@ -8,7 +8,6 @@ defineProps({
 
 <template>
   <section v-show="visible" class="seladmin-panel seladmin-surface seladmin-list">
-    <div class="seladmin-panel-header"><h2>{{ t('wizardTitle') }}</h2></div>
     <article v-for="step in steps" :key="step.stepCode" class="seladmin-list-row">
       <div>
         <p class="seladmin-list-title">{{ t(step.titleKey) }}</p>
@@ -21,4 +20,3 @@ defineProps({
     </article>
   </section>
 </template>
-

@@ -83,6 +83,8 @@ export const syncShellCounters = (state) => {
   state.bootstrapShell.sectionCounters.department = state.departments.length
   // 用员工列表长度回填员工计数。
   state.bootstrapShell.sectionCounters.employee = state.employees.length
+  // 用第七阶段规则列表长度回填规则计数，供导航徽标和工作台状态展示。
+  state.bootstrapShell.sectionCounters.rule = state.ruleWorkbench.rules.length
   // 用班次模板列表长度回填班次计数。
   state.bootstrapShell.sectionCounters.shift = state.shiftTemplates.length
   // 用排班项列表长度回填排班计数。

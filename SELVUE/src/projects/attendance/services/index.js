@@ -18,6 +18,14 @@ export {
   exportEmployees
 } from './employeeApi'
 
+// 暴露第七阶段规则接口，供规则配置、员工适用和预警看板复用。
+export {
+  fetchRuleWorkbench,
+  createRule,
+  updateRule,
+  assignRule
+} from './ruleApi'
+
 // 暴露班次模板读写接口，供班次区块和排班模板选择复用。
 export {
   listShiftTemplates,

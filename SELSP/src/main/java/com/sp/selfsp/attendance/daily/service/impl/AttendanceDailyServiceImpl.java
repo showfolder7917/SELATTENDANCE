@@ -35,13 +35,19 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
     private static final int DEFAULT_PAGE_SIZE = 20;
     // 产品允许的页大小档位固定为 20、50、100、200。
     private static final List<Integer> ALLOWED_PAGE_SIZES = List.of(20, 50, 100, 200);
-    // 计算版本用于记录当前日次结果采用的是哪套基础口径。
-    private static final String CALC_VERSION = "phase4-v1";
+    // 计算版本用于记录当前日次结果已经切换到第七阶段日本规则增强口径。
+    private static final String CALC_VERSION = "phase7-v1";
+    // 法定休日使用统一常量，避免数据库状态值和日志说明出现多种拼写。
+    private static final String HOLIDAY_TYPE_LEGAL = "LEGAL_HOLIDAY";
+    // 所定休日使用统一常量，供日次和月次层复用同一口径。
+    private static final String HOLIDAY_TYPE_SCHEDULED = "SCHEDULED_HOLIDAY";
 
     // 读取和写入日次、异常、计算日志以及排班和打卡快照。
     private final AttendanceDailyDao attendanceDailyDao;
     // JSON 序列化器用于把计算过程上下文写入日志。
     private final ObjectMapper objectMapper;
+    // 共享计算器统一承接原始打卡初算和审批后重算的规则算法，避免两套链路分叉维护。
+    private final AttendanceDailyMetricCalculator dailyMetricCalculator;
 
     // 注入第四阶段所需 DAO 与 JSON 工具，统一处理日次计算编排。
     public AttendanceDailyServiceImpl(
@@ -50,6 +56,7 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
     ) {
         this.attendanceDailyDao = attendanceDailyDao;
         this.objectMapper = objectMapper;
+        this.dailyMetricCalculator = new AttendanceDailyMetricCalculator();
     }
 
     @Override
@@ -68,11 +75,17 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
         );
         Integer total = attendanceDailyDao.countDailyList(AttendanceTenantContext.DEFAULT_TENANT_ID, normalizedQuery);
         AttendanceDailyOut.DailyListOut listOut = new AttendanceDailyOut.DailyListOut();
+        // 列表主体直接承接当前页结果，供第四阶段中间表格渲染日次行。
         listOut.setItems(items);
+        // 总条数始终回填成非空整数，避免分页栏对 null 做二次兜底。
         listOut.setTotal(total == null ? 0 : total);
+        // 当前页码沿用规范化后的查询口径，保证回翻页时前后端一致。
         listOut.setPage(normalizedQuery.getPage());
+        // 每页条数同样沿用规范化结果，供分页条稳定显示当前档位。
         listOut.setPageSize(normalizedQuery.getPageSize());
+        // 总页数在服务层统一换算完成，避免前端针对空数据重复实现同一算法。
         listOut.setTotalPages(calculateTotalPages(total == null ? 0 : total, normalizedQuery.getPageSize()));
+        // 顶部摘要在返回前同步聚合，确保列表与统计卡读取的是同一批筛选结果。
         listOut.setSummary(buildSummary(
             attendanceDailyDao.countDailySummary(AttendanceTenantContext.DEFAULT_TENANT_ID, normalizedQuery)
         ));
@@ -150,13 +163,16 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
         int failedCount = 0;
         for (Map<String, Object> target : targets) {
             try {
+                // 每个候选员工日期都走完整单天重算，保证批量重算与单日重算共用同一算法入口。
                 recalculateOneDay(
                     longValue(readMapValue(target, "employeeId")),
                     localDateValue(readMapValue(target, "workDate")),
                     "BATCH_RECALCULATE"
                 );
+                // 单条重算成功后立即累计成功数，供前端汇总本次批量刷新结果。
                 successCount += 1;
             } catch (RuntimeException error) {
+                // 任一目标失败只增加失败计数，不打断整批流程，避免一条坏数据拖垮整个筛选范围。
                 failedCount += 1;
             }
         }
@@ -209,6 +225,166 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
         );
     }
 
+    @Override
+    public Map<String, Object> getDailyMeta(Long dailyId) {
+        // 第五阶段审批流统一通过服务层读取日次元数据，避免上层直接依赖 DAO 细节。
+        return requireDailyMeta(dailyId);
+    }
+
+    @Override
+    @Transactional
+    public void markDailyInReview(Long dailyId) {
+        // 建单后把日次推进到审核中，保持异常中心列表和审批流状态同步。
+        attendanceDailyDao.updateDailyHandlingState(
+            AttendanceTenantContext.DEFAULT_TENANT_ID,
+            dailyId,
+            "IN_REVIEW",
+            "SUBMITTED"
+        );
+    }
+
+    @Override
+    @Transactional
+    public void markDailyReturned(Long dailyId) {
+        // 退回补充时仍属于审核链路内部，日次处理状态继续保持审核中。
+        attendanceDailyDao.updateDailyHandlingState(
+            AttendanceTenantContext.DEFAULT_TENANT_ID,
+            dailyId,
+            "IN_REVIEW",
+            "RETURNED"
+        );
+    }
+
+    @Override
+    @Transactional
+    public void markDailyRejected(Long dailyId) {
+        // 驳回后重新回到待处理状态，方便申请方重新发起处理单。
+        attendanceDailyDao.updateDailyHandlingState(
+            AttendanceTenantContext.DEFAULT_TENANT_ID,
+            dailyId,
+            "UNHANDLED",
+            "REJECTED"
+        );
+    }
+
+    @Override
+    @Transactional
+    public void applyApprovedResolution(
+        Long dailyId,
+        Long approvedCaseId,
+        LocalDateTime finalClockIn,
+        LocalDateTime finalClockOut,
+        Integer finalBreakMinutes,
+        String finalStatus,
+        String finalRemark,
+        Boolean finalExceptionFlag
+    ) {
+        // 审批通过后的最终结果回写和增强分钟刷新统一由日次服务收口，避免审批服务直接掌握持久化细节。
+        attendanceDailyDao.updateDailyFinalResult(
+            AttendanceTenantContext.DEFAULT_TENANT_ID,
+            dailyId,
+            "RESOLVED",
+            "APPROVED",
+            finalStatus,
+            finalClockIn,
+            finalClockOut,
+            finalBreakMinutes,
+            finalRemark,
+            approvedCaseId,
+            finalExceptionFlag
+        );
+        refreshResolvedDailyMetrics(
+            dailyId,
+            finalClockIn,
+            finalClockOut,
+            finalBreakMinutes,
+            finalStatus,
+            finalExceptionFlag
+        );
+    }
+
+    @Override
+    @Transactional
+    public void refreshResolvedDailyMetrics(
+        Long dailyId,
+        LocalDateTime finalClockIn,
+        LocalDateTime finalClockOut,
+        Integer finalBreakMinutes,
+        String finalStatus,
+        Boolean finalExceptionFlag
+    ) {
+        // 审批改完最终业务时间后，统一按最终结果重算第七阶段增强分钟，避免月次和规则页继续读取旧值。
+        AttendanceDailyOut.DailyDetailOut dailyDetail = requireDailyDetail(dailyId);
+        AttendanceDailyOut.ScheduleSnapshotOut schedule = attendanceDailyDao.selectScheduleSnapshot(
+            AttendanceTenantContext.DEFAULT_TENANT_ID,
+            dailyDetail.getEmployeeId(),
+            dailyDetail.getWorkDate()
+        );
+        Map<String, Object> applicableRule = attendanceDailyDao.selectApplicableRule(
+            AttendanceTenantContext.DEFAULT_TENANT_ID,
+            dailyDetail.getEmployeeId(),
+            dailyDetail.getWorkDate()
+        );
+        AttendanceDailyMetricCalculator.CalculationResult resolvedResult = dailyMetricCalculator.calculateFromResolvedFinal(
+            schedule,
+            applicableRule,
+            finalClockIn,
+            finalClockOut,
+            finalBreakMinutes
+        );
+        // 审批补丁如果显式给了最终状态，就以审批结论为准；否则沿用规则重算后的状态。
+        if (StringUtils.hasText(finalStatus)) {
+            resolvedResult.status = finalStatus.trim();
+        }
+        // 审批是否保留异常标记由处理单补丁决定，不能让自动重算把审批结论再覆盖掉。
+        resolvedResult.exceptionFlag = Boolean.TRUE.equals(finalExceptionFlag);
+        resolvedResult.calcMessage = "审批修改最终时间后已联动刷新增强分钟。";
+        attendanceDailyDao.updateDailyResolvedMetrics(
+            AttendanceTenantContext.DEFAULT_TENANT_ID,
+            dailyId,
+            // 最终休息分钟写回 resolved 结果，保证审批结论成为后续月次和规则页唯一口径。
+            resolvedResult.finalBreakMinutes,
+            // 实际工时和迟到早退分钟同步回写，避免审批后详情仍显示旧日次结论。
+            resolvedResult.actualWorkMinutes,
+            resolvedResult.lateMinutes,
+            resolvedResult.earlyLeaveMinutes,
+            // 正常、残业、法定外残业、深夜和休日分钟一起回写，保证第六阶段月次聚合能直接复用。
+            resolvedResult.normalWorkMinutes,
+            resolvedResult.overtimeMinutes,
+            resolvedResult.legalOvertimeMinutes,
+            resolvedResult.nightWorkMinutes,
+            resolvedResult.holidayWorkMinutes,
+            // 休日类型和命中规则同批持久化，避免规则页与日次详情出现字段错位。
+            resolvedResult.holidayType,
+            resolvedResult.appliedRuleId,
+            resolvedResult.status,
+            resolvedResult.exceptionFlag,
+            CALC_VERSION,
+            resolvedResult.calcMessage
+        );
+        // 额外留一条审批后重算日志，方便第六阶段和第七阶段联查最终业务时间为何变化。
+        attendanceDailyDao.insertCalcLog(
+            AttendanceTenantContext.DEFAULT_TENANT_ID,
+            dailyDetail.getEmployeeId(),
+            dailyDetail.getWorkDate(),
+            dailyId,
+            "APPROVED_PATCH",
+            null,
+            "SUCCESS",
+            "FINAL_PATCH_RECALC",
+            "审批修改最终时间后已刷新增强分钟：正常 " + resolvedResult.normalWorkMinutes + "，残业 " + resolvedResult.overtimeMinutes + "，深夜 " + resolvedResult.nightWorkMinutes + "。",
+            toJsonString(
+                Map.of(
+                    "dailyId", dailyId,
+                    "finalClockIn", stringValue(finalClockIn),
+                    "finalClockOut", stringValue(finalClockOut),
+                    "finalBreakMinutes", resolvedResult.finalBreakMinutes,
+                    "status", resolvedResult.status
+                )
+            )
+        );
+    }
+
     // 查询列表前按当前筛选范围自动补算缺失结果，保证第四阶段页面进入即有结论。
     private void ensureDailyResults(AttendanceDailyIn.DailyQueryIn queryIn, String triggerType) {
         List<Map<String, Object>> targets = attendanceDailyDao.selectCalculationTargets(
@@ -245,13 +421,24 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
             employeeId,
             workDate
         );
+        // 第七阶段按员工和业务日期读取生效规则，把自动休息、深夜时段和取整口径带入日次算法。
+        Map<String, Object> applicableRule = attendanceDailyDao.selectApplicableRule(
+            AttendanceTenantContext.DEFAULT_TENANT_ID,
+            employeeId,
+            workDate
+        );
         List<AttendanceDailyOut.PunchSnapshotOut> punches = attendanceDailyDao.selectProcessedPunches(
             AttendanceTenantContext.DEFAULT_TENANT_ID,
             employeeId,
             workDate
         );
 
-        CalculationResult calculationResult = calculateDaily(schedule, punches);
+        AttendanceDailyMetricCalculator.CalculationResult calculationResult = dailyMetricCalculator.calculateFromPunches(
+            schedule,
+            punches,
+            applicableRule
+        );
+        // 初算结果统一落入日次主表，确保排班、打卡、规则和增强分钟在同一条日次上收口。
         attendanceDailyDao.mergeDaily(
             AttendanceTenantContext.DEFAULT_TENANT_ID,
             employeeId,
@@ -264,16 +451,18 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
             calculationResult.scheduledWorkMinutes,
             calculationResult.actualClockIn,
             calculationResult.actualClockOut,
-            calculationResult.actualBreakMinutes,
+            calculationResult.finalBreakMinutes,
             calculationResult.actualWorkMinutes,
             calculationResult.lateMinutes,
             calculationResult.earlyLeaveMinutes,
             calculationResult.absenceMinutes,
             calculationResult.normalWorkMinutes,
-            0,
-            0,
-            0,
+            calculationResult.overtimeMinutes,
+            calculationResult.legalOvertimeMinutes,
+            calculationResult.nightWorkMinutes,
             calculationResult.holidayWorkMinutes,
+            calculationResult.holidayType,
+            calculationResult.appliedRuleId,
             calculationResult.status,
             "NONE",
             calculationResult.exceptionFlag ? "UNHANDLED" : "RESOLVED",
@@ -284,29 +473,34 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
             calculationResult.calcMessage
         );
 
+        // 合并后立即回读主键，供异常表和计算日志表继续挂接到同一条日次记录。
         Map<String, Object> identity = attendanceDailyDao.selectDailyIdentity(
             AttendanceTenantContext.DEFAULT_TENANT_ID,
             employeeId,
             workDate
         );
         Long dailyId = longValue(readMapValue(identity, "id"));
+        // 每次重算前先清掉旧异常，避免上一次判定结果残留到本轮新口径。
         attendanceDailyDao.deleteExceptionsByDailyId(AttendanceTenantContext.DEFAULT_TENANT_ID, dailyId);
-        for (ExceptionPlan exceptionPlan : calculationResult.exceptions) {
+        for (AttendanceDailyMetricCalculator.ExceptionPlan exceptionPlan : calculationResult.exceptions) {
+            // 本轮算法产出的异常计划逐条落库，供第五阶段异常中心直接建单或继续处理。
             attendanceDailyDao.insertException(
                 AttendanceTenantContext.DEFAULT_TENANT_ID,
                 employeeId,
                 workDate,
                 dailyId,
-                exceptionPlan.exceptionType,
-                exceptionPlan.exceptionLevel,
+                exceptionPlan.exceptionType(),
+                exceptionPlan.exceptionLevel(),
                 "OPEN",
-                exceptionPlan.message,
-                exceptionPlan.suggestedAction
+                exceptionPlan.message(),
+                exceptionPlan.suggestedAction()
             );
         }
+        // 计算日志也先全量替换，保证详情页展示的每一步都对应本轮最新算法。
         attendanceDailyDao.deleteCalcLogsByEmployeeDate(AttendanceTenantContext.DEFAULT_TENANT_ID, employeeId, workDate);
         int stepIndex = 1;
         for (String logLine : calculationResult.logs) {
+            // 逐条写入计算步骤日志，方便第四阶段详情和后续排障追溯每个业务判断。
             attendanceDailyDao.insertCalcLog(
                 AttendanceTenantContext.DEFAULT_TENANT_ID,
                 employeeId,
@@ -322,137 +516,6 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
             stepIndex += 1;
         }
         return new RecalculationOutcome(true, dailyId);
-    }
-
-    // 根据排班和打卡快照产出第四阶段第一版的基础日次结果与异常。
-    private CalculationResult calculateDaily(
-        AttendanceDailyOut.ScheduleSnapshotOut schedule,
-        List<AttendanceDailyOut.PunchSnapshotOut> punches
-    ) {
-        CalculationResult result = new CalculationResult();
-        result.logs = new ArrayList<>();
-        result.exceptions = new ArrayList<>();
-        result.workDayType = schedule == null ? "NO_SCHEDULE" : defaultText(schedule.getWorkDayType(), "WORKDAY");
-        result.scheduledStartTime = schedule == null ? null : schedule.getStartTime();
-        result.scheduledEndTime = schedule == null ? null : schedule.getEndTime();
-        result.scheduledBreakMinutes = schedule == null ? 0 : intValue(schedule.getBreakMinutes());
-        result.scheduledWorkMinutes = calculateScheduledWorkMinutes(schedule);
-
-        AttendanceDailyOut.PunchSnapshotOut firstClockIn = null;
-        AttendanceDailyOut.PunchSnapshotOut lastClockOut = null;
-        List<AttendanceDailyOut.PunchSnapshotOut> breakStarts = new ArrayList<>();
-        List<AttendanceDailyOut.PunchSnapshotOut> breakEnds = new ArrayList<>();
-        for (AttendanceDailyOut.PunchSnapshotOut punch : punches) {
-            if (Objects.equals("CLOCK_IN", punch.getPunchType())) {
-                if (firstClockIn == null || punch.getPunchTime().isBefore(firstClockIn.getPunchTime())) {
-                    firstClockIn = punch;
-                }
-            } else if (Objects.equals("CLOCK_OUT", punch.getPunchType())) {
-                if (lastClockOut == null || punch.getPunchTime().isAfter(lastClockOut.getPunchTime())) {
-                    lastClockOut = punch;
-                }
-            } else if (Objects.equals("BREAK_START", punch.getPunchType())) {
-                breakStarts.add(punch);
-            } else if (Objects.equals("BREAK_END", punch.getPunchType())) {
-                breakEnds.add(punch);
-            }
-        }
-        result.actualClockIn = firstClockIn == null ? null : firstClockIn.getPunchTime();
-        result.actualClockOut = lastClockOut == null ? null : lastClockOut.getPunchTime();
-        result.actualBreakMinutes = calculateBreakMinutes(breakStarts, breakEnds);
-        result.actualWorkMinutes = calculateActualWorkMinutes(result.actualClockIn, result.actualClockOut, result.actualBreakMinutes);
-        result.logs.add(schedule == null ? "当天没有排班快照，按无排班逻辑进入计算。" : "已读取当天排班快照：" + defaultText(schedule.getLabel(), "未命名班次"));
-        result.logs.add("当天有效打卡数量为 " + punches.size() + " 条。");
-        if (result.actualClockIn != null) {
-            result.logs.add("已选中最早上班卡：" + result.actualClockIn);
-        }
-        if (result.actualClockOut != null) {
-            result.logs.add("已选中最晚下班卡：" + result.actualClockOut);
-        }
-
-        if (schedule == null && !punches.isEmpty()) {
-            result.status = "NO_SCHEDULE";
-            result.exceptionFlag = true;
-            result.calcMessage = "无排班但存在有效打卡。";
-            result.exceptions.add(new ExceptionPlan("NO_SCHEDULE_PUNCH", "WARN", "当天没有排班，但检测到有效打卡记录。", "查看原始打卡"));
-            result.logs.add("由于没有排班但存在打卡，因此判定为无排班出勤。");
-            return result;
-        }
-
-        if (schedule != null && punches.isEmpty()) {
-            result.status = "ABSENCE";
-            result.exceptionFlag = true;
-            result.absenceMinutes = result.scheduledWorkMinutes;
-            result.calcMessage = "有排班但没有有效打卡。";
-            result.exceptions.add(new ExceptionPlan("SCHEDULE_NO_PUNCH", "ERROR", "当天有排班，但没有有效打卡，按缺勤处理。", "去打卡记录页处理"));
-            result.logs.add("当天有排班但没有有效打卡，因此按缺勤处理。");
-            return result;
-        }
-
-        if (schedule != null && result.actualClockIn == null && result.actualClockOut != null) {
-            result.status = "MISSING_CLOCK_IN";
-            result.exceptionFlag = true;
-            result.calcMessage = "缺少上班卡。";
-            result.exceptions.add(new ExceptionPlan("MISSING_CLOCK_IN", "ERROR", "只找到下班卡，缺少上班卡。", "去打卡记录页处理"));
-            result.logs.add("只找到下班卡，没有上班卡，因此判定为缺上班卡。");
-            return result;
-        }
-
-        if (schedule != null && result.actualClockIn != null && result.actualClockOut == null) {
-            result.status = "MISSING_CLOCK_OUT";
-            result.exceptionFlag = true;
-            result.lateMinutes = calculateLateMinutes(result.actualClockIn, result.scheduledStartTime);
-            result.calcMessage = "缺少下班卡。";
-            result.exceptions.add(new ExceptionPlan("MISSING_CLOCK_OUT", "ERROR", "只找到上班卡，缺少下班卡。", "去打卡记录页处理"));
-            result.logs.add("只找到上班卡，没有下班卡，因此判定为缺下班卡。");
-            return result;
-        }
-
-        if (schedule != null && result.actualClockIn != null && result.actualClockOut != null) {
-            result.lateMinutes = calculateLateMinutes(result.actualClockIn, result.scheduledStartTime);
-            result.earlyLeaveMinutes = calculateEarlyLeaveMinutes(result.actualClockOut, result.scheduledEndTime);
-            result.normalWorkMinutes = Math.max(0, result.actualWorkMinutes);
-            if (Objects.equals("REST", result.workDayType) || Objects.equals("OFF", result.workDayType)) {
-                result.status = "HOLIDAY_WORK";
-                result.exceptionFlag = true;
-                result.holidayWorkMinutes = result.actualWorkMinutes;
-                result.calcMessage = "休息日存在有效打卡。";
-                result.exceptions.add(new ExceptionPlan("HOLIDAY_WORK", "WARN", "休息日检测到有效打卡。", "查看原始打卡"));
-                result.logs.add("当前工作日类型为休息日，但存在有效打卡，因此判定为休日出勤。");
-                return result;
-            }
-            if (result.lateMinutes > 0) {
-                result.status = "LATE";
-                result.exceptionFlag = true;
-                result.calcMessage = "实际上班晚于计划开始。";
-                result.exceptions.add(new ExceptionPlan("LATE", "WARN", "实际上班时间晚于计划开始 " + result.lateMinutes + " 分钟。", "查看原始打卡"));
-                result.logs.add("实际上班时间晚于计划开始 " + result.lateMinutes + " 分钟，因此判定为迟到。");
-                if (result.earlyLeaveMinutes > 0) {
-                    result.exceptions.add(new ExceptionPlan("EARLY_LEAVE", "WARN", "实际下班时间早于计划结束 " + result.earlyLeaveMinutes + " 分钟。", "查看原始打卡"));
-                    result.logs.add("同时检测到早退 " + result.earlyLeaveMinutes + " 分钟。");
-                }
-                return result;
-            }
-            if (result.earlyLeaveMinutes > 0) {
-                result.status = "EARLY_LEAVE";
-                result.exceptionFlag = true;
-                result.calcMessage = "实际下班早于计划结束。";
-                result.exceptions.add(new ExceptionPlan("EARLY_LEAVE", "WARN", "实际下班时间早于计划结束 " + result.earlyLeaveMinutes + " 分钟。", "查看原始打卡"));
-                result.logs.add("实际下班时间早于计划结束 " + result.earlyLeaveMinutes + " 分钟，因此判定为早退。");
-                return result;
-            }
-            result.status = "NORMAL";
-            result.exceptionFlag = false;
-            result.calcMessage = "按完整上下班卡生成正常日次结果。";
-            result.logs.add("已取得完整上下班卡，且无迟到早退，因此判定为正常。");
-            return result;
-        }
-
-        result.status = "NORMAL";
-        result.exceptionFlag = false;
-        result.calcMessage = "未命中异常分支。";
-        result.logs.add("未命中任何异常分支，按正常结果收口。");
-        return result;
     }
 
     // 把查询入参补齐默认值，保持列表和自动补算使用同一口径。
@@ -492,15 +555,20 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
         summaryOut.setMissingClockCount(0);
         summaryOut.setAbsenceCount(0);
         for (Map<String, Object> row : rows) {
+            // 每行先还原数据库状态码和对应数量，后续统一映射到顶部四张摘要卡。
             String status = stringValue(readMapValue(row, "status"));
             int total = intValue(readMapValue(row, "totalCount"));
             if (Objects.equals("NORMAL", status)) {
+                // 正常类状态直接累计到正常卡。
                 summaryOut.setNormalCount(summaryOut.getNormalCount() + total);
             } else if (Objects.equals("LATE", status) || Objects.equals("EARLY_LEAVE", status)) {
+                // 迟到与早退都属于“出勤异常但有人上班”的范畴，因此汇总到同一张异常卡。
                 summaryOut.setLateCount(summaryOut.getLateCount() + total);
             } else if (Objects.equals("MISSING_CLOCK_IN", status) || Objects.equals("MISSING_CLOCK_OUT", status)) {
+                // 缺上班卡和缺下班卡同属缺卡场景，统一累计到缺卡卡片。
                 summaryOut.setMissingClockCount(summaryOut.getMissingClockCount() + total);
             } else if (Objects.equals("ABSENCE", status)) {
+                // 缺勤单独统计，避免与缺卡或迟到混淆。
                 summaryOut.setAbsenceCount(summaryOut.getAbsenceCount() + total);
             }
         }
@@ -520,51 +588,6 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
             throw new IllegalArgumentException("未找到对应日次结果");
         }
         return detailOut;
-    }
-
-    // 计算计划工时分钟，用于无打卡缺勤时给出基础分钟数。
-    private Integer calculateScheduledWorkMinutes(AttendanceDailyOut.ScheduleSnapshotOut schedule) {
-        if (schedule == null || schedule.getStartTime() == null || schedule.getEndTime() == null) {
-            return 0;
-        }
-        return Math.max(0, (int) Duration.between(schedule.getStartTime(), schedule.getEndTime()).toMinutes() - intValue(schedule.getBreakMinutes()));
-    }
-
-    // 计算休息分钟，只对成对出现的休息开始和结束做累加。
-    private Integer calculateBreakMinutes(
-        List<AttendanceDailyOut.PunchSnapshotOut> breakStarts,
-        List<AttendanceDailyOut.PunchSnapshotOut> breakEnds
-    ) {
-        int pairCount = Math.min(breakStarts.size(), breakEnds.size());
-        int totalMinutes = 0;
-        for (int index = 0; index < pairCount; index++) {
-            totalMinutes += Math.max(0, Duration.between(breakStarts.get(index).getPunchTime(), breakEnds.get(index).getPunchTime()).toMinutes());
-        }
-        return totalMinutes;
-    }
-
-    // 计算实际工时分钟，只有完整上下班卡时才输出有效值。
-    private Integer calculateActualWorkMinutes(LocalDateTime actualClockIn, LocalDateTime actualClockOut, Integer breakMinutes) {
-        if (actualClockIn == null || actualClockOut == null) {
-            return 0;
-        }
-        return Math.max(0, (int) Duration.between(actualClockIn, actualClockOut).toMinutes() - intValue(breakMinutes));
-    }
-
-    // 计算迟到分钟，只有计划开始和实际上班同时存在时才有效。
-    private Integer calculateLateMinutes(LocalDateTime actualClockIn, LocalDateTime scheduledStartTime) {
-        if (actualClockIn == null || scheduledStartTime == null || !actualClockIn.isAfter(scheduledStartTime)) {
-            return 0;
-        }
-        return (int) Duration.between(scheduledStartTime, actualClockIn).toMinutes();
-    }
-
-    // 计算早退分钟，只有计划结束和实际下班同时存在时才有效。
-    private Integer calculateEarlyLeaveMinutes(LocalDateTime actualClockOut, LocalDateTime scheduledEndTime) {
-        if (actualClockOut == null || scheduledEndTime == null || !actualClockOut.isBefore(scheduledEndTime)) {
-            return 0;
-        }
-        return (int) Duration.between(actualClockOut, scheduledEndTime).toMinutes();
     }
 
     // 第五阶段已进入审批、退回、通过或锁定的日次，必须保护最终结果不被重算覆盖。
@@ -723,36 +746,4 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
         }
     }
 
-    // 聚合一次日次计算产出的所有字段和解释信息。
-    private static class CalculationResult {
-        private Long shiftScheduleId;
-        private String workDayType;
-        private LocalDateTime scheduledStartTime;
-        private LocalDateTime scheduledEndTime;
-        private Integer scheduledBreakMinutes;
-        private Integer scheduledWorkMinutes;
-        private LocalDateTime actualClockIn;
-        private LocalDateTime actualClockOut;
-        private Integer actualBreakMinutes = 0;
-        private Integer actualWorkMinutes = 0;
-        private Integer lateMinutes = 0;
-        private Integer earlyLeaveMinutes = 0;
-        private Integer absenceMinutes = 0;
-        private Integer normalWorkMinutes = 0;
-        private Integer holidayWorkMinutes = 0;
-        private String status;
-        private Boolean exceptionFlag = false;
-        private String calcMessage;
-        private List<String> logs;
-        private List<ExceptionPlan> exceptions;
-    }
-
-    // 记录一条异常计划，供重算后统一写入异常表。
-    private record ExceptionPlan(
-        String exceptionType,
-        String exceptionLevel,
-        String message,
-        String suggestedAction
-    ) {
-    }
 }

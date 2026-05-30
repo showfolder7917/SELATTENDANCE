@@ -18,6 +18,7 @@ export const createSectionLoaders = () => ({
   workplace: false,
   department: false,
   employee: false,
+  rule: false,
   shift: false,
   schedule: false,
   punch: false,
@@ -31,6 +32,7 @@ export const createSectionErrors = () => ({
   workplace: '',
   department: '',
   employee: '',
+  rule: '',
   shift: '',
   schedule: '',
   punch: '',
@@ -44,6 +46,7 @@ export const createSectionStates = () => ({
   workplace: false,
   department: false,
   employee: false,
+  rule: false,
   shift: false,
   schedule: false,
   punch: false,
@@ -59,6 +62,7 @@ export const createBootstrapShell = () => ({
     workplace: 0,
     department: 0,
     employee: 0,
+    rule: 0,
     shift: 0,
     schedule: 0,
     punch: 0,
@@ -83,6 +87,21 @@ export const createWorkbenchState = () => ({
     workplaceId: ''
   },
   employees: [],
+  ruleFilters: {
+    yearMonth: '2026-05',
+    keyword: '',
+    activeOnly: true
+  },
+  ruleWorkbench: {
+    rules: [],
+    assignments: [],
+    alerts: [],
+    summary: {
+      highRiskCount: 0,
+      reminderCount: 0,
+      boundEmployeeCount: 0
+    }
+  },
   shiftTemplates: [],
   punchFilters: {
     dateFrom: '2026-05-01',
@@ -275,6 +294,32 @@ export const createWorkbenchState = () => ({
     departmentId: '',
     employmentType: '',
     status: ''
+  },
+  ruleForm: {
+    id: null,
+    ruleCode: '',
+    ruleName: '',
+    standardDailyMinutes: 480,
+    standardWeeklyMinutes: 2400,
+    autoBreakEnabled: true,
+    autoBreakThresholdMinutes: 360,
+    autoBreakDeductMinutes: 60,
+    nightWorkStart: '22:00',
+    nightWorkEnd: '05:00',
+    roundingUnitMinutes: 15,
+    roundingMode: 'ROUND_NEAREST',
+    monthlyOvertimeAlertHours: 45,
+    yearlyOvertimeAlertHours: 360,
+    paidLeaveReminderEnabled: true,
+    activeFlag: true,
+    note: ''
+  },
+  ruleAssignmentForm: {
+    employeeId: '',
+    ruleId: '',
+    effectiveStartDate: '2026-05-01',
+    effectiveEndDate: '',
+    note: ''
   },
   workplaceForm: {
     id: null,

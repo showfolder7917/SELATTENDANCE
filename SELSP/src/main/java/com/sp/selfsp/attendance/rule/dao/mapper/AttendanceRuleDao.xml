@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.attendance.rule.dao.AttendanceRuleDao">
+
+  <resultMap id="RuleResultMap" type="com.sp.selfsp.attendance.domain.out.AttendanceOut$RuleOut">
+    <id column="id" property="id"/>
+    <result column="rule_code" property="ruleCode"/>
+    <result column="rule_name" property="ruleName"/>
+    <result column="standard_daily_minutes" property="standardDailyMinutes"/>
+    <result column="standard_weekly_minutes" property="standardWeeklyMinutes"/>
+    <result column="auto_break_enabled" property="autoBreakEnabled"/>
+    <result column="auto_break_threshold_minutes" property="autoBreakThresholdMinutes"/>
+    <result column="auto_break_deduct_minutes" property="autoBreakDeductMinutes"/>
+    <result column="night_work_start" property="nightWorkStart"/>
+    <result column="night_work_end" property="nightWorkEnd"/>
+    <result column="rounding_unit_minutes" property="roundingUnitMinutes"/>
+    <result column="rounding_mode" property="roundingMode"/>
+    <result column="monthly_overtime_alert_hours" property="monthlyOvertimeAlertHours"/>
+    <result column="yearly_overtime_alert_hours" property="yearlyOvertimeAlertHours"/>
+    <result column="paid_leave_reminder_enabled" property="paidLeaveReminderEnabled"/>
+    <result column="active_flag" property="activeFlag"/>
+    <result column="note" property="note"/>
+  </resultMap>
+
+  <resultMap id="RuleAssignmentResultMap" type="com.sp.selfsp.attendance.domain.out.AttendanceOut$EmployeeRuleAssignmentOut">
+    <id column="employee_id" property="employeeId"/>
+    <result column="employee_no" property="employeeNo"/>
+    <result column="employee_name" property="employeeName"/>
+    <result column="workplace_name" property="workplaceName"/>
+    <result column="department_name" property="departmentName"/>
+    <result column="rule_id" property="ruleId"/>
+    <result column="rule_name" property="ruleName"/>
+    <result column="effective_start_date" property="effectiveStartDate"/>
+    <result column="effective_end_date" property="effectiveEndDate"/>
+    <result column="rule_note" property="note"/>
+    <result column="monthly_overtime_alert_hours" property="monthlyOvertimeAlertHours"/>
+    <result column="yearly_overtime_alert_hours" property="yearlyOvertimeAlertHours"/>
+    <result column="paid_leave_reminder_enabled" property="paidLeaveReminderEnabled"/>
+    <result column="monthly_overtime_minutes" property="monthlyOvertimeMinutes"/>
+    <result column="yearly_overtime_minutes" property="yearlyOvertimeMinutes"/>
+    <result column="yearly_paid_leave_days" property="yearlyPaidLeaveDays"/>
+  </resultMap>
+
+  <sql id="RuleColumns">
+    r.id,
+    r.rule_code,
+    r.rule_name,
+    r.standard_daily_minutes,
+    r.standard_weekly_minutes,
+    r.auto_break_enabled,
+    r.auto_break_threshold_minutes,
+    r.auto_break_deduct_minutes,
+    r.night_work_start,
+    r.night_work_end,
+    r.rounding_unit_minutes,
+    r.rounding_mode,
+    r.monthly_overtime_alert_hours,
+    r.yearly_overtime_alert_hours,
+    r.paid_leave_reminder_enabled,
+    r.active_flag,
+    r.note
+  </sql>
+
+  <select id="selectRuleList" resultMap="RuleResultMap">
+    SELECT <include refid="RuleColumns"/>
+    FROM attendance_rule_config r
+    WHERE r.tenant_id = #{tenantId}
+      AND r.deleted_flag = 0
+    <if test="query != null and query.keyword != null and query.keyword != ''">
+      AND (r.rule_code LIKE CONCAT('%', #{query.keyword}, '%') OR r.rule_name LIKE CONCAT('%', #{query.keyword}, '%'))
+    </if>
+    <if test="query != null and query.activeOnly != null and query.activeOnly">
+      AND r.active_flag = 1
+    </if>
+    ORDER BY r.active_flag DESC, r.rule_code ASC, r.id ASC
+  </select>
+
+  <select id="selectRuleById" resultMap="RuleResultMap">
+    SELECT <include refid="RuleColumns"/>
+    FROM attendance_rule_config r
+    WHERE r.tenant_id = #{tenantId}
+      AND r.id = #{id}
+      AND r.deleted_flag = 0
+  </select>
+
+  <select id="selectRuleByCode" resultMap="RuleResultMap">
+    SELECT <include refid="RuleColumns"/>
+    FROM attendance_rule_config r
+    WHERE r.tenant_id = #{tenantId}
+      AND r.rule_code = #{ruleCode}
+      AND r.deleted_flag = 0
+  </select>
+
+  <insert id="insertRule">
+    INSERT INTO attendance_rule_config (
+      tenant_id, rule_code, rule_name, standard_daily_minutes, standard_weekly_minutes,
+      auto_break_enabled, auto_break_threshold_minutes, auto_break_deduct_minutes,
+      night_work_start, night_work_end, rounding_unit_minutes, rounding_mode,
+      monthly_overtime_alert_hours, yearly_overtime_alert_hours,
+      paid_leave_reminder_enabled, active_flag, note, deleted_flag
+    ) VALUES (
+      #{tenantId}, #{in.ruleCode}, #{in.ruleName}, #{in.standardDailyMinutes}, #{in.standardWeeklyMinutes},
+      #{in.autoBreakEnabled}, #{in.autoBreakThresholdMinutes}, #{in.autoBreakDeductMinutes},
+      #{in.nightWorkStart}, #{in.nightWorkEnd}, #{in.roundingUnitMinutes}, #{in.roundingMode},
+      #{in.monthlyOvertimeAlertHours}, #{in.yearlyOvertimeAlertHours},
+      #{in.paidLeaveReminderEnabled}, #{in.activeFlag}, #{in.note}, 0
+    )
+  </insert>
+
+  <update id="updateRule">
+    UPDATE attendance_rule_config
+    SET rule_code = #{in.ruleCode},
+        rule_name = #{in.ruleName},
+        standard_daily_minutes = #{in.standardDailyMinutes},
+        standard_weekly_minutes = #{in.standardWeeklyMinutes},
+        auto_break_enabled = #{in.autoBreakEnabled},
+        auto_break_threshold_minutes = #{in.autoBreakThresholdMinutes},
+        auto_break_deduct_minutes = #{in.autoBreakDeductMinutes},
+        night_work_start = #{in.nightWorkStart},
+        night_work_end = #{in.nightWorkEnd},
+        rounding_unit_minutes = #{in.roundingUnitMinutes},
+        rounding_mode = #{in.roundingMode},
+        monthly_overtime_alert_hours = #{in.monthlyOvertimeAlertHours},
+        yearly_overtime_alert_hours = #{in.yearlyOvertimeAlertHours},
+        paid_leave_reminder_enabled = #{in.paidLeaveReminderEnabled},
+        active_flag = #{in.activeFlag},
+        note = #{in.note},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+      AND deleted_flag = 0
+  </update>
+
+  <select id="selectAssignments" resultMap="RuleAssignmentResultMap">
+    SELECT
+      e.id AS employee_id,
+      e.employee_no,
+      e.employee_name,
+      w.workplace_name,
+      d.department_name,
+      r.id AS rule_id,
+      r.rule_name,
+      wr.effective_start_date,
+      wr.effective_end_date,
+      wr.rule_note,
+      r.monthly_overtime_alert_hours,
+      r.yearly_overtime_alert_hours,
+      r.paid_leave_reminder_enabled,
+      COALESCE(m.overtime_minutes, 0) AS monthly_overtime_minutes,
+      COALESCE(y.yearly_overtime_minutes, 0) AS yearly_overtime_minutes,
+      COALESCE(y.yearly_paid_leave_days, 0) AS yearly_paid_leave_days
+    FROM employee e
+    LEFT JOIN workplace w ON w.id = e.workplace_id
+    LEFT JOIN department d ON d.id = e.department_id
+    LEFT JOIN employee_work_rule wr
+      ON wr.tenant_id = e.tenant_id
+      AND wr.employee_id = e.id
+    LEFT JOIN attendance_rule_config r
+      ON r.tenant_id = e.tenant_id
+      AND r.id = wr.rule_id
+      AND r.deleted_flag = 0
+    LEFT JOIN attendance_monthly m
+      ON m.tenant_id = e.tenant_id
+      AND m.employee_id = e.id
+      AND m.year_month = #{yearMonth}
+      AND m.deleted_flag = 0
+    LEFT JOIN (
+      SELECT
+        tenant_id,
+        employee_id,
+        SUM(overtime_minutes) AS yearly_overtime_minutes,
+        SUM(paid_leave_days) AS yearly_paid_leave_days
+      FROM attendance_monthly
+      WHERE tenant_id = #{tenantId}
+        AND year_month <![CDATA[ >= ]]> #{yearStartMonth}
+        AND year_month <![CDATA[ <= ]]> #{yearMonth}
+        AND deleted_flag = 0
+      GROUP BY tenant_id, employee_id
+    ) y
+      ON y.tenant_id = e.tenant_id
+      AND y.employee_id = e.id
+    WHERE e.tenant_id = #{tenantId}
+    <if test="keyword != null and keyword != ''">
+      AND (
+        e.employee_no LIKE CONCAT('%', #{keyword}, '%')
+        OR e.employee_name LIKE CONCAT('%', #{keyword}, '%')
+        OR COALESCE(r.rule_name, '') LIKE CONCAT('%', #{keyword}, '%')
+      )
+    </if>
+    ORDER BY e.employee_no ASC, e.id ASC
+  </select>
+
+  <select id="selectAssignmentByEmployeeId" resultMap="RuleAssignmentResultMap">
+    SELECT
+      e.id AS employee_id,
+      e.employee_no,
+      e.employee_name,
+      w.workplace_name,
+      d.department_name,
+      r.id AS rule_id,
+      r.rule_name,
+      wr.effective_start_date,
+      wr.effective_end_date,
+      wr.rule_note,
+      r.monthly_overtime_alert_hours,
+      r.yearly_overtime_alert_hours,
+      r.paid_leave_reminder_enabled,
+      COALESCE(m.overtime_minutes, 0) AS monthly_overtime_minutes,
+      COALESCE(y.yearly_overtime_minutes, 0) AS yearly_overtime_minutes,
+      COALESCE(y.yearly_paid_leave_days, 0) AS yearly_paid_leave_days
+    FROM employee e
+    LEFT JOIN workplace w ON w.id = e.workplace_id
+    LEFT JOIN department d ON d.id = e.department_id
+    LEFT JOIN employee_work_rule wr
+      ON wr.tenant_id = e.tenant_id
+      AND wr.employee_id = e.id
+    LEFT JOIN attendance_rule_config r
+      ON r.tenant_id = e.tenant_id
+      AND r.id = wr.rule_id
+      AND r.deleted_flag = 0
+    LEFT JOIN attendance_monthly m
+      ON m.tenant_id = e.tenant_id
+      AND m.employee_id = e.id
+      AND m.year_month = #{yearMonth}
+      AND m.deleted_flag = 0
+    LEFT JOIN (
+      SELECT
+        tenant_id,
+        employee_id,
+        SUM(overtime_minutes) AS yearly_overtime_minutes,
+        SUM(paid_leave_days) AS yearly_paid_leave_days
+      FROM attendance_monthly
+      WHERE tenant_id = #{tenantId}
+        AND year_month <![CDATA[ >= ]]> #{yearStartMonth}
+        AND year_month <![CDATA[ <= ]]> #{yearMonth}
+        AND deleted_flag = 0
+      GROUP BY tenant_id, employee_id
+    ) y
+      ON y.tenant_id = e.tenant_id
+      AND y.employee_id = e.id
+    WHERE e.tenant_id = #{tenantId}
+      AND e.id = #{employeeId}
+  </select>
+
+  <select id="countAssignmentByEmployeeId" resultType="java.lang.Integer">
+    SELECT COUNT(*)
+    FROM employee_work_rule
+    WHERE tenant_id = #{tenantId}
+      AND employee_id = #{employeeId}
+  </select>
+
+  <insert id="insertAssignment">
+    INSERT INTO employee_work_rule (
+      tenant_id, employee_id, rule_id, work_rule_type, standard_daily_minutes, standard_weekly_minutes,
+      overtime_enabled, night_work_enabled, holiday_work_enabled, rounding_rule_id,
+      effective_start_date, effective_end_date, rule_note
+    ) VALUES (
+      #{tenantId}, #{employeeId}, #{ruleId}, #{workRuleType}, #{dailyMinutes}, #{weeklyMinutes},
+      1, 1, 1, NULL,
+      #{effectiveStartDate}, #{effectiveEndDate}, #{note}
+    )
+  </insert>
+
+  <update id="updateAssignment">
+    UPDATE employee_work_rule
+    SET rule_id = #{ruleId},
+        work_rule_type = #{workRuleType},
+        standard_daily_minutes = #{dailyMinutes},
+        standard_weekly_minutes = #{weeklyMinutes},
+        overtime_enabled = 1,
+        night_work_enabled = 1,
+        holiday_work_enabled = 1,
+        effective_start_date = #{effectiveStartDate},
+        effective_end_date = #{effectiveEndDate},
+        rule_note = #{note}
+    WHERE tenant_id = #{tenantId}
+      AND employee_id = #{employeeId}
+  </update>
+</mapper>

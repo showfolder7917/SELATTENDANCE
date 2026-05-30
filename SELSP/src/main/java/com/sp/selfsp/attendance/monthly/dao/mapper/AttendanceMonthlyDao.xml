@@ -20,6 +20,11 @@
     <result column="missing_punch_count" property="missingPunchCount"/>
     <result column="absence_count" property="absenceCount"/>
     <result column="exception_days" property="exceptionDays"/>
+    <result column="total_work_minutes" property="totalWorkMinutes"/>
+    <result column="overtime_minutes" property="overtimeMinutes"/>
+    <result column="legal_overtime_minutes" property="legalOvertimeMinutes"/>
+    <result column="night_work_minutes" property="nightWorkMinutes"/>
+    <result column="holiday_work_minutes" property="holidayWorkMinutes"/>
     <result column="paid_leave_days" property="paidLeaveDays"/>
     <result column="rest_days" property="restDays"/>
     <result column="close_status" property="closeStatus"/>
@@ -107,6 +112,17 @@
       d.approval_status AS approvalStatus,
       d.exception_flag AS exceptionFlag,
       d.locked_flag AS lockedFlag,
+      d.actual_work_minutes AS actualWorkMinutes,
+      d.overtime_minutes AS overtimeMinutes,
+      d.legal_overtime_minutes AS legalOvertimeMinutes,
+      d.night_work_minutes AS nightWorkMinutes,
+      d.holiday_work_minutes AS holidayWorkMinutes,
+      d.actual_clock_in AS actualClockIn,
+      d.actual_clock_out AS actualClockOut,
+      d.actual_break_minutes AS actualBreakMinutes,
+      d.final_clock_in AS finalClockIn,
+      d.final_clock_out AS finalClockOut,
+      d.final_break_minutes AS finalBreakMinutes,
       d.updated_at AS updatedAt
     FROM attendance_daily d
     INNER JOIN employee e ON e.id = d.employee_id AND e.tenant_id = d.tenant_id
@@ -149,6 +165,11 @@
       m.missing_punch_count,
       m.absence_count,
       m.exception_days,
+      m.total_work_minutes,
+      m.overtime_minutes,
+      m.legal_overtime_minutes,
+      m.night_work_minutes,
+      m.holiday_work_minutes,
       m.paid_leave_days,
       m.rest_days,
       m.close_status,
@@ -195,6 +216,11 @@
       m.missing_punch_count,
       m.absence_count,
       m.exception_days,
+      m.total_work_minutes,
+      m.overtime_minutes,
+      m.legal_overtime_minutes,
+      m.night_work_minutes,
+      m.holiday_work_minutes,
       m.paid_leave_days,
       m.rest_days,
       m.close_status,
@@ -284,14 +310,16 @@
     MERGE INTO attendance_monthly (
       tenant_id, year_month, employee_id, workplace_id, department_id,
       scheduled_days, attendance_days, normal_days, late_count, early_leave_count,
-      missing_punch_count, absence_count, exception_days, paid_leave_days, rest_days,
+      missing_punch_count, absence_count, exception_days, total_work_minutes, overtime_minutes,
+      legal_overtime_minutes, night_work_minutes, holiday_work_minutes, paid_leave_days, rest_days,
       close_status, block_reason_count, closed_at, closed_by, reopened_at, reopened_by, remark,
       created_at, updated_at, deleted_flag
     ) KEY (tenant_id, year_month, employee_id)
     VALUES (
       #{tenantId}, #{yearMonth}, #{employeeId}, #{workplaceId}, #{departmentId},
       #{scheduledDays}, #{attendanceDays}, #{normalDays}, #{lateCount}, #{earlyLeaveCount},
-      #{missingPunchCount}, #{absenceCount}, #{exceptionDays}, #{paidLeaveDays}, #{restDays},
+      #{missingPunchCount}, #{absenceCount}, #{exceptionDays}, #{totalWorkMinutes}, #{overtimeMinutes},
+      #{legalOvertimeMinutes}, #{nightWorkMinutes}, #{holidayWorkMinutes}, #{paidLeaveDays}, #{restDays},
       #{closeStatus}, #{blockReasonCount}, #{closedAt}, #{closedBy}, #{reopenedAt}, #{reopenedBy}, #{remark},
       #{createdAt}, #{updatedAt}, 0
     )

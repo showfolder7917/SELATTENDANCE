@@ -73,6 +73,18 @@ function formatDateTime(value) {
   return value?.replace?.('T', ' ') || value || '-'
 }
 
+// 日次增强字段继续按分钟展示，避免前端再推导业务时长导致口径漂移。
+function formatMinutes(value) {
+  return Number.isFinite(Number(value)) ? Number(value) : 0
+}
+
+// 休日类型转成人话，供第七阶段管理员直接区分法定休日和所定休日。
+function translateHolidayType(holidayType) {
+  if (holidayType === 'LEGAL_HOLIDAY') return props.t('dailyHolidayTypeLegal')
+  if (holidayType === 'SCHEDULED_HOLIDAY') return props.t('dailyHolidayTypeScheduled')
+  return props.t('dailyHolidayTypeWorkday')
+}
+
 // 切换每页条数时同步回到第 1 页，避免旧页码在新页大小下跳空。
 function handlePageSizeChange(nextPageSize) {
   props.dailyFilters.pageSize = Number(nextPageSize)
@@ -179,9 +191,16 @@ function goToPage(page) {
             <small>{{ dailyDetail.workplaceName }} / {{ dailyDetail.departmentName }}</small>
             <small>{{ t('dailyScheduleLabel') }}：{{ dailyDetail.scheduleLabel || '-' }}</small>
             <small>{{ t('status') }}：{{ translateDailyStatus(dailyDetail.status) }}</small>
-            <small>{{ t('dailyActualWorkMinutes') }}：{{ dailyDetail.actualWorkMinutes || 0 }}</small>
-            <small>{{ t('dailyLateMinutes') }}：{{ dailyDetail.lateMinutes || 0 }}</small>
-            <small>{{ t('dailyEarlyLeaveMinutes') }}：{{ dailyDetail.earlyLeaveMinutes || 0 }}</small>
+            <small>{{ t('dailyAppliedRule') }}：{{ dailyDetail.appliedRuleName || '-' }}</small>
+            <small>{{ t('dailyHolidayType') }}：{{ translateHolidayType(dailyDetail.holidayType) }}</small>
+            <small>{{ t('dailyActualWorkMinutes') }}：{{ formatMinutes(dailyDetail.actualWorkMinutes) }}</small>
+            <small>{{ t('dailyNormalWorkMinutes') }}：{{ formatMinutes(dailyDetail.normalWorkMinutes) }}</small>
+            <small>{{ t('dailyOvertimeMinutes') }}：{{ formatMinutes(dailyDetail.overtimeMinutes) }}</small>
+            <small>{{ t('dailyLegalOvertimeMinutes') }}：{{ formatMinutes(dailyDetail.legalOvertimeMinutes) }}</small>
+            <small>{{ t('dailyNightWorkMinutes') }}：{{ formatMinutes(dailyDetail.nightWorkMinutes) }}</small>
+            <small>{{ t('dailyHolidayWorkMinutes') }}：{{ formatMinutes(dailyDetail.holidayWorkMinutes) }}</small>
+            <small>{{ t('dailyLateMinutes') }}：{{ formatMinutes(dailyDetail.lateMinutes) }}</small>
+            <small>{{ t('dailyEarlyLeaveMinutes') }}：{{ formatMinutes(dailyDetail.earlyLeaveMinutes) }}</small>
           </div>
         </section>
 

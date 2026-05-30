@@ -376,6 +376,257 @@ public final class AttendanceIn {
     }
 
     /**
+     * 第七阶段规则工作台查询入参。
+     */
+    public static class RuleWorkbenchQueryIn {
+
+        // 月份用于按月读取残业预警和当月适用结果。
+        private String yearMonth;
+        // 关键字用于同时筛规则名称、员工编号和员工姓名。
+        private String keyword;
+        // 是否只看启用中的规则，供规则页快速聚焦正式生效数据。
+        private Boolean activeOnly;
+
+        public String getYearMonth() {
+            return yearMonth;
+        }
+
+        public void setYearMonth(String yearMonth) {
+            this.yearMonth = yearMonth;
+        }
+
+        public String getKeyword() {
+            return keyword;
+        }
+
+        public void setKeyword(String keyword) {
+            this.keyword = keyword;
+        }
+
+        public Boolean getActiveOnly() {
+            return activeOnly;
+        }
+
+        public void setActiveOnly(Boolean activeOnly) {
+            this.activeOnly = activeOnly;
+        }
+    }
+
+    /**
+     * 第七阶段规则配置保存入参。
+     */
+    public static class RuleSaveIn {
+
+        // 规则编码用于规则主数据唯一定位和员工适用回写。
+        private String ruleCode;
+        // 规则名称用于列表、弹窗和员工适用页展示。
+        private String ruleName;
+        // 标准日工时用于残业和预警基线判断。
+        private Integer standardDailyMinutes;
+        // 标准周工时用于后续周残业扩展和规则解释。
+        private Integer standardWeeklyMinutes;
+        // 是否开启自动休息，用于第一版日本规则增强的基础口径。
+        private Boolean autoBreakEnabled;
+        // 超过多少分钟后自动扣休，避免短工时被误扣休息。
+        private Integer autoBreakThresholdMinutes;
+        // 自动扣休分钟数，供日次计算和规则说明展示。
+        private Integer autoBreakDeductMinutes;
+        // 深夜开始时间用于后续深夜分钟交集计算。
+        private String nightWorkStart;
+        // 深夜结束时间用于后续跨日深夜分钟交集计算。
+        private String nightWorkEnd;
+        // 取整粒度用于迟到、残业和总工时口径统一。
+        private Integer roundingUnitMinutes;
+        // 取整方式用于向用户解释是进位、舍去还是四舍五入。
+        private String roundingMode;
+        // 月残业预警阈值用于第七阶段看板高风险提示。
+        private Integer monthlyOvertimeAlertHours;
+        // 年残业预警阈值用于第七阶段累计风险提示。
+        private Integer yearlyOvertimeAlertHours;
+        // 是否开启有休提醒，用于年度 5 日提醒入口控制。
+        private Boolean paidLeaveReminderEnabled;
+        // 是否启用决定这条规则能否被正式分配给员工。
+        private Boolean activeFlag;
+        // 备注用于管理员记录特殊口径或适用说明。
+        private String note;
+
+        public String getRuleCode() {
+            return ruleCode;
+        }
+
+        public void setRuleCode(String ruleCode) {
+            this.ruleCode = ruleCode;
+        }
+
+        public String getRuleName() {
+            return ruleName;
+        }
+
+        public void setRuleName(String ruleName) {
+            this.ruleName = ruleName;
+        }
+
+        public Integer getStandardDailyMinutes() {
+            return standardDailyMinutes;
+        }
+
+        public void setStandardDailyMinutes(Integer standardDailyMinutes) {
+            this.standardDailyMinutes = standardDailyMinutes;
+        }
+
+        public Integer getStandardWeeklyMinutes() {
+            return standardWeeklyMinutes;
+        }
+
+        public void setStandardWeeklyMinutes(Integer standardWeeklyMinutes) {
+            this.standardWeeklyMinutes = standardWeeklyMinutes;
+        }
+
+        public Boolean getAutoBreakEnabled() {
+            return autoBreakEnabled;
+        }
+
+        public void setAutoBreakEnabled(Boolean autoBreakEnabled) {
+            this.autoBreakEnabled = autoBreakEnabled;
+        }
+
+        public Integer getAutoBreakThresholdMinutes() {
+            return autoBreakThresholdMinutes;
+        }
+
+        public void setAutoBreakThresholdMinutes(Integer autoBreakThresholdMinutes) {
+            this.autoBreakThresholdMinutes = autoBreakThresholdMinutes;
+        }
+
+        public Integer getAutoBreakDeductMinutes() {
+            return autoBreakDeductMinutes;
+        }
+
+        public void setAutoBreakDeductMinutes(Integer autoBreakDeductMinutes) {
+            this.autoBreakDeductMinutes = autoBreakDeductMinutes;
+        }
+
+        public String getNightWorkStart() {
+            return nightWorkStart;
+        }
+
+        public void setNightWorkStart(String nightWorkStart) {
+            this.nightWorkStart = nightWorkStart;
+        }
+
+        public String getNightWorkEnd() {
+            return nightWorkEnd;
+        }
+
+        public void setNightWorkEnd(String nightWorkEnd) {
+            this.nightWorkEnd = nightWorkEnd;
+        }
+
+        public Integer getRoundingUnitMinutes() {
+            return roundingUnitMinutes;
+        }
+
+        public void setRoundingUnitMinutes(Integer roundingUnitMinutes) {
+            this.roundingUnitMinutes = roundingUnitMinutes;
+        }
+
+        public String getRoundingMode() {
+            return roundingMode;
+        }
+
+        public void setRoundingMode(String roundingMode) {
+            this.roundingMode = roundingMode;
+        }
+
+        public Integer getMonthlyOvertimeAlertHours() {
+            return monthlyOvertimeAlertHours;
+        }
+
+        public void setMonthlyOvertimeAlertHours(Integer monthlyOvertimeAlertHours) {
+            this.monthlyOvertimeAlertHours = monthlyOvertimeAlertHours;
+        }
+
+        public Integer getYearlyOvertimeAlertHours() {
+            return yearlyOvertimeAlertHours;
+        }
+
+        public void setYearlyOvertimeAlertHours(Integer yearlyOvertimeAlertHours) {
+            this.yearlyOvertimeAlertHours = yearlyOvertimeAlertHours;
+        }
+
+        public Boolean getPaidLeaveReminderEnabled() {
+            return paidLeaveReminderEnabled;
+        }
+
+        public void setPaidLeaveReminderEnabled(Boolean paidLeaveReminderEnabled) {
+            this.paidLeaveReminderEnabled = paidLeaveReminderEnabled;
+        }
+
+        public Boolean getActiveFlag() {
+            return activeFlag;
+        }
+
+        public void setActiveFlag(Boolean activeFlag) {
+            this.activeFlag = activeFlag;
+        }
+
+        public String getNote() {
+            return note;
+        }
+
+        public void setNote(String note) {
+            this.note = note;
+        }
+    }
+
+    /**
+     * 第七阶段员工规则适用保存入参。
+     */
+    public static class RuleAssignmentSaveIn {
+
+        // 规则主键决定员工本次要套用哪条正式规则。
+        private Long ruleId;
+        // 生效开始日用于月次和日次判断哪天开始改按新规则计算。
+        private LocalDate effectiveStartDate;
+        // 生效结束日用于保留阶段性规则或临时规则切换记录。
+        private LocalDate effectiveEndDate;
+        // 适用备注用于记录人工调整背景。
+        private String note;
+
+        public Long getRuleId() {
+            return ruleId;
+        }
+
+        public void setRuleId(Long ruleId) {
+            this.ruleId = ruleId;
+        }
+
+        public LocalDate getEffectiveStartDate() {
+            return effectiveStartDate;
+        }
+
+        public void setEffectiveStartDate(LocalDate effectiveStartDate) {
+            this.effectiveStartDate = effectiveStartDate;
+        }
+
+        public LocalDate getEffectiveEndDate() {
+            return effectiveEndDate;
+        }
+
+        public void setEffectiveEndDate(LocalDate effectiveEndDate) {
+            this.effectiveEndDate = effectiveEndDate;
+        }
+
+        public String getNote() {
+            return note;
+        }
+
+        public void setNote(String note) {
+            this.note = note;
+        }
+    }
+
+    /**
      * 外部打卡绑定入参。
      */
     public static class ExternalMappingSaveIn {
