@@ -1,7 +1,7 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import SharedDataTable from '../../../shared/components/SharedDataTable.vue'
-import SharedMiniSelect from '../../../shared/components/SharedMiniSelect.vue'
+import SharedPaginationBar from '../../../shared/components/SharedPaginationBar.vue'
 import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
 import { attendancePunchLayoutPreset } from '../constants/workbenchLayoutPresets'
 
@@ -30,9 +30,6 @@ const props = defineProps({
 // 固定每页条数档位，保证前端切换值与后端数据库分页允许值完全一致。
 const pageSizeOptions = [20, 50, 100, 200]
 
-// 跳页输入框单独维护本地字符串，允许用户先输入再点按钮触发校验。
-const pageJumpInput = ref('')
-
 // 当前页优先使用后端回传页码，避免前端自己猜测造成分页状态漂移。
 const currentPage = computed(() => Number(props.punchLogList.page || props.punchFilters.page || 1))
 
@@ -46,55 +43,6 @@ const totalPages = computed(() => {
   return Math.max(1, Math.ceil(total / pageSize))
 })
 
-// 上一页按钮在第 1 页时禁用，避免无效数据库分页请求。
-const isPrevDisabled = computed(() => currentPage.value <= 1)
-
-// 下一页按钮在最后一页禁用，避免继续请求不存在的页码。
-const isNextDisabled = computed(() => currentPage.value >= totalPages.value)
-
-// 最后一页按钮在已经位于最后一页时禁用，避免重复请求同一页。
-const isLastDisabled = computed(() => currentPage.value >= totalPages.value)
-
-// 生成底部分页条要显示的页码片段，兼顾首页、当前页附近和最后一页。
-const pageItems = computed(() => {
-  const total = totalPages.value
-  const current = currentPage.value
-  if (total <= 7) {
-    return Array.from({ length: total }, (_, index) => ({ type: 'page', value: index + 1 }))
-  }
-
-  const items = [{ type: 'page', value: 1 }]
-  let start = Math.max(2, current - 1)
-  let end = Math.min(total - 1, current + 1)
-
-  // 当前页靠前时多展示前几页，减少一开始就出现过早省略号。
-  if (current <= 4) {
-    start = 2
-    end = 5
-  }
-
-  // 当前页接近尾部时多展示最后几页，让用户能直接看到收尾页码。
-  if (current >= total - 3) {
-    start = total - 4
-    end = total - 1
-  }
-
-  if (start > 2) {
-    items.push({ type: 'ellipsis', key: 'leading' })
-  }
-
-  for (let page = start; page <= end; page += 1) {
-    items.push({ type: 'page', value: page })
-  }
-
-  if (end < total - 1) {
-    items.push({ type: 'ellipsis', key: 'trailing' })
-  }
-
-  items.push({ type: 'page', value: total })
-  return items
-})
-
 // 打卡列表列定义继续留在业务页，保证状态文案、字段顺序和后续 slot 扩展都由业务决定。
 const punchColumns = computed(() => [
   { key: 'employeeName', label: props.t('employeeName'), minWidth: '160px' },
@@ -104,33 +52,6 @@ const punchColumns = computed(() => [
   { key: 'sourceSystem', label: props.t('sourceSystem'), minWidth: '120px' },
   { key: 'processStatus', label: props.t('status'), minWidth: '116px' }
 ])
-
-// 当前页变化后同步回填跳页输入框，让输入框始终反映实际分页状态。
-watch(
-  () => currentPage.value,
-  (nextPage) => {
-    pageJumpInput.value = String(nextPage)
-  },
-  { immediate: true }
-)
-
-// 点击上一页时只回退一个页码，让外层 watch 触发新的数据库分页请求。
-function goPrevPage() {
-  if (isPrevDisabled.value) return
-  props.punchFilters.page = currentPage.value - 1
-}
-
-// 点击下一页时只前进一个页码，让外层 watch 触发新的数据库分页请求。
-function goNextPage() {
-  if (isNextDisabled.value) return
-  props.punchFilters.page = currentPage.value + 1
-}
-
-// 点击最后一页时直接跳到总页数，方便长列表快速收尾定位。
-function goLastPage() {
-  if (isLastDisabled.value) return
-  props.punchFilters.page = totalPages.value
-}
 
 // 切换每页条数时同步回到第 1 页，避免旧页码在新页大小下跳空。
 function handlePageSizeChange(nextPageSize) {
@@ -142,27 +63,6 @@ function handlePageSizeChange(nextPageSize) {
 function goToPage(page) {
   if (page === currentPage.value) return
   props.punchFilters.page = page
-}
-
-// 点击加载时校验输入页码是否合法，错误时用页面级 toast 直接提示用户。
-function submitPageJump() {
-  const rawValue = String(pageJumpInput.value || '').trim()
-  if (!/^\d+$/.test(rawValue)) {
-    props.onShowToast(
-      props.t('punchPageInvalid').replace('{totalPages}', String(totalPages.value))
-    )
-    return
-  }
-
-  const targetPage = Number(rawValue)
-  if (targetPage < 1 || targetPage > totalPages.value) {
-    props.onShowToast(
-      props.t('punchPageOutOfRange').replace('{totalPages}', String(totalPages.value))
-    )
-    return
-  }
-
-  goToPage(targetPage)
 }
 </script>
 
@@ -244,7 +144,7 @@ function submitPageJump() {
           variant="list"
           sticky-header
           clickable-rows
-          :show-pagination="totalPages > 1"
+          :show-pagination="(punchLogList.total || 0) > 0"
           :columns="punchColumns"
           :rows="punchLogList.items || []"
           row-key="id"
@@ -267,53 +167,26 @@ function submitPageJump() {
             <span class="selattendance-punch-status" :class="`status-${(row.processStatus || '').toLowerCase()}`">{{ row.processStatus }}</span>
           </template>
           <template #pagination>
-            <div class="selattendance-punch-pagination">
-              <label class="selattendance-punch-pagination-size">
-                <span>{{ t('punchPageSize') }}</span>
-                <SharedMiniSelect
-                  :model-value="String(punchFilters.pageSize || 20)"
-                  :options="pageSizeOptions.map((size) => ({ value: String(size), label: String(size) }))"
-                  :aria-label="t('punchPageSize')"
-                  @change="handlePageSizeChange"
-                />
-              </label>
-
-              <div class="selattendance-punch-pagination-pages" :aria-label="t('punchPaginationNav')">
-                <button class="seladmin-button seladmin-button-secondary" type="button" :disabled="isPrevDisabled" @click="goPrevPage()">{{ t('punchPrevPage') }}</button>
-                <template v-for="item in pageItems" :key="item.type === 'page' ? `page-${item.value}` : item.key">
-                  <button
-                    v-if="item.type === 'page'"
-                    class="selattendance-pagination-number"
-                    :class="{ active: item.value === currentPage }"
-                    type="button"
-                    @click="goToPage(item.value)"
-                  >
-                    {{ item.value }}
-                  </button>
-                  <span v-else class="selattendance-pagination-ellipsis">...</span>
-                </template>
-                <button class="selattendance-pagination-tail" type="button" :disabled="isLastDisabled" @click="goLastPage()">{{ t('punchLastPage') }}</button>
-                <button class="seladmin-button seladmin-button-secondary" type="button" :disabled="isNextDisabled" @click="goNextPage()">{{ t('punchNextPage') }}</button>
-              </div>
-
-              <div class="selattendance-punch-pagination-jump">
-                <label class="selattendance-punch-pagination-jump-field">
-                  <span>{{ t('punchPageJumpPrefix') }}</span>
-                  <input
-                    v-model="pageJumpInput"
-                    inputmode="numeric"
-                    :placeholder="t('punchPageJumpPlaceholder').replace('{totalPages}', String(totalPages))"
-                    @keydown.enter.prevent="submitPageJump()"
-                  />
-                  <span>{{ t('punchPageJumpSuffix') }}</span>
-                </label>
-                <button class="seladmin-button seladmin-button-primary" type="button" @click="submitPageJump()">{{ t('punchPageJumpSubmit') }}</button>
-              </div>
-
-              <div class="selattendance-punch-pagination-meta">
-                <small>{{ t('punchPaginationSummary').replace('{total}', String(punchLogList.total || 0)) }}</small>
-              </div>
-            </div>
+            <SharedPaginationBar
+              :page-size="Number(punchFilters.pageSize || 20)"
+              :page-size-options="pageSizeOptions"
+              :current-page="currentPage"
+              :total-pages="totalPages"
+              :total-count="Number(punchLogList.total || 0)"
+              :page-size-label="t('punchPageSize')"
+              :prev-label="t('punchPrevPage')"
+              :next-label="t('punchNextPage')"
+              :last-label="t('punchLastPage')"
+              :jump-prefix="t('punchPageJumpPrefix')"
+              :jump-suffix="t('punchPageJumpSuffix')"
+              :jump-action-label="t('punchPageJumpSubmit')"
+              :total-text="t('punchPaginationSummary').replace('{total}', String(punchLogList.total || 0))"
+              :invalid-message="t('punchPageInvalid')"
+              :out-of-range-message="t('punchPageOutOfRange')"
+              @page-change="goToPage"
+              @page-size-change="handlePageSizeChange"
+              @invalid="onShowToast"
+            />
           </template>
         </SharedDataTable>
       </article>

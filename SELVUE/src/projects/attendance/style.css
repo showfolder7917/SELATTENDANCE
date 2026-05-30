@@ -523,6 +523,11 @@ body {
   min-height: 0;
 }
 
+.selattendance-case-split {
+  height: 100%;
+  min-height: 0;
+}
+
 .selattendance-master-split {
   height: 100%;
   min-height: 0;
@@ -538,30 +543,43 @@ body {
 .selattendance-punch-split .selattendance-resizable-pane-left,
 .selattendance-punch-split .selattendance-resizable-pane-right,
 .selattendance-daily-split .selattendance-resizable-pane-left,
-.selattendance-daily-split .selattendance-resizable-pane-right {
+.selattendance-daily-split .selattendance-resizable-pane-right,
+.selattendance-case-split .selattendance-resizable-pane-left,
+.selattendance-case-split .selattendance-resizable-pane-right {
   overflow: hidden;
 }
 
 .selattendance-master-list-panel,
 .selattendance-master-detail-panel,
 .selattendance-punch-detail-panel,
-.selattendance-daily-detail-panel {
+.selattendance-daily-detail-panel,
+.selattendance-case-detail-panel {
   height: 100%;
   min-height: 0;
   overflow: auto;
 }
 
 .selattendance-punch-list-panel,
-.selattendance-daily-list-panel {
+.selattendance-daily-list-panel,
+.selattendance-case-list-panel {
   height: 100%;
   min-height: 0;
   overflow: hidden;
   display: grid;
+}
+
+.selattendance-punch-list-panel,
+.selattendance-daily-list-panel {
   grid-template-rows: auto auto auto minmax(0, 1fr) auto;
 }
 
+.selattendance-case-list-panel {
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+}
+
 .selattendance-punch-list-panel .selattendance-punch-pagination,
-.selattendance-daily-list-panel .selattendance-punch-pagination {
+.selattendance-daily-list-panel .selattendance-punch-pagination,
+.selattendance-case-list-panel .selattendance-punch-pagination {
   align-self: end;
 }
 

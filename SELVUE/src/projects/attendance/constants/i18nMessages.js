@@ -12,9 +12,9 @@ export const messages = {
   // 执行当前业务步骤，推进本行对应的 constants 处理。
   'zh-CN': {
     // 维护 appTitle 字段，供当前前端状态或配置直接使用。
-    appTitle: '考勤系统第四阶段工作台',
+    appTitle: '考勤系统第五阶段工作台',
     // 维护 appSubtitle 字段，供当前前端状态或配置直接使用。
-    appSubtitle: '基础资料、排班、打卡与第四阶段日次计算在一个页面连续完成。',
+    appSubtitle: '基础资料、排班、打卡、日次计算与第五阶段异常审批在一个页面连续完成。',
     // 维护 liveTag 字段，供当前前端状态或配置直接使用。
     liveTag: '中日双语 / 一键启动',
     // 维护 主题Switch 字段，供当前前端状态或配置直接使用。
@@ -49,6 +49,8 @@ export const messages = {
     navPunch: '打卡记录',
     // 维护 导航日次 字段，供当前前端状态或配置直接使用。
     navDaily: '日次结果',
+    // 维护 导航异常处理 字段，供当前前端状态或配置直接使用。
+    navCase: '异常处理',
     // 维护 workspaceSidebarTitle 字段，供当前前端状态或配置直接使用。
     workspaceSidebarTitle: '功能导航',
     // 维护 workspaceSidebarHint 字段，供当前前端状态或配置直接使用。
@@ -71,10 +73,12 @@ export const messages = {
     sectionPunchHint: '第三阶段开始接收真实打卡事实，并处理未匹配、失败和忽略记录。',
     // 维护 section日次Hint 字段，供当前前端状态或配置直接使用。
     sectionDailyHint: '第四阶段开始把排班和打卡计算成每日结果，并集中处理异常。',
+    // 维护 section异常处理Hint 字段，供当前前端状态或配置直接使用。
+    sectionCaseHint: '第五阶段开始把异常整理成处理单，进入审批、回写和锁定闭环。',
     // 维护 wizardTitle 字段，供当前前端状态或配置直接使用。
     wizardTitle: '初始化向导',
     // 维护 wizardHint 字段，供当前前端状态或配置直接使用。
-    wizardHint: '基础资料、排班和打卡已经接通；当前已进入第四阶段日次计算，审批和月结仍未开始。',
+    wizardHint: '基础资料、排班、打卡和日次计算已经接通；当前已进入第五阶段异常处理与审批闭环，月结仍未开始。',
     // 维护 nextAction 字段，供当前前端状态或配置直接使用。
     nextAction: '推荐下一步',
     // 维护 phaseLocked 字段，供当前前端状态或配置直接使用。
@@ -458,6 +462,10 @@ export const messages = {
     dailyPageJumpSuffix: '页',
     dailyPageJumpPlaceholder: '1 - {totalPages}',
     dailyPageJumpSubmit: '加载',
+    dailyJumpTo: '跳转到 第',
+    dailyPageUnit: '页',
+    dailyJumpAction: '加载',
+    dailyTotalCount: '共 {total} 条',
     dailyPageInvalid: '请输入正确页码数字',
     dailyPageOutOfRange: '页码超出范围，请输入 1 到 {totalPages}',
     dailyWorkDate: '工作日',
@@ -478,6 +486,57 @@ export const messages = {
     dailyActualWorkMinutes: '实际工时分钟',
     dailyLateMinutes: '迟到分钟',
     dailyEarlyLeaveMinutes: '早退分钟',
+    caseTitle: '异常处理',
+    caseLead: '把异常日次整理成处理单，完成审批、回写和锁定，避免月结前结果反复漂移。',
+    caseRefresh: '刷新处理单',
+    caseSummaryPending: '待建单',
+    caseSummaryReviewing: '审批中',
+    caseSummaryApproved: '已通过',
+    caseSummaryRejected: '已驳回',
+    caseSummaryLocked: '已锁定',
+    caseCurrentException: '当前异常',
+    caseStatusLabel: '处理状态',
+    caseUpdatedAt: '最近更新时间',
+    caseStatusAll: '全部处理状态',
+    caseStatusUnhandled: '待建单',
+    caseStatusSubmitted: '已提交',
+    caseStatusReturned: '已退回',
+    caseStatusApproved: '已通过',
+    caseStatusRejected: '已驳回',
+    caseStatusLocked: '已锁定',
+    caseMineOnly: '只看我负责的处理单',
+    caseApplicant: '申请来源',
+    caseApplicantSystem: '系统自动汇总',
+    caseDetailTitle: '当前处理单详情',
+    caseCreateTitle: '创建处理单',
+    caseDetailLead: '确认异常原因、审批过程和最终回写结果。',
+    caseCreateLead: '当前异常还没有处理单，请先补充原因和预期处理方式。',
+    caseReasonCategory: '原因分类',
+    caseReasonDeviceError: '设备异常',
+    caseReasonManualConfirm: '人工确认',
+    caseReasonOther: '其他原因',
+    caseReasonText: '原因说明',
+    caseExpectedResolution: '期望处理方式',
+    caseCreateAction: '提交处理单',
+    caseTimelineTitle: '处理时间线',
+    caseApprovalTitle: '审批处理',
+    dailyStatusFinal: '最终结果',
+    caseKeepExceptionFlag: '仍保留异常标记',
+    caseApprovalComment: '审批备注',
+    caseApproveAction: '审批通过',
+    caseReturnAction: '退回补充',
+    caseRejectAction: '驳回处理单',
+    caseLockAction: '锁定当前日次',
+    caseUnlockAction: '解除锁定',
+    casePageInvalid: '请输入正确页码数字',
+    casePageOutOfRange: '页码超出范围，请输入 1 到 {totalPages}',
+    caseToastCreated: '处理单已创建',
+    caseToastApproved: '处理单已审批通过',
+    caseToastReturned: '处理单已退回',
+    caseToastRejected: '处理单已驳回',
+    caseToastLocked: '当前日次已锁定',
+    caseToastUnlocked: '当前日次已解除锁定',
+    emptyData: '当前没有可显示的数据。',
     dailyStatusNormal: '正常',
     dailyStatusLate: '迟到',
     dailyStatusEarlyLeave: '早退',
@@ -536,9 +595,9 @@ export const messages = {
   // 执行当前业务步骤，推进本行对应的 constants 处理。
   'ja-JP': {
     // 维护 appTitle 字段，供当前前端状态或配置直接使用。
-    appTitle: '勤怠システム Phase 4',
+    appTitle: '勤怠システム Phase 5',
     // 维护 appSubtitle 字段，供当前前端状态或配置直接使用。
-    appSubtitle: '基本マスタ、シフト、打刻、Phase 4 の日次計算を一画面で連続して管理します。',
+    appSubtitle: '基本マスタ、シフト、打刻、日次計算、Phase 5 の異常承認を一画面で連続して管理します。',
     // 维护 liveTag 字段，供当前前端状态或配置直接使用。
     liveTag: '中国語 / 日本語 / ワンクリック起動',
     // 维护 主题Switch 字段，供当前前端状态或配置直接使用。
@@ -573,6 +632,8 @@ export const messages = {
     navPunch: '打刻記録',
     // 维护 导航日次 字段，供当前前端状态或配置直接使用。
     navDaily: '日次結果',
+    // 维护 导航异常处理 字段，供当前前端状态或配置直接使用。
+    navCase: '異常処理',
     // 维护 workspaceSidebarTitle 字段，供当前前端状态或配置直接使用。
     workspaceSidebarTitle: '機能ナビ',
     // 维护 workspaceSidebarHint 字段，供当前前端状态或配置直接使用。
@@ -595,10 +656,12 @@ export const messages = {
     sectionPunchHint: 'Phase 3 で実打刻ログを受け取り、未紐付け・失敗・無視データを整理します。',
     // 维护 section日次Hint 字段，供当前前端状态或配置直接使用。
     sectionDailyHint: 'Phase 4 でシフトと打刻を日次結果へ計算し、異常をまとめて処理します。',
+    // 维护 section异常处理Hint 字段，供当前前端状态或配置直接使用。
+    sectionCaseHint: 'Phase 5 で異常を処理票へまとめ、承認・反映・ロックまでを閉じます。',
     // 维护 wizardTitle 字段，供当前前端状态或配置直接使用。
     wizardTitle: '初期化ウィザード',
     // 维护 wizardHint 字段，供当前前端状态或配置直接使用。
-    wizardHint: '基本マスタ、シフト、打刻は接続済みで、現在は Phase 4 の日次計算へ進んでいます。申請承認と月次締めはまだ対象外です。',
+    wizardHint: '基本マスタ、シフト、打刻、日次計算は接続済みで、現在は Phase 5 の異常処理と承認クローズへ進んでいます。月次締めはまだ対象外です。',
     // 维护 nextAction 字段，供当前前端状态或配置直接使用。
     nextAction: '次の推奨アクション',
     // 维护 phaseLocked 字段，供当前前端状态或配置直接使用。
@@ -621,6 +684,8 @@ export const messages = {
     punchTitle: '打刻記録',
     // 维护 日次Title 字段，供当前前端状态或配置直接使用。
     dailyTitle: '日次結果',
+    // 维护 异常处理Title 字段，供当前前端状态或配置直接使用。
+    caseTitle: '異常処理',
     // 维护 保存 字段，供当前前端状态或配置直接使用。
     save: '保存',
     // 维护 新增 字段，供当前前端状态或配置直接使用。
@@ -914,6 +979,10 @@ export const messages = {
     dailyPageJumpSuffix: 'ページへ',
     dailyPageJumpPlaceholder: '1 - {totalPages}',
     dailyPageJumpSubmit: '読み込む',
+    dailyJumpTo: '第',
+    dailyPageUnit: 'ページ',
+    dailyJumpAction: '読み込む',
+    dailyTotalCount: '合計 {total} 件',
     dailyPageInvalid: '正しいページ番号を入力してください',
     dailyPageOutOfRange: 'ページ番号は 1 から {totalPages} の範囲で入力してください',
     dailyWorkDate: '勤務日',
@@ -934,6 +1003,56 @@ export const messages = {
     dailyActualWorkMinutes: '実働分',
     dailyLateMinutes: '遅刻分',
     dailyEarlyLeaveMinutes: '早退分',
+    caseLead: '異常日次を処理票へまとめ、承認、反映、ロックまで進めて月次前の揺れを止めます。',
+    caseRefresh: '処理票を更新',
+    caseSummaryPending: '未起票',
+    caseSummaryReviewing: '承認中',
+    caseSummaryApproved: '承認済み',
+    caseSummaryRejected: '却下済み',
+    caseSummaryLocked: 'ロック済み',
+    caseCurrentException: '現在の異常',
+    caseStatusLabel: '処理状態',
+    caseUpdatedAt: '最終更新',
+    caseStatusAll: '全処理状態',
+    caseStatusUnhandled: '未起票',
+    caseStatusSubmitted: '申請済み',
+    caseStatusReturned: '差戻し',
+    caseStatusApproved: '承認済み',
+    caseStatusRejected: '却下済み',
+    caseStatusLocked: 'ロック済み',
+    caseMineOnly: '自分担当の処理票のみ',
+    caseApplicant: '起票元',
+    caseApplicantSystem: 'システム自動集約',
+    caseDetailTitle: '現在の処理票詳細',
+    caseCreateTitle: '処理票を作成',
+    caseDetailLead: '異常理由、承認経過、最終反映結果を確認します。',
+    caseCreateLead: '現在の異常にはまだ処理票がありません。先に理由と処理方針を登録してください。',
+    caseReasonCategory: '理由区分',
+    caseReasonDeviceError: '機器異常',
+    caseReasonManualConfirm: '手動確認',
+    caseReasonOther: 'その他',
+    caseReasonText: '理由メモ',
+    caseExpectedResolution: '想定処理',
+    caseCreateAction: '処理票を提出',
+    caseTimelineTitle: '処理タイムライン',
+    caseApprovalTitle: '承認処理',
+    dailyStatusFinal: '最終結果',
+    caseKeepExceptionFlag: '異常フラグを維持',
+    caseApprovalComment: '承認コメント',
+    caseApproveAction: '承認する',
+    caseReturnAction: '差し戻す',
+    caseRejectAction: '却下する',
+    caseLockAction: 'この日次をロック',
+    caseUnlockAction: 'ロック解除',
+    casePageInvalid: '正しいページ番号を入力してください',
+    casePageOutOfRange: 'ページ番号は 1 から {totalPages} の範囲で入力してください',
+    caseToastCreated: '処理票を作成しました',
+    caseToastApproved: '処理票を承認しました',
+    caseToastReturned: '処理票を差し戻しました',
+    caseToastRejected: '処理票を却下しました',
+    caseToastLocked: '現在の日次をロックしました',
+    caseToastUnlocked: '現在の日次のロックを解除しました',
+    emptyData: '表示できるデータがありません。',
     dailyStatusNormal: '正常',
     dailyStatusLate: '遅刻',
     dailyStatusEarlyLeave: '早退',

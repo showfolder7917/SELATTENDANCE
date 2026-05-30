@@ -59,3 +59,12 @@ export {
   recalculateDaily,
   recalculateDailyRange
 } from './dailyApi'
+
+// 暴露第五阶段异常处理与审批接口，供异常处理区块独立加载、建单和审批复用。
+export {
+  listCases,
+  getCaseDetail,
+  createCase,
+  applyCaseAction,
+  applyCaseBatchAction
+} from './caseApi'

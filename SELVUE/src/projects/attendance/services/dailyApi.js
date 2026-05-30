@@ -28,3 +28,11 @@ export const recalculateDaily = (payload) =>
 // 导出 范围重算 前端服务动作，供用户按当前筛选区间批量刷新第四阶段结果。
 export const recalculateDailyRange = (payload) =>
   requestJson('/api/attendance/daily/recalculate-range', { method: 'POST', body: JSON.stringify(payload) })
+
+// 导出 日次锁定 前端服务动作，供第五阶段审批通过后的最终结果进入锁定态。
+export const lockDaily = (id) =>
+  requestJson(`/api/attendance/daily/${id}/lock`, { method: 'POST' })
+
+// 导出 日次解锁 前端服务动作，供管理员在确需修正时重新开放当前日次。
+export const unlockDaily = (id) =>
+  requestJson(`/api/attendance/daily/${id}/unlock`, { method: 'POST' })

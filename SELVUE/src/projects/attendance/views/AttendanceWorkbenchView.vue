@@ -7,6 +7,7 @@ import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbe
 import ThemeSwitch from '../../../shared/components/ThemeSwitch.vue'
 import AttendanceSectionNav from '../components/AttendanceSectionNav.vue'
 import AttendanceSummaryPanel from '../components/AttendanceSummaryPanel.vue'
+import CaseSection from '../components/CaseSection.vue'
 import DailySection from '../components/DailySection.vue'
 import DepartmentSection from '../components/DepartmentSection.vue'
 import EmployeeSection from '../components/EmployeeSection.vue'
@@ -71,8 +72,10 @@ const {
   handleScheduleExport,
   loadPunchLogs,
   loadDailyResults,
+  loadCases,
   openPunchDetail,
   openDailyDetail,
+  openCaseDetail,
   submitManualPunch,
   runPunchImportPreview,
   submitPunchImport,
@@ -81,6 +84,10 @@ const {
   submitPunchReprocess,
   submitDailyRecalculate,
   submitDailyRangeRecalculate,
+  submitCaseCreate,
+  submitCaseAction,
+  submitCaseLock,
+  submitCaseUnlock,
   editWorkplace,
   openWorkplaceDepartments,
   editDepartment,
@@ -114,7 +121,8 @@ const workspaceNavItems = computed(() => {
     ,
     schedule: state.scheduleBoard.scheduleItems.length,
     punch: state.punchLogList.total,
-    daily: state.dailyList.total
+    daily: state.dailyList.total,
+    case: state.caseList.total
   }
 
   const moduleHintMap = {
@@ -126,7 +134,8 @@ const workspaceNavItems = computed(() => {
     ,
     schedule: t('sectionScheduleHint'),
     punch: t('sectionPunchHint'),
-    daily: t('sectionDailyHint')
+    daily: t('sectionDailyHint'),
+    case: t('sectionCaseHint')
   }
 
   return navItems.value.map((item) => ({
@@ -570,6 +579,26 @@ onBeforeUnmount(() => {
               :on-select-daily="openDailyDetail"
               :on-recalculate-daily="submitDailyRecalculate"
               :on-recalculate-range="submitDailyRangeRecalculate"
+              :on-show-toast="showToast"
+            />
+
+            <CaseSection
+              :visible="activeSection === 'case'"
+              :workplaces="state.workplaces"
+              :departments="state.departments"
+              :case-list="state.caseList"
+              :case-filters="state.caseFilters"
+              :case-detail="state.caseDetail"
+              :case-focus-item="state.caseFocusItem"
+              :case-create-form="state.caseCreateForm"
+              :case-action-form="state.caseActionForm"
+              :t="t"
+              :on-refresh="loadCases"
+              :on-select-case="openCaseDetail"
+              :on-submit-create="submitCaseCreate"
+              :on-submit-action="submitCaseAction"
+              :on-lock="submitCaseLock"
+              :on-unlock="submitCaseUnlock"
               :on-show-toast="showToast"
             />
           </div>

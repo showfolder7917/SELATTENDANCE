@@ -35,6 +35,13 @@ export const attendanceDailyLayoutPreset = {
   outerMaxLeftPercent: 78
 }
 
+// 异常处理列表要比日次略宽，同时右侧审批区仍需保留稳定操作宽度。
+export const attendanceCaseLayoutPreset = {
+  outerDefaultLeftPercent: 68,
+  outerMinLeftPercent: 50,
+  outerMaxLeftPercent: 80
+}
+
 // 排班页中间是超宽月历主区，因此左侧主区默认占比和允许范围都要比其他频道更大。
 export const attendanceScheduleLayoutPreset = {
   outerDefaultLeftPercent: 72,

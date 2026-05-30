@@ -133,6 +133,65 @@
           )
         </if>
     ) target
+    LEFT JOIN attendance_daily d
+      ON d.tenant_id = #{tenantId}
+      AND d.employee_id = target.employeeId
+      AND d.work_date = target.workDate
+    WHERE d.id IS NULL
+    ORDER BY target.workDate, target.employeeId
+  </select>
+
+  <select id="selectRecalculationTargets" resultType="java.util.HashMap">
+    SELECT DISTINCT target.employeeId AS employeeId, target.workDate AS workDate
+    FROM (
+      SELECT s.employee_id AS employeeId, s.work_date AS workDate
+      FROM shift_schedule s
+      INNER JOIN employee e ON e.id = s.employee_id AND e.tenant_id = s.tenant_id
+      WHERE s.tenant_id = #{tenantId}
+        <if test="query != null and query.startDate != null and query.startDate != ''">
+          AND s.work_date &gt;= CAST(#{query.startDate} AS DATE)
+        </if>
+        <if test="query != null and query.endDate != null and query.endDate != ''">
+          AND s.work_date &lt;= CAST(#{query.endDate} AS DATE)
+        </if>
+        <if test="query != null and query.workplaceId != null">
+          AND e.workplace_id = #{query.workplaceId}
+        </if>
+        <if test="query != null and query.departmentId != null">
+          AND e.department_id = #{query.departmentId}
+        </if>
+        <if test="query != null and query.employeeKeyword != null and query.employeeKeyword != ''">
+          AND (
+            e.employee_no LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+            OR e.employee_name LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+          )
+        </if>
+      UNION
+      SELECT p.employee_id AS employeeId, CAST(p.punch_time AS DATE) AS workDate
+      FROM punch_raw_log p
+      INNER JOIN employee e ON e.id = p.employee_id AND e.tenant_id = p.tenant_id
+      WHERE p.tenant_id = #{tenantId}
+        AND p.process_status = 'PROCESSED'
+        AND p.employee_id IS NOT NULL
+        <if test="query != null and query.startDate != null and query.startDate != ''">
+          AND CAST(p.punch_time AS DATE) &gt;= CAST(#{query.startDate} AS DATE)
+        </if>
+        <if test="query != null and query.endDate != null and query.endDate != ''">
+          AND CAST(p.punch_time AS DATE) &lt;= CAST(#{query.endDate} AS DATE)
+        </if>
+        <if test="query != null and query.workplaceId != null">
+          AND e.workplace_id = #{query.workplaceId}
+        </if>
+        <if test="query != null and query.departmentId != null">
+          AND e.department_id = #{query.departmentId}
+        </if>
+        <if test="query != null and query.employeeKeyword != null and query.employeeKeyword != ''">
+          AND (
+            e.employee_no LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+            OR e.employee_name LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+          )
+        </if>
+    ) target
     ORDER BY target.workDate, target.employeeId
   </select>
 
@@ -162,11 +221,31 @@
   </select>
 
   <select id="selectDailyIdentity" resultType="java.util.HashMap">
-    SELECT id, employee_id, work_date
+    SELECT id, employee_id, work_date, approval_status, handling_status, locked_flag
     FROM attendance_daily
     WHERE tenant_id = #{tenantId}
       AND employee_id = #{employeeId}
       AND work_date = #{workDate}
+  </select>
+
+  <select id="selectDailyMetaById" resultType="java.util.HashMap">
+    SELECT
+      d.id,
+      d.employee_id AS employeeId,
+      e.workplace_id AS workplaceId,
+      e.department_id AS departmentId,
+      d.work_date AS workDate,
+      d.status,
+      d.approval_status AS approvalStatus,
+      d.handling_status AS handlingStatus,
+      d.exception_flag AS exceptionFlag,
+      d.locked_flag AS lockedFlag,
+      d.approved_case_id AS approvedCaseId,
+      d.final_status AS finalStatus
+    FROM attendance_daily d
+    INNER JOIN employee e ON e.id = d.employee_id AND e.tenant_id = d.tenant_id
+    WHERE d.tenant_id = #{tenantId}
+      AND d.id = #{id}
   </select>
 
   <insert id="mergeDaily">
@@ -176,7 +255,7 @@
       actual_clock_in, actual_clock_out, actual_break_minutes, actual_work_minutes,
       late_minutes, early_leave_minutes, absence_minutes,
       normal_work_minutes, overtime_minutes, legal_overtime_minutes, night_work_minutes, holiday_work_minutes,
-      status, approval_status, exception_flag, locked,
+      status, approval_status, handling_status, exception_flag, locked,
       calculated_at, calc_version, calc_message, created_at, updated_at
     ) KEY (tenant_id, employee_id, work_date)
     VALUES (
@@ -185,7 +264,7 @@
       #{actualClockIn}, #{actualClockOut}, #{actualBreakMinutes}, #{actualWorkMinutes},
       #{lateMinutes}, #{earlyLeaveMinutes}, #{absenceMinutes},
       #{normalWorkMinutes}, #{overtimeMinutes}, #{legalOvertimeMinutes}, #{nightWorkMinutes}, #{holidayWorkMinutes},
-      #{status}, #{approvalStatus}, #{exceptionFlag}, #{locked},
+      #{status}, #{approvalStatus}, #{handlingStatus}, #{exceptionFlag}, #{locked},
       #{calculatedAt}, #{calcVersion}, #{calcMessage}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
     )
   </insert>
@@ -228,8 +307,11 @@
       d.id, d.employee_id, e.employee_no, e.employee_name, dept.department_name, wp.workplace_name,
       d.work_date,
       CONCAT(COALESCE(st.template_name, '未排班'), CASE WHEN st.start_time IS NULL THEN '' ELSE CONCAT(' ', st.start_time, '-', st.end_time) END) AS schedule_label,
-      d.actual_clock_in, d.actual_clock_out, d.actual_break_minutes, d.actual_work_minutes,
-      d.late_minutes, d.early_leave_minutes, d.status, d.exception_flag
+      COALESCE(d.final_clock_in, d.actual_clock_in) AS actual_clock_in,
+      COALESCE(d.final_clock_out, d.actual_clock_out) AS actual_clock_out,
+      COALESCE(d.final_break_minutes, d.actual_break_minutes) AS actual_break_minutes,
+      d.actual_work_minutes,
+      d.late_minutes, d.early_leave_minutes, COALESCE(d.final_status, d.status) AS status, d.exception_flag
     FROM attendance_daily d
     INNER JOIN employee e ON e.id = d.employee_id AND e.tenant_id = d.tenant_id
     LEFT JOIN department dept ON dept.id = e.department_id AND dept.tenant_id = e.tenant_id
@@ -261,8 +343,11 @@
       d.id, d.employee_id, e.employee_no, e.employee_name, dept.department_name, wp.workplace_name,
       d.work_date,
       CONCAT(COALESCE(st.template_name, '未排班'), CASE WHEN st.start_time IS NULL THEN '' ELSE CONCAT(' ', st.start_time, '-', st.end_time) END) AS schedule_label,
-      d.actual_clock_in, d.actual_clock_out, d.actual_break_minutes, d.actual_work_minutes,
-      d.late_minutes, d.early_leave_minutes, d.status, d.exception_flag
+      COALESCE(d.final_clock_in, d.actual_clock_in) AS actual_clock_in,
+      COALESCE(d.final_clock_out, d.actual_clock_out) AS actual_clock_out,
+      COALESCE(d.final_break_minutes, d.actual_break_minutes) AS actual_break_minutes,
+      d.actual_work_minutes,
+      d.late_minutes, d.early_leave_minutes, COALESCE(d.final_status, d.status) AS status, d.exception_flag
     FROM attendance_daily d
     INNER JOIN employee e ON e.id = d.employee_id AND e.tenant_id = d.tenant_id
     LEFT JOIN department dept ON dept.id = e.department_id AND dept.tenant_id = e.tenant_id
@@ -289,4 +374,40 @@
       AND work_date = #{workDate}
     ORDER BY id ASC
   </select>
+
+  <update id="updateDailyFinalResult">
+    UPDATE attendance_daily
+    SET handling_status = #{handlingStatus},
+        approval_status = #{approvalStatus},
+        final_status = #{finalStatus},
+        final_clock_in = #{finalClockIn},
+        final_clock_out = #{finalClockOut},
+        final_break_minutes = #{finalBreakMinutes},
+        final_remark = #{finalRemark},
+        approved_case_id = #{approvedCaseId},
+        exception_flag = #{exceptionFlag},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+
+  <update id="updateDailyHandlingState">
+    UPDATE attendance_daily
+    SET handling_status = #{handlingStatus},
+        approval_status = #{approvalStatus},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+
+  <update id="updateDailyLockedState">
+    UPDATE attendance_daily
+    SET handling_status = #{handlingStatus},
+        approval_status = #{approvalStatus},
+        locked_flag = #{lockedFlag},
+        locked_at = #{lockedAt},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
 </mapper>

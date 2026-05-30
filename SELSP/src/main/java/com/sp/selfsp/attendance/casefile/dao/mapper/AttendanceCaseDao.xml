@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.attendance.casefile.dao.AttendanceCaseDao">
+
+  <resultMap id="CaseItemResultMap" type="com.sp.selfsp.attendance.casefile.domain.out.AttendanceCaseOut$CaseItemOut">
+    <id column="case_id" property="caseId"/>
+    <result column="attendance_daily_id" property="attendanceDailyId"/>
+    <result column="employee_id" property="employeeId"/>
+    <result column="employee_no" property="employeeNo"/>
+    <result column="employee_name" property="employeeName"/>
+    <result column="workplace_name" property="workplaceName"/>
+    <result column="department_name" property="departmentName"/>
+    <result column="work_date" property="workDate"/>
+    <result column="current_exception" property="currentException"/>
+    <result column="case_type" property="caseType"/>
+    <result column="case_status" property="caseStatus"/>
+    <result column="handling_status" property="handlingStatus"/>
+    <result column="applicant_id" property="applicantId"/>
+    <result column="applicant_role" property="applicantRole"/>
+    <result column="current_approver_id" property="currentApproverId"/>
+    <result column="submitted_at" property="submittedAt"/>
+    <result column="updated_at" property="updatedAt"/>
+    <result column="locked_flag" property="lockedFlag"/>
+    <result column="pseudo_case" property="pseudoCase"/>
+  </resultMap>
+
+  <resultMap id="CaseDetailResultMap" type="com.sp.selfsp.attendance.casefile.domain.out.AttendanceCaseOut$CaseDetailOut" extends="CaseItemResultMap">
+    <result column="reason_category" property="reasonCategory"/>
+    <result column="reason_text" property="reasonText"/>
+    <result column="expected_resolution" property="expectedResolution"/>
+    <result column="final_status" property="finalStatus"/>
+    <result column="final_clock_in" property="finalClockIn"/>
+    <result column="final_clock_out" property="finalClockOut"/>
+    <result column="final_break_minutes" property="finalBreakMinutes"/>
+    <result column="final_remark" property="finalRemark"/>
+  </resultMap>
+
+  <resultMap id="CaseActionLogResultMap" type="com.sp.selfsp.attendance.casefile.domain.out.AttendanceCaseOut$CaseActionLogOut">
+    <id column="id" property="id"/>
+    <result column="action_type" property="actionType"/>
+    <result column="operator_id" property="operatorId"/>
+    <result column="operator_role" property="operatorRole"/>
+    <result column="action_comment" property="actionComment"/>
+    <result column="created_at" property="createdAt"/>
+  </resultMap>
+
+  <sql id="CaseBaseFrom">
+    FROM attendance_daily d
+    INNER JOIN employee e ON e.id = d.employee_id AND e.tenant_id = d.tenant_id
+    LEFT JOIN workplace wp ON wp.id = e.workplace_id AND wp.tenant_id = e.tenant_id
+    LEFT JOIN department dept ON dept.id = e.department_id AND dept.tenant_id = e.tenant_id
+    LEFT JOIN attendance_exception ex ON ex.id = (
+      SELECT MAX(sub_ex.id)
+      FROM attendance_exception sub_ex
+      WHERE sub_ex.tenant_id = d.tenant_id
+        AND sub_ex.attendance_daily_id = d.id
+    )
+    LEFT JOIN attendance_case c ON c.id = (
+      SELECT MAX(sub_c.id)
+      FROM attendance_case sub_c
+      WHERE sub_c.tenant_id = d.tenant_id
+        AND sub_c.attendance_daily_id = d.id
+    )
+  </sql>
+
+  <sql id="CaseWhere">
+    d.tenant_id = #{tenantId}
+    AND (
+      c.id IS NOT NULL
+      OR d.exception_flag = 1
+      OR d.handling_status &lt;&gt; 'RESOLVED'
+      OR d.approval_status &lt;&gt; 'NONE'
+      OR d.locked_flag = 1
+    )
+    <if test="query != null and query.startDate != null and query.startDate != ''">
+      AND d.work_date &gt;= CAST(#{query.startDate} AS DATE)
+    </if>
+    <if test="query != null and query.endDate != null and query.endDate != ''">
+      AND d.work_date &lt;= CAST(#{query.endDate} AS DATE)
+    </if>
+    <if test="query != null and query.workplaceId != null">
+      AND e.workplace_id = #{query.workplaceId}
+    </if>
+    <if test="query != null and query.departmentId != null">
+      AND e.department_id = #{query.departmentId}
+    </if>
+    <if test="query != null and query.employeeKeyword != null and query.employeeKeyword != ''">
+      AND (
+        e.employee_no LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+        OR e.employee_name LIKE CONCAT('%', #{query.employeeKeyword}, '%')
+      )
+    </if>
+    <if test="query != null and query.caseStatus != null and query.caseStatus != ''">
+      <choose>
+        <when test="query.caseStatus == 'UNHANDLED'">
+          AND c.id IS NULL
+          AND d.exception_flag = 1
+        </when>
+        <otherwise>
+          AND c.case_status = #{query.caseStatus}
+        </otherwise>
+      </choose>
+    </if>
+    <if test="query != null and query.handlingStatus != null and query.handlingStatus != ''">
+      AND d.handling_status = #{query.handlingStatus}
+    </if>
+    <if test="query != null and query.mineOnly != null and query.mineOnly">
+      AND c.current_approver_id = 9001
+    </if>
+  </sql>
+
+  <select id="selectCaseList" resultMap="CaseItemResultMap">
+    SELECT
+      c.id AS case_id,
+      d.id AS attendance_daily_id,
+      d.employee_id AS employee_id,
+      e.employee_no,
+      e.employee_name,
+      wp.workplace_name,
+      dept.department_name,
+      d.work_date,
+      COALESCE(ex.exception_type, d.status) AS current_exception,
+      COALESCE(c.case_type, ex.exception_type, d.status) AS case_type,
+      COALESCE(c.case_status, 'UNHANDLED') AS case_status,
+      d.handling_status,
+      c.applicant_id,
+      c.applicant_role,
+      c.current_approver_id,
+      c.submitted_at,
+      COALESCE(c.updated_at, d.updated_at) AS updated_at,
+      d.locked_flag,
+      CASE WHEN c.id IS NULL THEN 1 ELSE 0 END AS pseudo_case
+    <include refid="CaseBaseFrom"/>
+    WHERE <include refid="CaseWhere"/>
+    ORDER BY d.work_date DESC, d.id DESC
+    LIMIT #{pageSize} OFFSET #{offset}
+  </select>
+
+  <select id="countCaseList" resultType="int">
+    SELECT COUNT(1)
+    <include refid="CaseBaseFrom"/>
+    WHERE <include refid="CaseWhere"/>
+  </select>
+
+  <select id="countCaseSummary" resultType="java.util.HashMap">
+    SELECT
+      CASE
+        WHEN d.locked_flag = 1 THEN 'LOCKED'
+        WHEN c.case_status IS NOT NULL THEN c.case_status
+        WHEN d.exception_flag = 1 THEN 'UNHANDLED'
+        ELSE d.handling_status
+      END AS bucket,
+      COUNT(1) AS totalCount
+    <include refid="CaseBaseFrom"/>
+    WHERE <include refid="CaseWhere"/>
+    GROUP BY CASE
+      WHEN d.locked_flag = 1 THEN 'LOCKED'
+      WHEN c.case_status IS NOT NULL THEN c.case_status
+      WHEN d.exception_flag = 1 THEN 'UNHANDLED'
+      ELSE d.handling_status
+    END
+  </select>
+
+  <select id="selectCaseDetail" resultMap="CaseDetailResultMap">
+    SELECT
+      c.id AS case_id,
+      d.id AS attendance_daily_id,
+      d.employee_id AS employee_id,
+      e.employee_no,
+      e.employee_name,
+      wp.workplace_name,
+      dept.department_name,
+      d.work_date,
+      COALESCE(ex.exception_type, d.status) AS current_exception,
+      c.case_type,
+      c.case_status,
+      d.handling_status,
+      c.applicant_id,
+      c.applicant_role,
+      c.current_approver_id,
+      c.submitted_at,
+      c.updated_at,
+      d.locked_flag,
+      0 AS pseudo_case,
+      c.reason_category,
+      c.reason_text,
+      c.expected_resolution,
+      d.final_status,
+      d.final_clock_in,
+      d.final_clock_out,
+      d.final_break_minutes,
+      d.final_remark
+    FROM attendance_case c
+    INNER JOIN attendance_daily d ON d.id = c.attendance_daily_id AND d.tenant_id = c.tenant_id
+    INNER JOIN employee e ON e.id = d.employee_id AND e.tenant_id = d.tenant_id
+    LEFT JOIN workplace wp ON wp.id = e.workplace_id AND wp.tenant_id = e.tenant_id
+    LEFT JOIN department dept ON dept.id = e.department_id AND dept.tenant_id = e.tenant_id
+    LEFT JOIN attendance_exception ex ON ex.id = (
+      SELECT MAX(sub_ex.id)
+      FROM attendance_exception sub_ex
+      WHERE sub_ex.tenant_id = d.tenant_id
+        AND sub_ex.attendance_daily_id = d.id
+    )
+    WHERE c.tenant_id = #{tenantId}
+      AND c.id = #{id}
+  </select>
+
+  <select id="selectCaseActionLogs" resultMap="CaseActionLogResultMap">
+    SELECT id, action_type, operator_id, operator_role, action_comment, created_at
+    FROM attendance_case_action_log
+    WHERE tenant_id = #{tenantId}
+      AND attendance_case_id = #{caseId}
+    ORDER BY created_at ASC, id ASC
+  </select>
+
+  <select id="selectLatestCaseIdentityByDailyId" resultType="java.util.HashMap">
+    SELECT id, attendance_daily_id AS attendanceDailyId, case_status AS caseStatus
+    FROM attendance_case
+    WHERE tenant_id = #{tenantId}
+      AND attendance_daily_id = #{attendanceDailyId}
+    ORDER BY id DESC
+    LIMIT 1
+  </select>
+
+  <select id="selectCaseIdentityById" resultType="java.util.HashMap">
+    SELECT id, attendance_daily_id AS attendanceDailyId, case_status AS caseStatus, current_approver_id AS currentApproverId
+    FROM attendance_case
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </select>
+
+  <insert id="insertCase">
+    INSERT INTO attendance_case (
+      tenant_id, attendance_daily_id, employee_id, workplace_id, department_id,
+      case_type, case_status, applicant_id, applicant_role, current_approver_id,
+      reason_category, reason_text, expected_resolution, patch_payload_json, submitted_at, created_at, updated_at
+    ) VALUES (
+      #{tenantId}, #{attendanceDailyId}, #{employeeId}, #{workplaceId}, #{departmentId},
+      #{caseType}, #{caseStatus}, #{applicantId}, #{applicantRole}, #{currentApproverId},
+      #{reasonCategory}, #{reasonText}, #{expectedResolution}, #{patchPayloadJson}, #{submittedAt}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+    )
+  </insert>
+
+  <select id="selectLatestCaseDetailByDailyId" resultMap="CaseDetailResultMap">
+    SELECT
+      c.id AS case_id,
+      d.id AS attendance_daily_id,
+      d.employee_id AS employee_id,
+      e.employee_no,
+      e.employee_name,
+      wp.workplace_name,
+      dept.department_name,
+      d.work_date,
+      COALESCE(ex.exception_type, d.status) AS current_exception,
+      c.case_type,
+      c.case_status,
+      d.handling_status,
+      c.applicant_id,
+      c.applicant_role,
+      c.current_approver_id,
+      c.submitted_at,
+      c.updated_at,
+      d.locked_flag,
+      0 AS pseudo_case,
+      c.reason_category,
+      c.reason_text,
+      c.expected_resolution,
+      d.final_status,
+      d.final_clock_in,
+      d.final_clock_out,
+      d.final_break_minutes,
+      d.final_remark
+    FROM attendance_case c
+    INNER JOIN attendance_daily d ON d.id = c.attendance_daily_id AND d.tenant_id = c.tenant_id
+    INNER JOIN employee e ON e.id = d.employee_id AND e.tenant_id = d.tenant_id
+    LEFT JOIN workplace wp ON wp.id = e.workplace_id AND wp.tenant_id = e.tenant_id
+    LEFT JOIN department dept ON dept.id = e.department_id AND dept.tenant_id = e.tenant_id
+    LEFT JOIN attendance_exception ex ON ex.id = (
+      SELECT MAX(sub_ex.id)
+      FROM attendance_exception sub_ex
+      WHERE sub_ex.tenant_id = d.tenant_id
+        AND sub_ex.attendance_daily_id = d.id
+    )
+    WHERE c.tenant_id = #{tenantId}
+      AND c.attendance_daily_id = #{attendanceDailyId}
+    ORDER BY c.id DESC
+    LIMIT 1
+  </select>
+
+  <update id="updateCaseStatus">
+    UPDATE attendance_case
+    SET case_status = #{caseStatus},
+        current_approver_id = #{currentApproverId},
+        patch_payload_json = #{patchPayloadJson},
+        approved_at = #{approvedAt},
+        rejected_at = #{rejectedAt},
+        locked_at = #{lockedAt},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+
+  <insert id="insertActionLog">
+    INSERT INTO attendance_case_action_log (
+      tenant_id, attendance_case_id, action_type, operator_id, operator_role,
+      action_comment, before_snapshot_json, after_snapshot_json, created_at
+    ) VALUES (
+      #{tenantId}, #{attendanceCaseId}, #{actionType}, #{operatorId}, #{operatorRole},
+      #{actionComment}, #{beforeSnapshotJson}, #{afterSnapshotJson}, CURRENT_TIMESTAMP
+    )
+  </insert>
+</mapper>

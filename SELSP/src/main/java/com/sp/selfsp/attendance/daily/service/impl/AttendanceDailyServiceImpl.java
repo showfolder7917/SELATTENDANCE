@@ -142,7 +142,7 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
         queryIn.setEmployeeKeyword(recalculateRangeIn == null ? null : recalculateRangeIn.getEmployeeKeyword());
         queryIn.setExceptionOnly(recalculateRangeIn == null ? null : recalculateRangeIn.getExceptionOnly());
         AttendanceDailyIn.DailyQueryIn normalizedQuery = normalizeQuery(queryIn);
-        List<Map<String, Object>> targets = attendanceDailyDao.selectCalculationTargets(
+        List<Map<String, Object>> targets = attendanceDailyDao.selectRecalculationTargets(
             AttendanceTenantContext.DEFAULT_TENANT_ID,
             normalizedQuery
         );
@@ -167,6 +167,48 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
         return resultOut;
     }
 
+    @Override
+    @Transactional
+    public void lockDaily(Long dailyId) {
+        // 第五阶段只有已生成的日次结果才能进入锁定，避免空主键或不存在主键直接写坏状态。
+        Map<String, Object> dailyMeta = requireDailyMeta(dailyId);
+        // 已经锁定的日次直接跳过，保证重复点击锁定按钮时不会再触发额外状态抖动。
+        if (booleanValue(readMapValue(dailyMeta, "lockedFlag"))) {
+            return;
+        }
+        // 只允许未锁定日次进入锁定态，防止把无效状态误标记成锁定完成。
+        if (!isLockAllowed(dailyMeta)) {
+            throw new IllegalStateException("当前日次结果状态不允许锁定");
+        }
+        attendanceDailyDao.updateDailyLockedState(
+            AttendanceTenantContext.DEFAULT_TENANT_ID,
+            dailyId,
+            "LOCKED",
+            "LOCKED",
+            true,
+            LocalDateTime.now()
+        );
+    }
+
+    @Override
+    @Transactional
+    public void unlockDaily(Long dailyId) {
+        // 解锁动作同样先验证主键存在，避免前端旧数据触发无效解锁。
+        Map<String, Object> dailyMeta = requireDailyMeta(dailyId);
+        // 未锁定记录不需要重复解锁，保持操作幂等。
+        if (!booleanValue(readMapValue(dailyMeta, "lockedFlag"))) {
+            return;
+        }
+        attendanceDailyDao.updateDailyLockedState(
+            AttendanceTenantContext.DEFAULT_TENANT_ID,
+            dailyId,
+            "RESOLVED",
+            stringValue(readMapValue(dailyMeta, "approvalStatus")).isEmpty() ? "APPROVED" : stringValue(readMapValue(dailyMeta, "approvalStatus")),
+            false,
+            null
+        );
+    }
+
     // 查询列表前按当前筛选范围自动补算缺失结果，保证第四阶段页面进入即有结论。
     private void ensureDailyResults(AttendanceDailyIn.DailyQueryIn queryIn, String triggerType) {
         List<Map<String, Object>> targets = attendanceDailyDao.selectCalculationTargets(
@@ -184,6 +226,20 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
 
     // 对单个员工单天执行完整日次重算，并返回本次写入结果主键。
     private RecalculationOutcome recalculateOneDay(Long employeeId, LocalDate workDate, String triggerType) {
+        // 第五阶段若日次已进入审批或锁定，就不能再被重算覆盖最终业务结论。
+        Map<String, Object> currentDaily = attendanceDailyDao.selectDailyIdentity(
+            AttendanceTenantContext.DEFAULT_TENANT_ID,
+            employeeId,
+            workDate
+        );
+        if (isProtectedFromRecalculation(currentDaily)) {
+            Long protectedDailyId = longValue(readMapValue(currentDaily, "id"));
+            // 列表补算只应静默跳过受保护记录，避免打开列表就因为审批中的数据抛错。
+            if (Objects.equals("LIST_VIEW", triggerType)) {
+                return new RecalculationOutcome(true, protectedDailyId);
+            }
+            throw new IllegalStateException("当前日次结果已进入审批或锁定阶段，不能直接重算");
+        }
         AttendanceDailyOut.ScheduleSnapshotOut schedule = attendanceDailyDao.selectScheduleSnapshot(
             AttendanceTenantContext.DEFAULT_TENANT_ID,
             employeeId,
@@ -220,6 +276,7 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
             calculationResult.holidayWorkMinutes,
             calculationResult.status,
             "NONE",
+            calculationResult.exceptionFlag ? "UNHANDLED" : "RESOLVED",
             calculationResult.exceptionFlag,
             false,
             LocalDateTime.now(),
@@ -510,6 +567,47 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
         return (int) Duration.between(actualClockOut, scheduledEndTime).toMinutes();
     }
 
+    // 第五阶段已进入审批、退回、通过或锁定的日次，必须保护最终结果不被重算覆盖。
+    private boolean isProtectedFromRecalculation(Map<String, Object> identity) {
+        if (identity == null || identity.isEmpty()) {
+            return false;
+        }
+        if (booleanValue(readMapValue(identity, "lockedFlag"))) {
+            return true;
+        }
+        String approvalStatus = stringValue(readMapValue(identity, "approvalStatus"));
+        if (
+            Objects.equals("SUBMITTED", approvalStatus)
+                || Objects.equals("RETURNED", approvalStatus)
+                || Objects.equals("APPROVED", approvalStatus)
+                || Objects.equals("LOCKED", approvalStatus)
+        ) {
+            return true;
+        }
+        String handlingStatus = stringValue(readMapValue(identity, "handlingStatus"));
+        return Objects.equals("IN_REVIEW", handlingStatus) || Objects.equals("LOCKED", handlingStatus);
+    }
+
+    // 只有尚未锁定的日次才允许进入锁定动作，避免锁定状态被重复覆盖。
+    private boolean isLockAllowed(Map<String, Object> dailyMeta) {
+        return dailyMeta != null && !booleanValue(readMapValue(dailyMeta, "lockedFlag"));
+    }
+
+    // 第五阶段大量审批动作都需要先确认日次主键有效，这里统一封装存在性检查。
+    private Map<String, Object> requireDailyMeta(Long dailyId) {
+        if (dailyId == null || dailyId <= 0) {
+            throw new IllegalArgumentException("dailyId 不能为空");
+        }
+        Map<String, Object> dailyMeta = attendanceDailyDao.selectDailyMetaById(
+            AttendanceTenantContext.DEFAULT_TENANT_ID,
+            dailyId
+        );
+        if (dailyMeta == null || dailyMeta.isEmpty()) {
+            throw new IllegalArgumentException("未找到对应日次结果");
+        }
+        return dailyMeta;
+    }
+
     // 把日期字符串统一解析成 LocalDate，保证第四阶段所有日期口径一致。
     private LocalDate parseDate(String value) {
         try {
@@ -555,6 +653,21 @@ public class AttendanceDailyServiceImpl implements AttendanceDailyService {
     // 把任意对象安全转成字符串，供日志和统计分支复用。
     private String stringValue(Object value) {
         return value == null ? "" : String.valueOf(value);
+    }
+
+    // 兼容数据库里 TINYINT、BOOLEAN 和字符串三种锁定标记返回值。
+    private boolean booleanValue(Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof Boolean booleanValue) {
+            return booleanValue;
+        }
+        if (value instanceof Number numberValue) {
+            return numberValue.intValue() != 0;
+        }
+        String text = stringValue(value);
+        return Objects.equals("true", text.toLowerCase(Locale.ROOT)) || Objects.equals("1", text);
     }
 
     // 兼容不同数据库驱动下 Map 键名大小写差异，避免第四阶段批量目标字段回读失败。

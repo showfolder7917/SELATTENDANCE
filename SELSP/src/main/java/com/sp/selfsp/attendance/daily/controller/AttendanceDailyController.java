@@ -69,4 +69,16 @@ public class AttendanceDailyController {
     ) {
         return CommonResponse.success(attendanceDailyService.recalculateRange(recalculateRangeIn));
     }
+
+    @PostMapping("/{id}/lock")
+    public CommonResponse<Void> lockDaily(@PathVariable Long id) {
+        attendanceDailyService.lockDaily(id);
+        return CommonResponse.success(null);
+    }
+
+    @PostMapping("/{id}/unlock")
+    public CommonResponse<Void> unlockDaily(@PathVariable Long id) {
+        attendanceDailyService.unlockDaily(id);
+        return CommonResponse.success(null);
+    }
 }

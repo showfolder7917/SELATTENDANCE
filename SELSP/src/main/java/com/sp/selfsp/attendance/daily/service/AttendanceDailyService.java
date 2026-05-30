@@ -19,4 +19,10 @@ public interface AttendanceDailyService {
 
     // 按日期范围批量重算日次结果，供列表页顶部批量刷新使用。
     AttendanceDailyOut.RecalculateResultOut recalculateRange(AttendanceDailyIn.DailyRecalculateRangeIn recalculateRangeIn);
+
+    // 第五阶段管理员锁定指定日次结果，避免后续审批完成结果被再次任意改动。
+    void lockDaily(Long dailyId);
+
+    // 第五阶段管理员解锁指定日次结果，供审批修正后重新开放少量调整窗口。
+    void unlockDaily(Long dailyId);
 }

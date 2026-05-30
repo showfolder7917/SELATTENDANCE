@@ -21,6 +21,12 @@ public interface AttendanceDailyDao {
         @Param("query") AttendanceDailyIn.DailyQueryIn queryIn
     );
 
+    // 读取本次范围重算涉及的员工日期组合，供管理员主动重算时覆盖已有日次结果。
+    List<Map<String, Object>> selectRecalculationTargets(
+        @Param("tenantId") Long tenantId,
+        @Param("query") AttendanceDailyIn.DailyQueryIn queryIn
+    );
+
     // 按员工与日期读取排班快照，供日次计算确定计划班次和计划时间。
     AttendanceDailyOut.ScheduleSnapshotOut selectScheduleSnapshot(
         @Param("tenantId") Long tenantId,
@@ -41,6 +47,9 @@ public interface AttendanceDailyDao {
         @Param("employeeId") Long employeeId,
         @Param("workDate") LocalDate workDate
     );
+
+    // 按主键读取日次处理与锁定状态，供第五阶段审批和锁定动作决定是否允许继续流转。
+    Map<String, Object> selectDailyMetaById(@Param("tenantId") Long tenantId, @Param("id") Long id);
 
     // 用唯一键合并写入日次结果，保证重复重算时只保留最新结果。
     int mergeDaily(
@@ -67,6 +76,7 @@ public interface AttendanceDailyDao {
         @Param("holidayWorkMinutes") Integer holidayWorkMinutes,
         @Param("status") String status,
         @Param("approvalStatus") String approvalStatus,
+        @Param("handlingStatus") String handlingStatus,
         @Param("exceptionFlag") Boolean exceptionFlag,
         @Param("locked") Boolean locked,
         @Param("calculatedAt") LocalDateTime calculatedAt,
@@ -136,5 +146,38 @@ public interface AttendanceDailyDao {
         @Param("tenantId") Long tenantId,
         @Param("employeeId") Long employeeId,
         @Param("workDate") LocalDate workDate
+    );
+
+    // 第五阶段审批通过后把最终业务结论回写到日次结果，供后续月结读取稳定结果。
+    int updateDailyFinalResult(
+        @Param("tenantId") Long tenantId,
+        @Param("id") Long id,
+        @Param("handlingStatus") String handlingStatus,
+        @Param("approvalStatus") String approvalStatus,
+        @Param("finalStatus") String finalStatus,
+        @Param("finalClockIn") LocalDateTime finalClockIn,
+        @Param("finalClockOut") LocalDateTime finalClockOut,
+        @Param("finalBreakMinutes") Integer finalBreakMinutes,
+        @Param("finalRemark") String finalRemark,
+        @Param("approvedCaseId") Long approvedCaseId,
+        @Param("exceptionFlag") Boolean exceptionFlag
+    );
+
+    // 第五阶段创建处理单或退回补充时更新日次处理状态，让列表第一眼就看出卡在哪一步。
+    int updateDailyHandlingState(
+        @Param("tenantId") Long tenantId,
+        @Param("id") Long id,
+        @Param("handlingStatus") String handlingStatus,
+        @Param("approvalStatus") String approvalStatus
+    );
+
+    // 第五阶段锁定动作直接写回日次结果，避免月结面对仍可变动的数据。
+    int updateDailyLockedState(
+        @Param("tenantId") Long tenantId,
+        @Param("id") Long id,
+        @Param("handlingStatus") String handlingStatus,
+        @Param("approvalStatus") String approvalStatus,
+        @Param("lockedFlag") Boolean lockedFlag,
+        @Param("lockedAt") LocalDateTime lockedAt
     );
 }
