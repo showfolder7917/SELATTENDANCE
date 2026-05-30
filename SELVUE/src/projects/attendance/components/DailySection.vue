@@ -15,8 +15,8 @@ const props = defineProps({
   t: { type: Function, required: true },
   onRefresh: { type: Function, required: true },
   onSelectDaily: { type: Function, required: true },
-  onRecalculateDaily: { type: Function, required: true },
   onRecalculateRange: { type: Function, required: true },
+  onRecalculateDaily: { type: Function, required: true },
   onShowToast: { type: Function, required: true }
 })
 
@@ -98,82 +98,13 @@ function goToPage(page) {
     <template #left>
       <article class="seladmin-panel seladmin-surface selattendance-data-panel selattendance-daily-list-panel">
         <div class="seladmin-panel-header">
-          <div>
-            <h2>{{ t('dailyTitle') }}</h2>
-            <p class="seladmin-copy">{{ t('dailyLead') }}</p>
-          </div>
           <div class="selattendance-punch-actions">
+            <!-- 日次列表区的刷新动作属于表格业务动作，和异常处理一样留在列表区顶部，避免污染头部概览层。 -->
             <button class="seladmin-button seladmin-button-secondary" type="button" @click="onRefresh()">{{ t('dailyRefresh') }}</button>
+            <!-- 当前筛选重算依赖表格筛选结果，应和列表放在一起，便于用户先看结果再触发批量处理。 -->
             <button class="seladmin-button seladmin-button-primary" type="button" @click="onRecalculateRange()">{{ t('dailyRecalculateRange') }}</button>
           </div>
         </div>
-
-        <div class="selattendance-punch-summary">
-          <div class="selattendance-punch-summary-card">
-            <strong>{{ dailyList.summary?.normalCount || 0 }}</strong>
-            <small>{{ t('dailySummaryNormal') }}</small>
-          </div>
-          <div class="selattendance-punch-summary-card warm">
-            <strong>{{ dailyList.summary?.lateCount || 0 }}</strong>
-            <small>{{ t('dailySummaryLate') }}</small>
-          </div>
-          <div class="selattendance-punch-summary-card danger">
-            <strong>{{ dailyList.summary?.missingClockCount || 0 }}</strong>
-            <small>{{ t('dailySummaryMissing') }}</small>
-          </div>
-          <div class="selattendance-punch-summary-card muted">
-            <strong>{{ dailyList.summary?.absenceCount || 0 }}</strong>
-            <small>{{ t('dailySummaryAbsence') }}</small>
-          </div>
-        </div>
-
-        <div class="selattendance-schedule-toolbar">
-          <label class="seladmin-field">
-            <span>{{ t('dailyDateFrom') }}</span>
-            <input v-model="dailyFilters.startDate" type="date" />
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('dailyDateTo') }}</span>
-            <input v-model="dailyFilters.endDate" type="date" />
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('workplace') }}</span>
-            <select v-model="dailyFilters.workplaceId">
-              <option value="">{{ t('allWorkplaces') }}</option>
-              <option v-for="item in workplaces" :key="item.id" :value="item.id">{{ item.workplaceName }}</option>
-            </select>
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('departmentName') }}</span>
-            <select v-model="dailyFilters.departmentId">
-              <option value="">{{ t('allDepartments') }}</option>
-              <option v-for="item in departments" :key="item.id" :value="item.id">{{ item.departmentName }}</option>
-            </select>
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('employeeName') }}</span>
-            <input v-model="dailyFilters.employeeKeyword" :placeholder="t('dailyEmployeeKeywordHint')" />
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('status') }}</span>
-            <select v-model="dailyFilters.status">
-              <option value="">{{ t('dailyStatusAll') }}</option>
-              <option value="NORMAL">{{ t('dailyStatusNormal') }}</option>
-              <option value="LATE">{{ t('dailyStatusLate') }}</option>
-              <option value="EARLY_LEAVE">{{ t('dailyStatusEarlyLeave') }}</option>
-              <option value="MISSING_CLOCK_IN">{{ t('dailyStatusMissingClockIn') }}</option>
-              <option value="MISSING_CLOCK_OUT">{{ t('dailyStatusMissingClockOut') }}</option>
-              <option value="ABSENCE">{{ t('dailyStatusAbsence') }}</option>
-              <option value="NO_SCHEDULE">{{ t('dailyStatusNoSchedule') }}</option>
-              <option value="HOLIDAY_WORK">{{ t('dailyStatusHolidayWork') }}</option>
-            </select>
-          </label>
-          <label class="selattendance-daily-checkbox">
-            <input v-model="dailyFilters.exceptionOnly" type="checkbox" />
-            <span>{{ t('dailyExceptionOnly') }}</span>
-          </label>
-        </div>
-
         <SharedDataTable
           class="selattendance-punch-list-shell"
           variant="list"

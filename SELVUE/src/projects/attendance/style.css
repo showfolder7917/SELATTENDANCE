@@ -512,16 +512,26 @@ body {
 }
 
 .selattendance-monthly-workbench-header {
-  --shared-workbench-copy-min: 420px;
-  /* 月次标题说明区只保留可读上限，剩余宽度优先让右侧统计卡继续自适应吃满。 */
-  --shared-workbench-copy-max: clamp(420px, 50%, 560px);
-  --shared-workbench-metrics-min: 520px;
+  padding: 0;
+}
+
+.selattendance-generic-workbench-header {
   padding: 0;
 }
 
 .selattendance-monthly-header-summary {
   --shared-metric-card-columns: 4;
   --shared-metric-card-gap: 12px;
+}
+
+.selattendance-case-header-summary {
+  --shared-metric-card-columns: 5;
+}
+
+.selattendance-workbench-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .selattendance-content-stack {
@@ -751,15 +761,22 @@ body {
   box-shadow: 0 18px 28px rgba(206, 120, 131, 0.18);
 }
 
-.selattendance-schedule-toolbar {
+.selattendance-workbench-header-toolbar {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
-  gap: 14px;
+  gap: 12px;
   align-items: end;
-  margin-bottom: 18px;
 }
 
-.selattendance-monthly-header-toolbar {
+.selattendance-workbench-header-toolbar--schedule {
+  grid-template-columns:
+    minmax(150px, 0.9fr)
+    minmax(150px, 0.9fr)
+    minmax(150px, 0.9fr)
+    minmax(190px, 1fr)
+    max-content;
+}
+
+.selattendance-workbench-header-toolbar--monthly {
   grid-template-columns:
     minmax(150px, 0.95fr)
     minmax(150px, 0.9fr)
@@ -767,17 +784,47 @@ body {
     minmax(180px, 1fr)
     minmax(150px, 0.85fr)
     max-content;
-  gap: 12px;
 }
 
-.selattendance-monthly-search-field {
+.selattendance-workbench-header-toolbar--case {
+  grid-template-columns:
+    minmax(150px, 0.9fr)
+    minmax(150px, 0.9fr)
+    minmax(150px, 0.9fr)
+    minmax(150px, 0.9fr)
+    minmax(180px, 1fr)
+    minmax(150px, 0.85fr)
+    max-content;
+}
+
+.selattendance-workbench-header-toolbar--punch {
+  grid-template-columns:
+    minmax(150px, 0.9fr)
+    minmax(150px, 0.9fr)
+    minmax(190px, 1fr)
+    minmax(150px, 0.85fr)
+    minmax(150px, 0.85fr);
+}
+
+.selattendance-workbench-header-toolbar--daily {
+  grid-template-columns:
+    minmax(150px, 0.9fr)
+    minmax(150px, 0.9fr)
+    minmax(150px, 0.9fr)
+    minmax(150px, 0.9fr)
+    minmax(190px, 1fr)
+    minmax(150px, 0.85fr)
+    max-content;
+}
+
+.selattendance-header-search-field {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
 }
 
-.selattendance-monthly-search-button {
+.selattendance-header-search-button {
   min-width: 48px;
   width: 48px;
   height: 48px;
@@ -789,7 +836,7 @@ body {
   font-size: 1.05rem;
 }
 
-.selattendance-monthly-search-button svg[aria-hidden='true'] {
+.selattendance-header-search-button svg[aria-hidden='true'] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -798,7 +845,7 @@ body {
   flex: 0 0 auto;
 }
 
-.selattendance-monthly-header-checkbox {
+.selattendance-header-inline-checkbox {
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -810,7 +857,7 @@ body {
   white-space: nowrap;
 }
 
-.selattendance-monthly-header-checkbox span {
+.selattendance-header-inline-checkbox span {
   white-space: nowrap;
 }
 
@@ -1338,12 +1385,14 @@ body {
     display: none;
   }
 
-  .selattendance-schedule-toolbar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .selattendance-workbench-header-toolbar--monthly,
+  .selattendance-workbench-header-toolbar--case,
+  .selattendance-workbench-header-toolbar--schedule {
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
   }
 
-  .selattendance-monthly-header-toolbar {
-    grid-template-columns: repeat(3, minmax(220px, 1fr));
+  .selattendance-case-header-summary {
+    --shared-metric-card-columns: 3;
   }
 }
 
@@ -1371,11 +1420,17 @@ body {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .selattendance-monthly-header-toolbar {
+  .selattendance-workbench-header-toolbar--monthly,
+  .selattendance-workbench-header-toolbar--case,
+  .selattendance-workbench-header-toolbar--schedule {
     grid-template-columns: repeat(2, minmax(220px, 1fr));
   }
 
   .selattendance-monthly-header-summary {
+    --shared-metric-card-columns: 2;
+  }
+
+  .selattendance-case-header-summary {
     --shared-metric-card-columns: 2;
   }
 }
@@ -1391,16 +1446,21 @@ body {
     min-height: auto;
   }
 
-  .selattendance-schedule-toolbar,
+  .selattendance-workbench-header-toolbar--monthly,
+  .selattendance-workbench-header-toolbar--case,
+  .selattendance-workbench-header-toolbar--schedule {
+    grid-template-columns: 1fr;
+  }
+
   .selattendance-schedule-actionbar {
     grid-template-columns: 1fr;
   }
 
-  .selattendance-monthly-header-toolbar {
-    grid-template-columns: 1fr;
+  .selattendance-monthly-header-summary {
+    --shared-metric-card-columns: 1;
   }
 
-  .selattendance-monthly-header-summary {
+  .selattendance-case-header-summary {
     --shared-metric-card-columns: 1;
   }
 

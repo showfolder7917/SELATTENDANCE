@@ -58,6 +58,7 @@ const {
   submitConfirmDialog,
   submitShiftTemplate,
   loadScheduleBoard,
+  runScheduleSearch,
   generateRecommended,
   removeShiftTemplate,
   selectScheduleTemplate,
@@ -76,7 +77,10 @@ const {
   loadPunchLogs,
   loadDailyResults,
   loadCases,
+  runPunchSearch,
+  runDailySearch,
   loadMonthlyResults,
+  runCaseSearch,
   runMonthlySearch,
   openPunchDetail,
   openDailyDetail,
@@ -187,6 +191,96 @@ const monthlyHeaderMetricItems = computed(() => [
     key: 'reopened',
     value: state.monthlyList.summary?.reopenedCount || 0,
     label: t('monthlySummaryReopened'),
+    tone: 'muted'
+  }
+])
+
+// 打卡头部继续沿用原有四类处理结果统计，只把展示壳切到 shared 层。
+const punchHeaderMetricItems = computed(() => [
+  {
+    key: 'processed',
+    value: state.punchLogList.summary?.processed || 0,
+    label: t('punchStatusProcessed'),
+    tone: 'default'
+  },
+  {
+    key: 'unmatched',
+    value: state.punchLogList.summary?.unmatched || 0,
+    label: t('punchStatusUnmatched'),
+    tone: 'warm'
+  },
+  {
+    key: 'error',
+    value: state.punchLogList.summary?.error || 0,
+    label: t('punchStatusError'),
+    tone: 'danger'
+  },
+  {
+    key: 'ignored',
+    value: state.punchLogList.summary?.ignored || 0,
+    label: t('punchStatusIgnored'),
+    tone: 'muted'
+  }
+])
+
+// 日次头部只把统计卡配置上收到页面层，第四阶段的筛选和重算动作仍走原业务状态与接口。
+const dailyHeaderMetricItems = computed(() => [
+  {
+    key: 'normal',
+    value: state.dailyList.summary?.normalCount || 0,
+    label: t('dailySummaryNormal'),
+    tone: 'default'
+  },
+  {
+    key: 'late',
+    value: state.dailyList.summary?.lateCount || 0,
+    label: t('dailySummaryLate'),
+    tone: 'warm'
+  },
+  {
+    key: 'missing',
+    value: state.dailyList.summary?.missingClockCount || 0,
+    label: t('dailySummaryMissing'),
+    tone: 'danger'
+  },
+  {
+    key: 'absence',
+    value: state.dailyList.summary?.absenceCount || 0,
+    label: t('dailySummaryAbsence'),
+    tone: 'muted'
+  }
+])
+
+// 异常处理头部保留五张统计卡，供 shared 指标卡验证多卡场景而不再让业务页重复写壳。
+const caseHeaderMetricItems = computed(() => [
+  {
+    key: 'pending',
+    value: state.caseList.summary?.pendingCount || 0,
+    label: t('caseSummaryPending'),
+    tone: 'warm'
+  },
+  {
+    key: 'reviewing',
+    value: state.caseList.summary?.reviewingCount || 0,
+    label: t('caseSummaryReviewing'),
+    tone: 'default'
+  },
+  {
+    key: 'approved',
+    value: state.caseList.summary?.approvedCount || 0,
+    label: t('caseSummaryApproved'),
+    tone: 'default'
+  },
+  {
+    key: 'rejected',
+    value: state.caseList.summary?.rejectedCount || 0,
+    label: t('caseSummaryRejected'),
+    tone: 'danger'
+  },
+  {
+    key: 'locked',
+    value: state.caseList.summary?.lockedCount || 0,
+    label: t('caseSummaryLocked'),
     tone: 'muted'
   }
 ])
@@ -466,6 +560,60 @@ onBeforeUnmount(() => {
       <template #main>
         <main class="selattendance-content">
           <SharedWorkbenchHeader
+            v-if="activeSection === 'schedule'"
+            class="selattendance-content-header seladmin-surface"
+            :title="t('scheduleTitle')"
+            :lead="t('scheduleLead')"
+          >
+            <template #filters>
+              <!-- 排班头部只承接筛选条件，真正刷新看板的查询动作由放大镜按钮显式触发。 -->
+              <div class="selattendance-workbench-header-toolbar selattendance-workbench-header-toolbar--schedule">
+                <label class="seladmin-field">
+                  <span>{{ t('scheduleMonth') }}</span>
+                  <input v-model="state.scheduleFilters.month" type="month" />
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('workplace') }}</span>
+                  <select v-model="state.scheduleFilters.workplaceId">
+                    <option value="">{{ t('scheduleWorkplaceFilterHint') }}</option>
+                    <option v-for="item in state.workplaces" :key="item.id" :value="item.id">{{ item.workplaceName }}</option>
+                  </select>
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('departmentName') }}</span>
+                  <select v-model="state.scheduleFilters.departmentId">
+                    <option value="">{{ t('scheduleDepartmentFilterHint') }}</option>
+                    <option v-for="item in state.departments" :key="item.id" :value="item.id">{{ item.departmentName }}</option>
+                  </select>
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('scheduleKeyword') }}</span>
+                  <div class="selattendance-header-search-field">
+                    <input v-model="state.scheduleFilters.employeeKeyword" :placeholder="t('scheduleKeywordHint')" />
+                    <!-- 排班筛选也改成统一的手动搜索入口，避免用户编辑关键字时频繁重刷整张排班看板。 -->
+                    <button
+                      class="seladmin-button seladmin-button-secondary selattendance-header-search-button"
+                      type="button"
+                      :aria-label="t('searchAction')"
+                      :title="t('searchAction')"
+                      @click="runScheduleSearch()"
+                    >
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="5.5" />
+                        <path d="M16 16l4 4" />
+                      </svg>
+                    </button>
+                  </div>
+                </label>
+                <label class="selattendance-header-inline-checkbox">
+                  <input v-model="state.scheduleFilters.onlyUnassigned" type="checkbox" />
+                  <span>{{ t('scheduleOnlyUnassigned') }}</span>
+                </label>
+              </div>
+            </template>
+          </SharedWorkbenchHeader>
+
+          <SharedWorkbenchHeader
             v-if="activeSection === 'monthly'"
             class="selattendance-content-header seladmin-surface selattendance-monthly-workbench-header"
             :title="t('monthlyTitle')"
@@ -482,7 +630,7 @@ onBeforeUnmount(() => {
 
             <template #filters>
               <!-- 月次搜索条件继续放在头部，但改成显式点击放大镜后才走后台月次查询。 -->
-              <div class="selattendance-schedule-toolbar selattendance-monthly-header-toolbar">
+              <div class="selattendance-workbench-header-toolbar selattendance-workbench-header-toolbar--monthly">
                 <label class="seladmin-field">
                   <span>{{ t('monthlyYearMonth') }}</span>
                   <input v-model="state.monthlyFilters.yearMonth" type="month" />
@@ -503,14 +651,14 @@ onBeforeUnmount(() => {
                 </label>
                 <label class="seladmin-field">
                   <span>{{ t('employeeName') }}</span>
-                  <div class="selattendance-monthly-search-field">
+                  <div class="selattendance-header-search-field">
                     <input v-model="state.monthlyFilters.employeeKeyword" :placeholder="t('monthlyEmployeeKeywordHint')" />
                     <!-- 搜索按钮与员工关键字输入框同组展示，提醒用户需要点击后才真正向后台检索。 -->
                     <button
-                      class="seladmin-button seladmin-button-secondary selattendance-monthly-search-button"
+                      class="seladmin-button seladmin-button-secondary selattendance-header-search-button"
                       type="button"
-                      :aria-label="t('monthlySearchAction')"
-                      :title="t('monthlySearchAction')"
+                      :aria-label="t('searchAction')"
+                      :title="t('searchAction')"
                       @click="runMonthlySearch()"
                     >
                       <!-- 改用 SVG 放大镜图标，保证在同样按钮尺寸下比字符图标更清晰醒目。 -->
@@ -531,9 +679,228 @@ onBeforeUnmount(() => {
                     <option value="REOPENED">{{ t('monthlyCloseStatusReopened') }}</option>
                   </select>
                 </label>
-                <label class="selattendance-daily-checkbox selattendance-monthly-header-checkbox">
+                <label class="selattendance-daily-checkbox selattendance-header-inline-checkbox">
                   <input v-model="state.monthlyFilters.blockedOnly" type="checkbox" />
                   <span>{{ t('monthlyBlockedOnly') }}</span>
+                </label>
+              </div>
+            </template>
+          </SharedWorkbenchHeader>
+
+          <SharedWorkbenchHeader
+            v-else-if="activeSection === 'punch'"
+            class="selattendance-content-header seladmin-surface selattendance-generic-workbench-header"
+            :title="t('punchTitle')"
+            :lead="t('punchLead')"
+            split-mode="left-summary-right-metrics"
+          >
+            <template #metrics>
+              <SharedMetricCards :items="punchHeaderMetricItems" />
+            </template>
+
+            <template #filters>
+              <div class="selattendance-workbench-header-toolbar selattendance-workbench-header-toolbar--punch">
+                <label class="seladmin-field">
+                  <span>{{ t('punchDateFrom') }}</span>
+                  <input v-model="state.punchFilters.dateFrom" type="date" />
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('punchDateTo') }}</span>
+                  <input v-model="state.punchFilters.dateTo" type="date" />
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('employeeName') }}</span>
+                  <div class="selattendance-header-search-field">
+                    <input v-model="state.punchFilters.employeeKeyword" :placeholder="t('punchEmployeeKeywordHint')" />
+                    <!-- 打卡记录改成显式搜索后，只有点击放大镜才真正查询后台打卡列表。 -->
+                    <button
+                      class="seladmin-button seladmin-button-secondary selattendance-header-search-button"
+                      type="button"
+                      :aria-label="t('searchAction')"
+                      :title="t('searchAction')"
+                      @click="runPunchSearch()"
+                    >
+                      <!-- 继续复用头部统一 SVG 放大镜，避免 monthly/case/punch 出现三种搜索按钮。 -->
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="5.5" />
+                        <path d="M16 16l4 4" />
+                      </svg>
+                    </button>
+                  </div>
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('sourceSystem') }}</span>
+                  <select v-model="state.punchFilters.sourceSystem">
+                    <option value="">{{ t('punchAllSources') }}</option>
+                    <option value="MANUAL">MANUAL</option>
+                    <option value="CSV_IMPORT">CSV_IMPORT</option>
+                    <option value="WEBHOOK">WEBHOOK</option>
+                  </select>
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('status') }}</span>
+                  <select v-model="state.punchFilters.processStatus">
+                    <option value="">{{ t('punchAllStatuses') }}</option>
+                    <option value="PROCESSED">{{ t('punchStatusProcessed') }}</option>
+                    <option value="UNMATCHED">{{ t('punchStatusUnmatched') }}</option>
+                    <option value="ERROR">{{ t('punchStatusError') }}</option>
+                    <option value="DUPLICATE">{{ t('punchStatusDuplicate') }}</option>
+                    <option value="IGNORED">{{ t('punchStatusIgnored') }}</option>
+                  </select>
+                </label>
+              </div>
+            </template>
+
+          </SharedWorkbenchHeader>
+
+          <SharedWorkbenchHeader
+            v-else-if="activeSection === 'daily'"
+            class="selattendance-content-header seladmin-surface selattendance-generic-workbench-header"
+            :title="t('dailyTitle')"
+            :lead="t('dailyLead')"
+            split-mode="left-summary-right-metrics"
+          >
+            <template #metrics>
+              <SharedMetricCards :items="dailyHeaderMetricItems" />
+            </template>
+
+            <template #filters>
+              <div class="selattendance-workbench-header-toolbar selattendance-workbench-header-toolbar--daily">
+                <label class="seladmin-field">
+                  <span>{{ t('dailyDateFrom') }}</span>
+                  <input v-model="state.dailyFilters.startDate" type="date" />
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('dailyDateTo') }}</span>
+                  <input v-model="state.dailyFilters.endDate" type="date" />
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('workplace') }}</span>
+                  <select v-model="state.dailyFilters.workplaceId">
+                    <option value="">{{ t('allWorkplaces') }}</option>
+                    <option v-for="item in state.workplaces" :key="item.id" :value="item.id">{{ item.workplaceName }}</option>
+                  </select>
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('departmentName') }}</span>
+                  <select v-model="state.dailyFilters.departmentId">
+                    <option value="">{{ t('allDepartments') }}</option>
+                    <option v-for="item in state.departments" :key="item.id" :value="item.id">{{ item.departmentName }}</option>
+                  </select>
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('employeeName') }}</span>
+                  <div class="selattendance-header-search-field">
+                    <input v-model="state.dailyFilters.employeeKeyword" :placeholder="t('dailyEmployeeKeywordHint')" />
+                    <!-- 日次结果改成和月次一致的显式搜索模式，输入筛选后点击按钮才查询后台。 -->
+                    <button
+                      class="seladmin-button seladmin-button-secondary selattendance-header-search-button"
+                      type="button"
+                      :aria-label="t('searchAction')"
+                      :title="t('searchAction')"
+                      @click="runDailySearch()"
+                    >
+                      <!-- 共用头部搜索按钮图标样式，保证四个模块的按钮尺寸和视觉统一。 -->
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="5.5" />
+                        <path d="M16 16l4 4" />
+                      </svg>
+                    </button>
+                  </div>
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('status') }}</span>
+                  <select v-model="state.dailyFilters.status">
+                    <option value="">{{ t('dailyStatusAll') }}</option>
+                    <option value="NORMAL">{{ t('dailyStatusNormal') }}</option>
+                    <option value="LATE">{{ t('dailyStatusLate') }}</option>
+                    <option value="EARLY_LEAVE">{{ t('dailyStatusEarlyLeave') }}</option>
+                    <option value="MISSING_CLOCK_IN">{{ t('dailyStatusMissingClockIn') }}</option>
+                    <option value="MISSING_CLOCK_OUT">{{ t('dailyStatusMissingClockOut') }}</option>
+                    <option value="ABSENCE">{{ t('dailyStatusAbsence') }}</option>
+                    <option value="NO_SCHEDULE">{{ t('dailyStatusNoSchedule') }}</option>
+                    <option value="HOLIDAY_WORK">{{ t('dailyStatusHolidayWork') }}</option>
+                  </select>
+                </label>
+                <label class="selattendance-daily-checkbox selattendance-header-inline-checkbox">
+                  <input v-model="state.dailyFilters.exceptionOnly" type="checkbox" />
+                  <span>{{ t('dailyExceptionOnly') }}</span>
+                </label>
+              </div>
+            </template>
+
+          </SharedWorkbenchHeader>
+
+          <SharedWorkbenchHeader
+            v-else-if="activeSection === 'case'"
+            class="selattendance-content-header seladmin-surface selattendance-generic-workbench-header selattendance-case-workbench-header"
+            :title="t('caseTitle')"
+            :lead="t('caseLead')"
+            split-mode="left-summary-right-metrics"
+          >
+            <template #metrics>
+              <SharedMetricCards class="selattendance-case-header-summary" :items="caseHeaderMetricItems" />
+            </template>
+
+            <template #filters>
+              <div class="selattendance-workbench-header-toolbar selattendance-workbench-header-toolbar--case">
+                <label class="seladmin-field">
+                  <span>{{ t('dailyDateFrom') }}</span>
+                  <input v-model="state.caseFilters.startDate" type="date" />
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('dailyDateTo') }}</span>
+                  <input v-model="state.caseFilters.endDate" type="date" />
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('workplace') }}</span>
+                  <select v-model="state.caseFilters.workplaceId">
+                    <option value="">{{ t('allWorkplaces') }}</option>
+                    <option v-for="item in state.workplaces" :key="item.id" :value="item.id">{{ item.workplaceName }}</option>
+                  </select>
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('departmentName') }}</span>
+                  <select v-model="state.caseFilters.departmentId">
+                    <option value="">{{ t('allDepartments') }}</option>
+                    <option v-for="item in state.departments" :key="item.id" :value="item.id">{{ item.departmentName }}</option>
+                  </select>
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('employeeName') }}</span>
+                  <div class="selattendance-header-search-field">
+                    <input v-model="state.caseFilters.employeeKeyword" :placeholder="t('dailyEmployeeKeywordHint')" />
+                    <!-- 异常处理改成和月次一致的显式搜索按钮，输入关键字后点击才真正触发后台查询。 -->
+                    <button
+                      class="seladmin-button seladmin-button-secondary selattendance-header-search-button"
+                      type="button"
+                      :aria-label="t('searchAction')"
+                      :title="t('searchAction')"
+                      @click="runCaseSearch()"
+                    >
+                      <!-- 和月次共用同一套 SVG 放大镜样式，避免不同模块出现两种搜索按钮尺寸。 -->
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="5.5" />
+                        <path d="M16 16l4 4" />
+                      </svg>
+                    </button>
+                  </div>
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('caseStatusLabel') }}</span>
+                  <select v-model="state.caseFilters.caseStatus">
+                    <option value="">{{ t('caseStatusAll') }}</option>
+                    <option value="UNHANDLED">{{ t('caseStatusUnhandled') }}</option>
+                    <option value="SUBMITTED">{{ t('caseStatusSubmitted') }}</option>
+                    <option value="RETURNED">{{ t('caseStatusReturned') }}</option>
+                    <option value="APPROVED">{{ t('caseStatusApproved') }}</option>
+                    <option value="REJECTED">{{ t('caseStatusRejected') }}</option>
+                    <option value="LOCKED">{{ t('caseStatusLocked') }}</option>
+                  </select>
+                </label>
+                <label class="selattendance-daily-checkbox selattendance-header-inline-checkbox">
+                  <input v-model="state.caseFilters.mineOnly" type="checkbox" />
+                  <span>{{ t('caseMineOnly') }}</span>
                 </label>
               </div>
             </template>
@@ -636,10 +1003,7 @@ onBeforeUnmount(() => {
 
             <ScheduleSection
               :visible="activeSection === 'schedule'"
-              :workplaces="state.workplaces"
-              :departments="state.departments"
               :schedule-board="state.scheduleBoard"
-              :schedule-filters="state.scheduleFilters"
               :schedule-template-tip="state.scheduleTemplateTip"
               :schedule-form="state.scheduleForm"
               :batch-wizard="state.batchWizard"
@@ -692,8 +1056,8 @@ onBeforeUnmount(() => {
               :t="t"
               :on-refresh="loadDailyResults"
               :on-select-daily="openDailyDetail"
-              :on-recalculate-daily="submitDailyRecalculate"
               :on-recalculate-range="submitDailyRangeRecalculate"
+              :on-recalculate-daily="submitDailyRecalculate"
               :on-show-toast="showToast"
             />
 

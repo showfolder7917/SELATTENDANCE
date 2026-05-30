@@ -7,10 +7,7 @@ import { attendanceScheduleLayoutPreset } from '../constants/workbenchLayoutPres
 
 const props = defineProps({
   visible: { type: Boolean, required: true },
-  workplaces: { type: Array, required: true },
-  departments: { type: Array, required: true },
   scheduleBoard: { type: Object, required: true },
-  scheduleFilters: { type: Object, required: true },
   scheduleTemplateTip: { type: Object, required: true },
   scheduleForm: { type: Object, required: true },
   batchWizard: { type: Object, required: true },
@@ -105,44 +102,9 @@ const wizardStepLabels = computed(() => [
   >
     <template #left>
       <article class="seladmin-panel seladmin-surface selattendance-data-panel selattendance-schedule-main-panel">
-        <div class="seladmin-panel-header">
-          <div>
-            <h2>{{ t('scheduleTitle') }}</h2>
-            <p class="seladmin-copy">{{ t('scheduleLead') }}</p>
-          </div>
-          <button class="seladmin-button seladmin-button-secondary" type="button" @click="onRefresh()">{{ t('scheduleRefresh') }}</button>
-        </div>
-
-        <div class="selattendance-schedule-toolbar">
-          <label class="seladmin-field">
-            <span>{{ t('scheduleMonth') }}</span>
-            <input v-model="scheduleFilters.month" type="month" />
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('workplace') }}</span>
-            <select v-model="scheduleFilters.workplaceId">
-              <option value="">{{ t('scheduleWorkplaceFilterHint') }}</option>
-              <option v-for="item in workplaces" :key="item.id" :value="item.id">{{ item.workplaceName }}</option>
-            </select>
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('departmentName') }}</span>
-            <select v-model="scheduleFilters.departmentId">
-              <option value="">{{ t('scheduleDepartmentFilterHint') }}</option>
-              <option v-for="item in departments" :key="item.id" :value="item.id">{{ item.departmentName }}</option>
-            </select>
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('scheduleKeyword') }}</span>
-            <input v-model="scheduleFilters.employeeKeyword" :placeholder="t('scheduleKeywordHint')" />
-          </label>
-          <label class="selattendance-inline-check selattendance-inline-check-wide">
-            <input v-model="scheduleFilters.onlyUnassigned" type="checkbox" />
-            <span>{{ t('scheduleOnlyUnassigned') }}</span>
-          </label>
-        </div>
-
+        <!-- 排班看板主区不再重复承接标题和筛选，专注保留列表动作与看板本体。 -->
         <div class="selattendance-schedule-actionbar">
+          <button class="seladmin-button seladmin-button-secondary" type="button" @click="onRefresh()">{{ t('scheduleRefresh') }}</button>
           <button class="seladmin-button seladmin-button-primary" type="button" @click="onOpenBatchWizard()">{{ t('scheduleBatchOpen') }}</button>
           <button class="seladmin-button seladmin-button-secondary" type="button" @click="onCopyLastWeek()">{{ t('scheduleCopyLastWeek') }}</button>
           <button class="seladmin-button seladmin-button-secondary" type="button" @click="onCopyLastMonth()">{{ t('scheduleCopyLastMonth') }}</button>

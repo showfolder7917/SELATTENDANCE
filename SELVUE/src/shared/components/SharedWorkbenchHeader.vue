@@ -76,8 +76,8 @@ const hasActions = computed(() => Boolean(slots.actions))
 
 .shared-workbench-header.split-copy-metrics .shared-workbench-header-topline {
   grid-template-columns:
-    minmax(var(--shared-workbench-copy-min, 420px), var(--shared-workbench-copy-max, 1fr))
-    minmax(var(--shared-workbench-metrics-min, 520px), 1fr);
+    minmax(var(--shared-workbench-copy-min, 0), var(--shared-workbench-copy-max, 1fr))
+    minmax(var(--shared-workbench-metrics-min, 0), var(--shared-workbench-metrics-max, 1fr));
 }
 
 .shared-workbench-header-copy {

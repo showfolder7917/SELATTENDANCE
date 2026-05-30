@@ -107,80 +107,11 @@ function goToPage(page) {
   >
     <template #left>
       <article class="seladmin-panel seladmin-surface selattendance-data-panel selattendance-case-list-panel">
+        <!-- 异常处理参照月次汇总，把刷新动作放回列表区，保持按钮和表格在同一业务区块。 -->
         <div class="seladmin-panel-header">
-          <div>
-            <h2>{{ t('caseTitle') }}</h2>
-            <p class="seladmin-copy">{{ t('caseLead') }}</p>
+          <div class="selattendance-punch-actions">
+            <button class="seladmin-button seladmin-button-secondary" type="button" @click="onRefresh()">{{ t('caseRefresh') }}</button>
           </div>
-          <button class="seladmin-button seladmin-button-secondary" type="button" @click="onRefresh()">{{ t('caseRefresh') }}</button>
-        </div>
-
-        <div class="selattendance-punch-summary">
-          <div class="selattendance-punch-summary-card warm">
-            <strong>{{ caseList.summary?.pendingCount || 0 }}</strong>
-            <small>{{ t('caseSummaryPending') }}</small>
-          </div>
-          <div class="selattendance-punch-summary-card">
-            <strong>{{ caseList.summary?.reviewingCount || 0 }}</strong>
-            <small>{{ t('caseSummaryReviewing') }}</small>
-          </div>
-          <div class="selattendance-punch-summary-card">
-            <strong>{{ caseList.summary?.approvedCount || 0 }}</strong>
-            <small>{{ t('caseSummaryApproved') }}</small>
-          </div>
-          <div class="selattendance-punch-summary-card danger">
-            <strong>{{ caseList.summary?.rejectedCount || 0 }}</strong>
-            <small>{{ t('caseSummaryRejected') }}</small>
-          </div>
-          <div class="selattendance-punch-summary-card muted">
-            <strong>{{ caseList.summary?.lockedCount || 0 }}</strong>
-            <small>{{ t('caseSummaryLocked') }}</small>
-          </div>
-        </div>
-
-        <div class="selattendance-schedule-toolbar">
-          <label class="seladmin-field">
-            <span>{{ t('dailyDateFrom') }}</span>
-            <input v-model="caseFilters.startDate" type="date" />
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('dailyDateTo') }}</span>
-            <input v-model="caseFilters.endDate" type="date" />
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('workplace') }}</span>
-            <select v-model="caseFilters.workplaceId">
-              <option value="">{{ t('allWorkplaces') }}</option>
-              <option v-for="item in workplaces" :key="item.id" :value="item.id">{{ item.workplaceName }}</option>
-            </select>
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('departmentName') }}</span>
-            <select v-model="caseFilters.departmentId">
-              <option value="">{{ t('allDepartments') }}</option>
-              <option v-for="item in departments" :key="item.id" :value="item.id">{{ item.departmentName }}</option>
-            </select>
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('employeeName') }}</span>
-            <input v-model="caseFilters.employeeKeyword" :placeholder="t('dailyEmployeeKeywordHint')" />
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('caseStatusLabel') }}</span>
-            <select v-model="caseFilters.caseStatus">
-              <option value="">{{ t('caseStatusAll') }}</option>
-              <option value="UNHANDLED">{{ t('caseStatusUnhandled') }}</option>
-              <option value="SUBMITTED">{{ t('caseStatusSubmitted') }}</option>
-              <option value="RETURNED">{{ t('caseStatusReturned') }}</option>
-              <option value="APPROVED">{{ t('caseStatusApproved') }}</option>
-              <option value="REJECTED">{{ t('caseStatusRejected') }}</option>
-              <option value="LOCKED">{{ t('caseStatusLocked') }}</option>
-            </select>
-          </label>
-          <label class="selattendance-daily-checkbox">
-            <input v-model="caseFilters.mineOnly" type="checkbox" />
-            <span>{{ t('caseMineOnly') }}</span>
-          </label>
         </div>
 
         <SharedDataTable

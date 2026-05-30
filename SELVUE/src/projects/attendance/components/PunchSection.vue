@@ -78,67 +78,11 @@ function goToPage(page) {
     <template #left>
       <article class="seladmin-panel seladmin-surface selattendance-data-panel selattendance-punch-list-panel">
         <div class="seladmin-panel-header">
-          <div>
-            <h2>{{ t('punchTitle') }}</h2>
-            <p class="seladmin-copy">{{ t('punchLead') }}</p>
-          </div>
-          <button class="seladmin-button seladmin-button-secondary" type="button" @click="onRefresh()">{{ t('punchRefresh') }}</button>
-        </div>
-
-        <div class="selattendance-punch-summary">
-          <div class="selattendance-punch-summary-card">
-            <strong>{{ punchLogList.summary?.processed || 0 }}</strong>
-            <small>{{ t('punchStatusProcessed') }}</small>
-          </div>
-          <div class="selattendance-punch-summary-card warm">
-            <strong>{{ punchLogList.summary?.unmatched || 0 }}</strong>
-            <small>{{ t('punchStatusUnmatched') }}</small>
-          </div>
-          <div class="selattendance-punch-summary-card danger">
-            <strong>{{ punchLogList.summary?.error || 0 }}</strong>
-            <small>{{ t('punchStatusError') }}</small>
-          </div>
-          <div class="selattendance-punch-summary-card muted">
-            <strong>{{ punchLogList.summary?.ignored || 0 }}</strong>
-            <small>{{ t('punchStatusIgnored') }}</small>
+          <div class="selattendance-punch-actions">
+            <!-- 打卡列表刷新属于列表区局部动作，按和日次/异常处理一致的边界回到表格区顶部。 -->
+            <button class="seladmin-button seladmin-button-secondary" type="button" @click="onRefresh()">{{ t('punchRefresh') }}</button>
           </div>
         </div>
-
-        <div class="selattendance-schedule-toolbar">
-          <label class="seladmin-field">
-            <span>{{ t('punchDateFrom') }}</span>
-            <input v-model="punchFilters.dateFrom" type="date" />
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('punchDateTo') }}</span>
-            <input v-model="punchFilters.dateTo" type="date" />
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('employeeName') }}</span>
-            <input v-model="punchFilters.employeeKeyword" :placeholder="t('punchEmployeeKeywordHint')" />
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('sourceSystem') }}</span>
-            <select v-model="punchFilters.sourceSystem">
-              <option value="">{{ t('punchAllSources') }}</option>
-              <option value="MANUAL">MANUAL</option>
-              <option value="CSV_IMPORT">CSV_IMPORT</option>
-              <option value="WEBHOOK">WEBHOOK</option>
-            </select>
-          </label>
-          <label class="seladmin-field">
-            <span>{{ t('status') }}</span>
-            <select v-model="punchFilters.processStatus">
-              <option value="">{{ t('punchAllStatuses') }}</option>
-              <option value="PROCESSED">{{ t('punchStatusProcessed') }}</option>
-              <option value="UNMATCHED">{{ t('punchStatusUnmatched') }}</option>
-              <option value="ERROR">{{ t('punchStatusError') }}</option>
-              <option value="DUPLICATE">{{ t('punchStatusDuplicate') }}</option>
-              <option value="IGNORED">{{ t('punchStatusIgnored') }}</option>
-            </select>
-          </label>
-        </div>
-
         <SharedDataTable
           class="selattendance-punch-list-shell"
           variant="list"

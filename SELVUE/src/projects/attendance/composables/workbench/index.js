@@ -56,6 +56,12 @@ export function useAttendanceWorkbench() {
   })
   // 月次筛选改成手动搜索后，需要区分“筛选项导致的回第一页”和“用户主动翻页”两种场景。
   const skipNextMonthlyPageReload = ref(false)
+  // 异常处理改成手动搜索后，同样要区分筛选项联动回第一页和用户主动翻页两种业务动作。
+  const skipNextCasePageReload = ref(false)
+  // 打卡记录改成手动搜索后，需要把“筛选项联动回第一页”与“用户主动翻页查询”拆开。
+  const skipNextPunchPageReload = ref(false)
+  // 日次结果改成手动搜索后，同样要避免回第一页被误判成用户主动翻页。
+  const skipNextDailyPageReload = ref(false)
 
   // 基于当前语言环境翻译文案 key，保持页面原有 `t()` 调用方式不变。
   const t = (key) => messages[locale.value][key] || key
@@ -386,6 +392,56 @@ export function useAttendanceWorkbench() {
     syncDerivedState()
   }
 
+  // 打卡记录改成显式搜索后，只有点击搜索按钮时才重置分页并查询后台打卡列表。
+  const runPunchSearch = async () => {
+    // 搜索新条件时优先回到第一页，避免旧分页让用户误以为结果没有刷新。
+    if (state.punchFilters.page !== 1) {
+      // 这次回第一页是用户主动搜索，分页监听应继续执行真实查询。
+      skipNextPunchPageReload.value = false
+      state.punchFilters.page = 1
+      return
+    }
+    // 已经在第一页时直接请求后台，保证点击放大镜就能看到最新打卡结果。
+    await punchSection.loadPunchLogs()
+    syncDerivedState()
+  }
+
+  // 日次结果改成显式搜索后，只有点击搜索按钮时才按当前条件真正查询后台日次结果。
+  const runDailySearch = async () => {
+    // 日次搜索同样从第一页开始，避免新条件落在旧分页上看起来像没有变化。
+    if (state.dailyFilters.page !== 1) {
+      // 用户主动点击搜索时，不应保留跳过标记，否则分页监听会把本次搜索吞掉。
+      skipNextDailyPageReload.value = false
+      state.dailyFilters.page = 1
+      return
+    }
+    // 已在第一页时直接请求后台，保证手动搜索立即刷新结果。
+    await dailySection.loadDailyResults()
+    syncDerivedState()
+  }
+
+  // 异常处理搜索切到显式按钮后，只有点击搜索按钮时才重置分页并真正查询后台处理单列表。
+  const runCaseSearch = async () => {
+    // 新条件下搜索应从第一页开始，避免沿用旧页码看起来像“没有刷新”。
+    if (state.caseFilters.page !== 1) {
+      // 主动点击搜索按钮时允许分页监听继续查库，因此这里显式清掉跳过标记。
+      skipNextCasePageReload.value = false
+      state.caseFilters.page = 1
+      return
+    }
+    // 已在第一页时直接查询后台，保证点击搜索按钮立刻刷新异常处理列表。
+    await caseSection.loadCases()
+    syncDerivedState()
+  }
+
+  // 排班管理把筛选条上收到头部后，继续沿用“点搜索按钮才真正刷新看板”的显式查询方式。
+  const runScheduleSearch = async () => {
+    // 排班看板没有分页游标，因此点击搜索时直接按当前筛选条件重读后台看板即可。
+    await scheduleSection.loadScheduleBoard()
+    // 看板刷新后同步壳层计数和默认引用，保证导航角标与依赖表单状态一起更新。
+    syncDerivedState()
+  }
+
   // 根据当前激活区块按需加载所需数据，形成轻量壳 + section 独立加载模式。
   const ensureActiveSectionLoaded = async (sectionKey, force = false) => {
     if (sectionKey === 'wizard') {
@@ -473,7 +529,7 @@ export function useAttendanceWorkbench() {
     { deep: true }
   )
 
-  // 打卡筛选条件变化时先回到第 1 页，再按新的数据库条件重查列表。
+  // 打卡筛选条件现在只同步本地待检索条件，不再在编辑筛选项时自动查询后台列表。
   watch(
     () => ({
       dateFrom: state.punchFilters.dateFrom,
@@ -483,15 +539,14 @@ export function useAttendanceWorkbench() {
       processStatus: state.punchFilters.processStatus,
       punchType: state.punchFilters.punchType
     }),
-    async () => {
+    () => {
       if (activeSection.value !== 'punch') return
-      // 非第 1 页时先回到首页，后续由分页监听接手真实重查，避免同一轮筛选触发两次请求。
+      // 筛选项变化后只回第一页，真正查询交给搜索按钮或用户主动分页。
       if (state.punchFilters.page !== 1) {
+        // 这次页码变化只是待检索状态同步，不应让分页监听误判成主动翻页。
+        skipNextPunchPageReload.value = true
         state.punchFilters.page = 1
-        return
       }
-      await punchSection.loadPunchLogs()
-      syncDerivedState()
     },
     { deep: true }
   )
@@ -504,13 +559,18 @@ export function useAttendanceWorkbench() {
     }),
     async () => {
       if (activeSection.value !== 'punch') return
+      // 如果页码变化只是筛选条件联动回第一页，则跳过本次查询，等待用户显式点击搜索按钮。
+      if (skipNextPunchPageReload.value) {
+        skipNextPunchPageReload.value = false
+        return
+      }
       await punchSection.loadPunchLogs()
       syncDerivedState()
     },
     { deep: true }
   )
 
-  // 日次筛选条件变化时先回到第 1 页，再按新的数据库条件重查列表。
+  // 日次筛选条件现在只更新本地待检索条件，不再在编辑筛选项时自动重查后台列表。
   watch(
     () => ({
       startDate: state.dailyFilters.startDate,
@@ -521,15 +581,14 @@ export function useAttendanceWorkbench() {
       status: state.dailyFilters.status,
       exceptionOnly: state.dailyFilters.exceptionOnly
     }),
-    async () => {
+    () => {
       if (activeSection.value !== 'daily') return
-      // 非第 1 页时先回到首页，后续由分页监听接手真实重查，避免筛选触发两次请求。
+      // 筛选项变化后只回第一页，真正查询交给搜索按钮或后续分页动作。
       if (state.dailyFilters.page !== 1) {
+        // 这次页码变化只是待检索状态同步，不应让分页监听误判成用户主动翻页。
+        skipNextDailyPageReload.value = true
         state.dailyFilters.page = 1
-        return
       }
-      await dailySection.loadDailyResults()
-      syncDerivedState()
     },
     { deep: true }
   )
@@ -542,13 +601,18 @@ export function useAttendanceWorkbench() {
     }),
     async () => {
       if (activeSection.value !== 'daily') return
+      // 如果页码变化只是筛选项联动回第一页，则跳过本次查询，等待用户点击搜索按钮。
+      if (skipNextDailyPageReload.value) {
+        skipNextDailyPageReload.value = false
+        return
+      }
       await dailySection.loadDailyResults()
       syncDerivedState()
     },
     { deep: true }
   )
 
-  // 第五阶段筛选条件变化时先回到第 1 页，再按新的数据库条件重查处理单列表。
+  // 第五阶段筛选条件现在只更新本地待检索条件，不再在编辑或切换筛选项时自动向后台查单。
   watch(
     () => ({
       startDate: state.caseFilters.startDate,
@@ -560,14 +624,14 @@ export function useAttendanceWorkbench() {
       handlingStatus: state.caseFilters.handlingStatus,
       mineOnly: state.caseFilters.mineOnly
     }),
-    async () => {
+    () => {
       if (activeSection.value !== 'case') return
+      // 筛选项变化后只把分页游标重置回第一页，真正查询交给搜索按钮或后续分页动作。
       if (state.caseFilters.page !== 1) {
+        // 这次页码变化只是待检索条件同步，不应让分页监听误判成用户主动翻页。
+        skipNextCasePageReload.value = true
         state.caseFilters.page = 1
-        return
       }
-      await caseSection.loadCases()
-      syncDerivedState()
     },
     { deep: true }
   )
@@ -580,6 +644,11 @@ export function useAttendanceWorkbench() {
     }),
     async () => {
       if (activeSection.value !== 'case') return
+      // 如果页码变化只是筛选条件联动回第一页，则跳过本次查询，等待用户显式点击搜索按钮。
+      if (skipNextCasePageReload.value) {
+        skipNextCasePageReload.value = false
+        return
+      }
       await caseSection.loadCases()
       syncDerivedState()
     },
@@ -658,9 +727,13 @@ export function useAttendanceWorkbench() {
     cancelConfirmDialog,
     submitConfirmDialog,
     loadScheduleBoard: scheduleSection.loadScheduleBoard,
+    runScheduleSearch,
     loadPunchLogs: punchSection.loadPunchLogs,
     loadDailyResults: dailySection.loadDailyResults,
     loadCases: caseSection.loadCases,
+    runCaseSearch,
+    runPunchSearch,
+    runDailySearch,
     loadMonthlyResults: monthlySection.loadMonthlyResults,
     runMonthlySearch,
     selectScheduleTemplate: scheduleSection.selectScheduleTemplate,
