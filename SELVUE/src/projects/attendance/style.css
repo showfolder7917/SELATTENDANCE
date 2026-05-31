@@ -18,25 +18,6 @@ body {
   overflow: hidden;
 }
 
-.selattendance-hero-actions {
-  display: grid;
-  gap: 12px;
-  justify-items: end;
-}
-
-.selattendance-theme-switch {
-  display: grid;
-  gap: 8px;
-  justify-items: end;
-}
-
-.selattendance-theme-label {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.72);
-}
-
 .selattendance-workbench {
   margin-top: 20px;
   min-height: 0;
@@ -1486,11 +1467,13 @@ body {
 
   .selattendance-hero-actions {
     width: 100%;
-    justify-items: stretch;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
   .selattendance-theme-switch {
-    justify-items: stretch;
+    width: 100%;
+    justify-content: space-between;
   }
 
   .selattendance-content-header {

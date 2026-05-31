@@ -1,0 +1,94 @@
+/* hero 顶部操作带统一承接主题、语言和宿主 project 切换器，所有工程都走同一套横向排列规则。 */
+.selattendance-hero-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* 宿主 project 切换器预留槽位本身不占额外视觉块，只负责在 hero 操作带里接收 teleport 过来的宿主控件。 */
+.selattendance-hero-toolbar-slot {
+  display: contents;
+}
+
+/* 主题切换壳负责让 ThemeSwitch 在所有工程里都保持稳定的单行结构，不再让页面各自维护一套排列逻辑。 */
+.selattendance-theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+}
+
+/* 主题切换标签改成共享的行内提示样式，保证主题组和 project 组处于同一级视觉层。 */
+.selattendance-theme-label {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+}
+
+/* 顶部操作带里的语言切换只服务快速切换，需要统一收紧分组间距，避免各工程重复写压缩规则。 */
+.selattendance-hero-actions .seladmin-locale-switch {
+  gap: 8px;
+  min-height: 48px;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+}
+
+/* hero 顶部统一覆盖 locale 按钮的正文默认尺寸，只在操作带场景压缩最小宽度和内边距。 */
+.selattendance-hero-actions .seladmin-locale-button {
+  min-width: 104px;
+  padding: 8px 12px;
+}
+
+/* 宿主 project 切换器和主题/语言切换共享同一套胶囊容器，保证进入任何工程时顶部工具带都是一体化样式。 */
+.project-host-switcher-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 8px 30px;
+  border: 1px solid rgba(163, 190, 255, 0.18);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(20, 31, 54, 0.94), rgba(16, 24, 42, 0.9)),
+    rgba(15, 23, 42, 0.82);
+  box-shadow: 0 18px 42px rgba(3, 8, 20, 0.28);
+  backdrop-filter: blur(18px);
+  flex: 0 0 auto;
+  box-sizing: border-box;
+}
+
+/* Project 标签和主题标签保持同级提示语气，帮助用户分辨这是宿主工程切换而不是业务筛选项。 */
+.project-host-switcher-label {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(220, 232, 255, 0.74);
+}
+
+/* Project 下拉框沿用顶部工具带的紧凑尺寸，避免宽度再次把整排 hero 操作带撑出容器。 */
+.project-host-switcher-select {
+  flex: 0 0 auto;
+  min-width: 136px;
+  width: 136px;
+  max-width: 136px;
+  padding: 8px 10px;
+  border: 1px solid rgba(163, 190, 255, 0.16);
+  border-radius: 14px;
+  background: rgba(11, 18, 33, 0.72);
+  color: #f5f8ff;
+  font: inherit;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}

@@ -40,6 +40,13 @@
 
 .memory-hero {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
+}
+
+.memory-hero-copy {
+  display: grid;
   gap: 12px;
 }
 

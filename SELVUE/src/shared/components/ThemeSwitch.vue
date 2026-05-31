@@ -23,8 +23,10 @@ const emit = defineEmits(['update:modelValue'])
 </script>
 
 <template>
+  <!-- 主题切换改成单行标签加选项组，和语言、project 切换器共用同一条顶部操作带节奏。 -->
   <div class="selattendance-theme-switch">
-    <p class="selattendance-theme-label">{{ label }}</p>
+    <!-- 主题标签保持短文案，放在同一行里提示当前切换的是全局主题而不是业务筛选。 -->
+    <span class="selattendance-theme-label">{{ label }}</span>
     <div class="seladmin-locale-switch" role="group" :aria-label="label">
       <button
         v-for="option in options"

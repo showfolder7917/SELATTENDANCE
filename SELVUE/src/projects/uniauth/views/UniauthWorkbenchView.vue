@@ -78,6 +78,8 @@ const { themeId, themeOptions } = useUniauthTheme()
       <div class="selattendance-hero-actions">
         <ThemeSwitch v-model="themeId" :options="themeOptions" :label="t('themeSwitch')" :t="t" />
         <LanguageSwitch v-model="locale" :options="localeOptions" />
+        <!-- 宿主 project 切换器通过 teleport 挂进这里，并固定排在语言切换器后面。 -->
+        <div id="project-host-toolbar-target" class="selattendance-hero-toolbar-slot"></div>
       </div>
     </header>
 

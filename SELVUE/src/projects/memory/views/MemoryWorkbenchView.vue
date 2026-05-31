@@ -12,12 +12,19 @@ const checkpoints = [
 <template>
   <main class="memory-shell">
     <section class="memory-hero">
-      <p class="memory-eyebrow">Project Module</p>
-      <h1>Memory Workspace</h1>
-      <p class="memory-copy">
-        This is the minimal pluggable skeleton for the <code>memory</code> project. As long as
-        <code>src/projects/memory</code> exists, the host can discover and load it.
-      </p>
+      <div class="memory-hero-copy">
+        <p class="memory-eyebrow">Project Module</p>
+        <h1>Memory Workspace</h1>
+        <p class="memory-copy">
+          This is the minimal pluggable skeleton for the <code>memory</code> project. As long as
+          <code>src/projects/memory</code> exists, the host can discover and load it.
+        </p>
+      </div>
+
+      <div class="selattendance-hero-actions">
+        <!-- memory 也提供统一的宿主 toolbar 挂载点，让 project 切换器切入任何工程时都能稳定挂到同一条 hero 操作带。 -->
+        <div id="project-host-toolbar-target" class="selattendance-hero-toolbar-slot"></div>
+      </div>
     </section>
 
     <section class="memory-panel">

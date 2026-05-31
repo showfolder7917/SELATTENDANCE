@@ -28,28 +28,6 @@ body {
   align-items: start;
 }
 
-/* hero 右上操作列沿用 attendance 的纵向节奏，承接主题和语言切换控件。 */
-.selattendance-hero-actions {
-  display: grid;
-  gap: 12px;
-  justify-items: end;
-}
-
-/* 主题切换壳负责让 ThemeSwitch 在权限中心里也保持稳定排列。 */
-.selattendance-theme-switch {
-  display: grid;
-  gap: 8px;
-  justify-items: end;
-}
-
-/* 主题切换标签沿用较弱色值，避免与主标题抢层级。 */
-.selattendance-theme-label {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.72);
-}
-
 /* 消息条统一放在 workbench 上方，避免成功失败提示插进内容区打断编辑流程。 */
 .seluniauth-message {
   padding: 14px 18px;
@@ -438,6 +416,16 @@ body {
 @media (max-width: 1180px) {
   .seluniauth-hero {
     grid-template-columns: 1fr;
+  }
+
+  .selattendance-hero-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .selattendance-theme-switch {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .seluniauth-section-shell {

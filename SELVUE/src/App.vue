@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import {
   availableProjects,
   findProjectById,
@@ -9,6 +9,8 @@ import {
   writeProjectIdToUrl
 } from './projects'
 import { readAuthSession, subscribeAuthSession } from './shared/services/authSession'
+// 宿主入口统一引入 hero 顶部工具带共享样式，让 attendance 和 uniauth 共用同一套主题/语言/project 布局规则。
+import './shared/styles/hero-toolbar.css'
 
 // 用可写工程 id 维护当前宿主激活项目，保证切换器能直接切换工程而不是只读计算。
 const activeProjectId = ref(resolveInitialProjectId())
@@ -41,6 +43,8 @@ const visibleProjects = computed(() =>
 
 // 是否显示工程切换器取决于当前是否存在多个工程，单工程时避免无意义控件干扰页面。
 const showProjectSwitcher = computed(() => visibleProjects.value.length > 1)
+// 当前页面是否已经提供 hero 顶部工具条挂载点，决定 project 切换器是并入同一排还是退回独立浮层。
+const toolbarTargetReady = ref(false)
 
 // 把 URL 中的 project 参数重新同步回宿主激活工程，支持浏览器前进后退或手工改 URL。
 const syncProjectFromUrl = () => {
@@ -54,6 +58,8 @@ const syncProjectFromUrl = () => {
 
 // 当前激活工程变化时立即写回 URL，保证刷新页面或复制链接后仍能打开同一工程。
 watch(activeProjectId, (nextProjectId) => {
+  // 工程切换开始时先把 toolbar 目标标记为未就绪，让宿主立即回退到兜底浮层，避免旧 teleport 目标刚卸载时出现短暂空窗。
+  toolbarTargetReady.value = false
   writeProjectIdToUrl(nextProjectId)
 })
 
@@ -65,12 +71,19 @@ watch(visibleProjects, (nextVisibleProjects) => {
   activeProjectId.value = nextVisibleProjects[0]?.id || ''
 })
 
+// 每次工程切换或列表变化后都重新检查当前页面是否暴露了统一 toolbar 挂载点，保证 project 切换器能并入 hero 操作带。
+watch([activeProjectId, visibleProjects], async () => {
+  await refreshToolbarTargetState()
+})
+
 // 页面挂载后监听浏览器历史变化，保证宿主地址栏和激活工程保持双向同步。
 onMounted(() => {
   unsubscribeAuthSession = subscribeAuthSession((nextSession) => {
     authSession.value = nextSession
   })
   window.addEventListener('popstate', syncProjectFromUrl)
+  // 首次挂载后也要探测一次目标页面是否已经渲染出 toolbar 挂载点。
+  refreshToolbarTargetState()
 })
 
 // 页面卸载时移除浏览器历史监听，避免宿主组件重复挂载后遗留事件处理器。
@@ -78,17 +91,42 @@ onBeforeUnmount(() => {
   unsubscribeAuthSession()
   window.removeEventListener('popstate', syncProjectFromUrl)
 })
+
+// 工具条目标检测统一收口在宿主层，避免每个 project 自己判断 project 切换器该怎么放。
+async function refreshToolbarTargetState() {
+  // 等待当前工程视图完成一次 DOM 更新，再检查统一挂载点是否已经出现。
+  await nextTick()
+  // 只有存在挂载点时才把 project 切换器 teleport 进 hero 操作带，否则回退到独立浮层。
+  toolbarTargetReady.value = Boolean(document.querySelector('#project-host-toolbar-target'))
+}
 </script>
 
 <template>
   <div class="project-host-shell">
-    <header v-if="showProjectSwitcher" class="project-host-switcher">
-      <label class="project-host-switcher-label" for="project-host-select">Project</label>
-      <select id="project-host-select" v-model="activeProjectId" class="project-host-switcher-select">
-        <option v-for="projectEntry in visibleProjects" :key="projectEntry.id" :value="projectEntry.id">
-          {{ projectEntry.label }}
-        </option>
-      </select>
+    <!-- 当业务页面提供统一挂载点时，宿主 project 切换器直接并入页面 hero 的主题/语言同一条操作带。 -->
+    <teleport v-if="showProjectSwitcher && toolbarTargetReady" to="#project-host-toolbar-target">
+      <div class="project-host-switcher-group">
+        <!-- Project 标签保留在同一条横向操作带里，帮助用户知道当前切换的是宿主工程而不是业务筛选项。 -->
+        <label class="project-host-switcher-label" for="project-host-select">Project</label>
+        <!-- 工程下拉框继续直接绑定 activeProjectId，但视觉上改成和主题切换同一套深色胶囊风格。 -->
+        <select id="project-host-select" v-model="activeProjectId" class="project-host-switcher-select">
+          <option v-for="projectEntry in visibleProjects" :key="projectEntry.id" :value="projectEntry.id">
+            {{ projectEntry.label }}
+          </option>
+        </select>
+      </div>
+    </teleport>
+
+    <!-- 没有挂载点的页面仍保留宿主兜底浮层，避免 memory 等简单工程失去 project 切换能力。 -->
+    <header v-else-if="showProjectSwitcher" class="project-host-switcher">
+      <div class="project-host-switcher-group">
+        <label class="project-host-switcher-label" for="project-host-select">Project</label>
+        <select id="project-host-select" v-model="activeProjectId" class="project-host-switcher-select">
+          <option v-for="projectEntry in visibleProjects" :key="projectEntry.id" :value="projectEntry.id">
+            {{ projectEntry.label }}
+          </option>
+        </select>
+      </div>
     </header>
 
     <component :is="activeProject.component" v-if="activeProject" />
@@ -115,32 +153,9 @@ onBeforeUnmount(() => {
   top: 16px;
   right: 16px;
   z-index: 40;
-  display: grid;
-  gap: 6px;
-  padding: 12px 14px;
-  border: 1px solid rgba(15, 23, 42, 0.14);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.14);
-  backdrop-filter: blur(10px);
-}
-
-.project-host-switcher-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #5b6474;
-}
-
-.project-host-switcher-select {
-  min-width: 164px;
-  padding: 8px 10px;
-  border: 1px solid #cdd5df;
-  border-radius: 10px;
-  background: #ffffff;
-  color: #142033;
-  font: inherit;
+  display: flex;
+  align-items: center;
+  padding: 0;
 }
 
 .project-host-empty-state {
@@ -184,9 +199,14 @@ onBeforeUnmount(() => {
     right: 16px;
   }
 
+  .project-host-switcher-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .project-host-switcher-select {
     min-width: 0;
-    width: 100%;
+    width: min(100%, 220px);
   }
 }
 </style>
