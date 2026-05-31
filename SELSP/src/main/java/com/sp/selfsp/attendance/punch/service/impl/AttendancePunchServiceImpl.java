@@ -3,7 +3,7 @@ package com.sp.selfsp.attendance.punch.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sp.selfsp.attendance.common.AttendanceTenantContext;
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 import com.sp.selfsp.attendance.employee.dao.AttendanceEmployeeDao;
 import com.sp.selfsp.attendance.punch.dao.AttendancePunchDao;
 import com.sp.selfsp.attendance.punch.domain.in.AttendancePunchIn;

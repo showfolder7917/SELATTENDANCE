@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.sp.selfsp.attendance.domain.in.AttendanceIn;
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.in.AttendanceIn;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 import com.sp.selfsp.attendance.employee.service.AttendanceEmployeeService;
 import com.sp.selfsp.attendance.workplace.dao.AttendanceWorkplaceDao;
 import com.sp.selfsp.attendance.workplace.service.AttendanceWorkplaceService;

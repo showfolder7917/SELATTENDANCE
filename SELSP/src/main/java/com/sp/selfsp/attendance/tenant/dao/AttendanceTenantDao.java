@@ -6,8 +6,8 @@
  */
 package com.sp.selfsp.attendance.tenant.dao;
 
-import com.sp.selfsp.attendance.domain.in.AttendanceIn;
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.in.AttendanceIn;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

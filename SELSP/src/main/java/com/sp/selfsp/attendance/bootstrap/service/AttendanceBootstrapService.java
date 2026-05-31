@@ -6,7 +6,7 @@
  */
 package com.sp.selfsp.attendance.bootstrap.service;
 
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 
 /**
  * 考勤首页聚合服务接口。

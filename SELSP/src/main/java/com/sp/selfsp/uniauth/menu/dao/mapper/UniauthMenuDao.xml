@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.uniauth.menu.dao.UniauthMenuDao">
+
+  <resultMap id="MenuItemResultMap" type="com.sp.selfsp.uniauth.menu.domain.out.UniauthMenuItemOut">
+    <id column="id" property="id"/>
+    <result column="module_code" property="moduleCode"/>
+    <result column="menu_code" property="menuCode"/>
+    <result column="parent_id" property="parentId"/>
+    <result column="menu_type" property="menuType"/>
+    <result column="route_path" property="routePath"/>
+    <result column="component_name" property="componentName"/>
+    <result column="icon_name" property="iconName"/>
+    <result column="sort_order" property="sortOrder"/>
+    <result column="title_zh" property="titleZh"/>
+    <result column="title_ja" property="titleJa"/>
+    <result column="enabled_flag" property="enabledFlag"/>
+  </resultMap>
+
+  <sql id="MenuItemColumns">
+    id, module_code, menu_code, parent_id, menu_type, route_path, component_name, icon_name, sort_order, title_zh, title_ja, enabled_flag
+  </sql>
+
+  <insert id="insertMenu">
+    INSERT INTO ua_menu (
+      module_code, menu_code, parent_id, menu_type, route_path, component_name, icon_name, sort_order, title_zh, title_ja, enabled_flag
+    ) VALUES (
+      #{in.moduleCode}, #{in.menuCode}, #{in.parentId}, #{in.menuType}, #{in.routePath}, #{in.componentName}, #{in.iconName}, #{in.sortOrder}, #{in.titleZh}, #{in.titleJa}, #{in.enabledFlag}
+    )
+  </insert>
+
+  <update id="updateMenu">
+    UPDATE ua_menu
+    SET module_code = #{in.moduleCode},
+        menu_code = #{in.menuCode},
+        parent_id = #{in.parentId},
+        menu_type = #{in.menuType},
+        route_path = #{in.routePath},
+        component_name = #{in.componentName},
+        icon_name = #{in.iconName},
+        sort_order = #{in.sortOrder},
+        title_zh = #{in.titleZh},
+        title_ja = #{in.titleJa},
+        enabled_flag = #{in.enabledFlag},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = #{in.id}
+  </update>
+
+  <select id="selectMenuByCode" resultMap="MenuItemResultMap">
+    SELECT <include refid="MenuItemColumns"/>
+    FROM ua_menu
+    WHERE menu_code = #{menuCode}
+  </select>
+</mapper>

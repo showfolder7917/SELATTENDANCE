@@ -1,8 +1,8 @@
 package com.sp.selfsp.attendance.schedule.service.impl;
 
 import com.sp.selfsp.attendance.common.AttendanceTenantContext;
-import com.sp.selfsp.attendance.domain.in.AttendanceIn;
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.in.AttendanceIn;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 import com.sp.selfsp.attendance.employee.dao.AttendanceEmployeeDao;
 import com.sp.selfsp.attendance.schedule.dao.AttendanceScheduleDao;
 import com.sp.selfsp.attendance.schedule.domain.in.AttendanceScheduleIn;

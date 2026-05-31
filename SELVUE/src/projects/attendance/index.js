@@ -9,5 +9,6 @@ export default {
   label: 'Attendance',
   description: 'Attendance administration workbench',
   order: 10,
+  requiredMenuCodes: ['attendance.home'],
   component: AttendanceWorkbenchView
 }

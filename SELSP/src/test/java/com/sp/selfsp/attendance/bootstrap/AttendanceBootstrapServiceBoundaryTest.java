@@ -3,7 +3,7 @@ package com.sp.selfsp.attendance.bootstrap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 import com.sp.selfsp.attendance.schedule.domain.in.AttendanceScheduleIn;
 import com.sp.selfsp.attendance.bootstrap.service.AttendanceBootstrapService;
 import com.sp.selfsp.attendance.schedule.service.AttendanceScheduleService;

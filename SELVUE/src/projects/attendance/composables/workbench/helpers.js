@@ -77,6 +77,8 @@ export const syncFilterReferences = (state) => {
 
 // 把当前各区块的已加载数据量写回轻量壳，供导航徽标和壳层状态汇总复用。
 export const syncShellCounters = (state) => {
+  // 用第八阶段连接器数量回填接入计数，供导航徽标和工作台状态展示。
+  state.bootstrapShell.sectionCounters.connector = state.connectorWorkbench.connectors.length
   // 用场所列表长度回填场所计数。
   state.bootstrapShell.sectionCounters.workplace = state.workplaces.length
   // 用部门列表长度回填部门计数。

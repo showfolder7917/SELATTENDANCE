@@ -16,6 +16,8 @@ import { createWorkplaceSection } from './workplaceSection'
 import { createDepartmentSection } from './departmentSection'
 // 员工区块模块负责员工列表、映射、导入导出和部门到员工的跳转。
 import { createEmployeeSection } from './employeeSection'
+// 第八阶段外部接入区块负责连接器配置、映射和同步日志工作台。
+import { createConnectorSection } from './connectorSection'
 // 日本规则区块模块负责第七阶段规则配置、员工适用和预警看板。
 import { createRuleSection } from './ruleSection'
 // 班次区块模块负责模板列表、模板表单和推荐模板生成。
@@ -36,7 +38,7 @@ export function useAttendanceWorkbench() {
   // 先从 URL 中读取初始 section，支持直接带 section 参数进入某个区块。
   const initialSection = new URLSearchParams(window.location.search).get('section')
   // 限定可用区块集合，避免 URL 传入未知值污染工作台状态。
-  const allowedSections = ['wizard', 'workplace', 'department', 'employee', 'rule', 'shift', 'schedule', 'punch', 'daily', 'case', 'monthly']
+  const allowedSections = ['wizard', 'workplace', 'department', 'employee', 'connector', 'rule', 'shift', 'schedule', 'punch', 'daily', 'case', 'monthly']
   // 从 URL 中读取当前语言，没有时回退到中文环境。
   const locale = ref(new URLSearchParams(window.location.search).get('locale') || 'zh-CN')
   // 用 section 参数或默认向导区块作为工作台当前激活区块。
@@ -79,6 +81,7 @@ export function useAttendanceWorkbench() {
     { key: 'workplace', label: t('navWorkplace') },
     { key: 'department', label: t('navDepartment') },
     { key: 'employee', label: t('navEmployee') },
+    { key: 'connector', label: t('navConnector') },
     { key: 'rule', label: t('navRule') },
     { key: 'shift', label: t('navShift') },
     { key: 'schedule', label: t('navSchedule') },
@@ -255,6 +258,15 @@ export function useAttendanceWorkbench() {
     downloadCsv
   })
 
+  // 组装第八阶段外部接入区块动作，供连接器配置、映射和同步日志复用。
+  const connectorSection = createConnectorSection({
+    state,
+    setSectionLoading,
+    setSectionError,
+    pushToast: showToast,
+    t
+  })
+
   // 组装第七阶段日本规则区块动作，供规则配置、员工适用和预警看板复用。
   const ruleSection = createRuleSection({
     state,
@@ -351,6 +363,13 @@ export function useAttendanceWorkbench() {
     syncDerivedState()
   }
 
+  // 保障第八阶段接入工作台已加载，供连接器页展示配置、映射和同步日志。
+  const ensureConnectorLoaded = async (force = false) => {
+    if (!force && state.bootstrapShell.sectionStates.connector) return
+    await connectorSection.loadConnectorWorkbench()
+    syncDerivedState()
+  }
+
   // 保障第七阶段规则工作台已加载，供规则页展示规则、适用和预警聚合结果。
   const ensureRuleLoaded = async (force = false) => {
     if (!force && state.bootstrapShell.sectionStates.rule) return
@@ -420,6 +439,12 @@ export function useAttendanceWorkbench() {
     syncDerivedState()
   }
 
+  // 第八阶段接入页同样走显式搜索，避免输入关键字时不断重刷配置和日志三块内容。
+  const runConnectorSearch = async () => {
+    await connectorSection.loadConnectorWorkbench()
+    syncDerivedState()
+  }
+
   // 打卡记录改成显式搜索后，只有点击搜索按钮时才重置分页并查询后台打卡列表。
   const runPunchSearch = async () => {
     // 搜索新条件时优先回到第一页，避免旧分页让用户误以为结果没有刷新。
@@ -481,6 +506,12 @@ export function useAttendanceWorkbench() {
       await ensureWorkplacesLoaded(force)
       await ensureDepartmentsLoaded(force)
       await ensureEmployeesLoaded(force)
+      return
+    }
+    if (sectionKey === 'connector') {
+      await ensureEmployeesLoaded(force)
+      await ensureWorkplacesLoaded(force)
+      await ensureConnectorLoaded(force)
       return
     }
     if (sectionKey === 'rule') {
@@ -748,6 +779,16 @@ export function useAttendanceWorkbench() {
     submitMapping: employeeSection.submitMapping,
     submitImport: employeeSection.submitImport,
     handleExport: employeeSection.handleExport,
+    loadConnectorWorkbench: connectorSection.loadConnectorWorkbench,
+    runConnectorSearch,
+    submitConnector: connectorSection.submitConnector,
+    editConnector: connectorSection.editConnector,
+    resetConnectorForm: connectorSection.resetConnectorForm,
+    submitConnectorTest: connectorSection.submitConnectorTest,
+    submitConnectorMapping: connectorSection.submitConnectorMapping,
+    editConnectorMapping: connectorSection.editConnectorMapping,
+    resetConnectorMappingForm: connectorSection.resetConnectorMappingForm,
+    submitConnectorRetry: connectorSection.submitConnectorRetry,
     loadRuleWorkbench: ruleSection.loadRuleWorkbench,
     runRuleSearch,
     submitRule: ruleSection.submitRule,

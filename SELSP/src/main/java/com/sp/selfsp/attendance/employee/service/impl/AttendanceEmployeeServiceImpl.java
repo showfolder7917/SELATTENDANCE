@@ -2,8 +2,8 @@ package com.sp.selfsp.attendance.employee.service.impl;
 
 import com.sp.selfsp.attendance.common.AttendanceTenantContext;
 import com.sp.selfsp.attendance.department.dao.AttendanceDepartmentDao;
-import com.sp.selfsp.attendance.domain.in.AttendanceIn;
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.in.AttendanceIn;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 import com.sp.selfsp.attendance.employee.dao.AttendanceEmployeeDao;
 import com.sp.selfsp.attendance.employee.service.AttendanceEmployeeService;
 import com.sp.selfsp.attendance.workplace.dao.AttendanceWorkplaceDao;

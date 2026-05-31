@@ -15,6 +15,7 @@ export const createEmptyTenant = () => ({
 
 // 生成 section 级加载状态，供多接口并发场景下按区块显示局部加载状态。
 export const createSectionLoaders = () => ({
+  connector: false,
   workplace: false,
   department: false,
   employee: false,
@@ -29,6 +30,7 @@ export const createSectionLoaders = () => ({
 
 // 生成 section 级错误状态，供某个区块失败时只影响本区块而不是整页。
 export const createSectionErrors = () => ({
+  connector: '',
   workplace: '',
   department: '',
   employee: '',
@@ -43,6 +45,7 @@ export const createSectionErrors = () => ({
 
 // 生成 section 加载完成标记，供按需懒加载时避免重复首刷同一区块。
 export const createSectionStates = () => ({
+  connector: false,
   workplace: false,
   department: false,
   employee: false,
@@ -59,6 +62,7 @@ export const createSectionStates = () => ({
 export const createBootstrapShell = () => ({
   tenantSummary: createEmptyTenant(),
   sectionCounters: {
+    connector: 0,
     workplace: 0,
     department: 0,
     employee: 0,
@@ -87,6 +91,22 @@ export const createWorkbenchState = () => ({
     workplaceId: ''
   },
   employees: [],
+  connectorFilters: {
+    sourceSystem: '',
+    keyword: '',
+    activeOnly: true
+  },
+  connectorWorkbench: {
+    connectors: [],
+    mappings: [],
+    syncLogs: [],
+    summary: {
+      activeConnectorCount: 0,
+      mappedEmployeeCount: 0,
+      failedSyncCount: 0,
+      latestSyncAt: null
+    }
+  },
   ruleFilters: {
     yearMonth: '2026-05',
     keyword: '',
@@ -355,6 +375,29 @@ export const createWorkbenchState = () => ({
     externalEmployeeNo: '',
     status: 'ACTIVE'
   },
+  connectorForm: {
+    id: null,
+    sourceSystem: 'WEBHOOK',
+    connectorName: '',
+    providerType: 'CUSTOM_WEBHOOK',
+    receiveMode: 'WEBHOOK',
+    apiBaseUrl: '',
+    apiKey: '',
+    apiSecret: '',
+    webhookSecret: '',
+    syncCron: '',
+    workplaceId: '',
+    activeFlag: true,
+    note: ''
+  },
+  connectorMappingForm: {
+    employeeId: '',
+    sourceSystem: 'WEBHOOK',
+    externalEmployeeId: '',
+    externalEmployeeNo: '',
+    status: 'ACTIVE'
+  },
+  connectorTestResult: null,
   shiftForm: {
     id: null,
     templateCode: '',

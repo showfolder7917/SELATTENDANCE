@@ -3,7 +3,7 @@ package com.sp.selfsp.attendance.shifttemplate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 import com.sp.selfsp.attendance.shifttemplate.dao.AttendanceShiftTemplateDao;
 import com.sp.selfsp.attendance.support.AttendanceMapperIntegrationSupport;
 import java.util.List;

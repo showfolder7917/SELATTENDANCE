@@ -1,8 +1,8 @@
 package com.sp.selfsp.attendance.shifttemplate.service.impl;
 
 import com.sp.selfsp.attendance.common.AttendanceTenantContext;
-import com.sp.selfsp.attendance.domain.in.AttendanceIn;
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.in.AttendanceIn;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 import com.sp.selfsp.attendance.shifttemplate.dao.AttendanceShiftTemplateDao;
 import com.sp.selfsp.attendance.shifttemplate.service.AttendanceShiftTemplateService;
 import java.util.ArrayList;

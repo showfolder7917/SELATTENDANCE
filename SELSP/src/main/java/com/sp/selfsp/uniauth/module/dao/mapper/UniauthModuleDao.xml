@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.uniauth.module.dao.UniauthModuleDao">
+
+  <resultMap id="ModuleItemResultMap" type="com.sp.selfsp.uniauth.module.domain.out.UniauthModuleItemOut">
+    <id column="id" property="id"/>
+    <result column="module_code" property="moduleCode"/>
+    <result column="module_name" property="moduleName"/>
+    <result column="module_type" property="moduleType"/>
+    <result column="module_desc" property="moduleDesc"/>
+    <result column="entry_project" property="entryProject"/>
+    <result column="owner_system" property="ownerSystem"/>
+    <result column="route_key" property="routeKey"/>
+    <result column="enabled_flag" property="enabledFlag"/>
+  </resultMap>
+
+  <sql id="ModuleItemColumns">
+    id, module_code, module_name, module_type, module_desc, entry_project, owner_system, route_key, enabled_flag
+  </sql>
+
+  <insert id="insertModule">
+    INSERT INTO ua_module (
+      module_code, module_name, module_type, module_desc, entry_project, owner_system, route_key, enabled_flag
+    ) VALUES (
+      #{in.moduleCode}, #{in.moduleName}, #{in.moduleType}, #{in.moduleDesc}, #{in.entryProject}, #{in.ownerSystem}, #{in.routeKey}, #{in.enabledFlag}
+    )
+  </insert>
+
+  <update id="updateModule">
+    UPDATE ua_module
+    SET module_code = #{in.moduleCode},
+        module_name = #{in.moduleName},
+        module_type = #{in.moduleType},
+        module_desc = #{in.moduleDesc},
+        entry_project = #{in.entryProject},
+        owner_system = #{in.ownerSystem},
+        route_key = #{in.routeKey},
+        enabled_flag = #{in.enabledFlag},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = #{in.id}
+  </update>
+
+  <select id="selectModuleByCode" resultMap="ModuleItemResultMap">
+    SELECT <include refid="ModuleItemColumns"/>
+    FROM ua_module
+    WHERE module_code = #{moduleCode}
+  </select>
+</mapper>

@@ -8,7 +8,7 @@ import SharedWorkbenchHeader from '../../../shared/components/SharedWorkbenchHea
 import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
 import ThemeSwitch from '../../../shared/components/ThemeSwitch.vue'
 import AttendanceSectionNav from '../components/AttendanceSectionNav.vue'
-import AttendanceSummaryPanel from '../components/AttendanceSummaryPanel.vue'
+import AttendanceSummarySection from '../components/AttendanceSummarySection.vue'
 import CaseSection from '../components/CaseSection.vue'
 import DailySection from '../components/DailySection.vue'
 import DepartmentSection from '../components/DepartmentSection.vue'
@@ -16,9 +16,10 @@ import EmployeeSection from '../components/EmployeeSection.vue'
 import MonthlySection from '../components/MonthlySection.vue'
 import PunchSection from '../components/PunchSection.vue'
 import RuleSection from '../components/RuleSection.vue'
+import ConnectorSection from '../components/ConnectorSection.vue'
 import ScheduleSection from '../components/ScheduleSection.vue'
 import ShiftTemplateSection from '../components/ShiftTemplateSection.vue'
-import TenantPanel from '../components/TenantPanel.vue'
+import TenantSection from '../components/TenantSection.vue'
 import WizardSection from '../components/WizardSection.vue'
 import WorkplaceSection from '../components/WorkplaceSection.vue'
 import {
@@ -54,6 +55,15 @@ const {
   submitMapping,
   submitImport,
   handleExport,
+  runConnectorSearch,
+  submitConnector,
+  editConnector,
+  resetConnectorForm,
+  submitConnectorTest,
+  submitConnectorMapping,
+  editConnectorMapping,
+  resetConnectorMappingForm,
+  submitConnectorRetry,
   runRuleSearch,
   submitRule,
   editRule,
@@ -139,6 +149,7 @@ const workspaceNavItems = computed(() => {
     workplace: state.workplaces.length,
     department: state.departments.length,
     employee: state.employees.length,
+    connector: state.connectorWorkbench.connectors.length,
     rule: state.ruleWorkbench.rules.length,
     shift: state.shiftTemplates.length
     ,
@@ -154,6 +165,7 @@ const workspaceNavItems = computed(() => {
     workplace: t('sectionWorkplaceHint'),
     department: t('sectionDepartmentHint'),
     employee: t('sectionEmployeeHint'),
+    connector: t('sectionConnectorHint'),
     rule: t('sectionRuleHint'),
     shift: t('sectionShiftHint')
     ,
@@ -201,6 +213,28 @@ const monthlyHeaderMetricItems = computed(() => [
     value: state.monthlyList.summary?.reopenedCount || 0,
     label: t('monthlySummaryReopened'),
     tone: 'muted'
+  }
+])
+
+// 第八阶段接入页把启用配置、映射数量和失败同步量汇总成卡片，先暴露接入风险再进入配置细节。
+const connectorHeaderMetricItems = computed(() => [
+  {
+    key: 'active',
+    value: state.connectorWorkbench.summary?.activeConnectorCount || 0,
+    label: t('connectorActiveCount'),
+    tone: 'default'
+  },
+  {
+    key: 'mapped',
+    value: state.connectorWorkbench.summary?.mappedEmployeeCount || 0,
+    label: t('connectorMappedCount'),
+    tone: 'warm'
+  },
+  {
+    key: 'failed',
+    value: state.connectorWorkbench.summary?.failedSyncCount || 0,
+    label: t('connectorFailedCount'),
+    tone: 'danger'
   }
 ])
 
@@ -665,6 +699,49 @@ onBeforeUnmount(() => {
           </SharedWorkbenchHeader>
 
           <SharedWorkbenchHeader
+            v-else-if="activeSection === 'connector'"
+            class="selattendance-content-header seladmin-surface selattendance-generic-workbench-header"
+            :title="t('connectorTitle')"
+            :lead="t('sectionConnectorHint')"
+            split-mode="left-summary-right-metrics"
+          >
+            <template #metrics>
+              <SharedMetricCards class="selattendance-rule-header-summary" :items="connectorHeaderMetricItems" />
+            </template>
+
+            <template #filters>
+              <div class="selattendance-workbench-header-toolbar selattendance-workbench-header-toolbar--rule">
+                <label class="seladmin-field">
+                  <span>{{ t('connectorSourceSystem') }}</span>
+                  <input v-model="state.connectorFilters.sourceSystem" :placeholder="t('connectorSourceSystem')" />
+                </label>
+                <label class="seladmin-field">
+                  <span>{{ t('search') }}</span>
+                  <div class="selattendance-header-search-field">
+                    <input v-model="state.connectorFilters.keyword" :placeholder="t('connectorKeywordHint')" />
+                    <button
+                      class="seladmin-button seladmin-button-secondary selattendance-header-search-button"
+                      type="button"
+                      :aria-label="t('searchAction')"
+                      :title="t('searchAction')"
+                      @click="runConnectorSearch()"
+                    >
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="5.5" />
+                        <path d="M16 16l4 4" />
+                      </svg>
+                    </button>
+                  </div>
+                </label>
+                <label class="selattendance-daily-checkbox selattendance-header-inline-checkbox">
+                  <input v-model="state.connectorFilters.activeOnly" type="checkbox" />
+                  <span>{{ t('connectorActiveOnly') }}</span>
+                </label>
+              </div>
+            </template>
+          </SharedWorkbenchHeader>
+
+          <SharedWorkbenchHeader
             v-else-if="activeSection === 'rule'"
             class="selattendance-content-header seladmin-surface selattendance-generic-workbench-header"
             :title="t('ruleTitle')"
@@ -950,11 +1027,11 @@ onBeforeUnmount(() => {
                 :outer-max-left-percent="attendanceOverviewLayoutPreset.outerMaxLeftPercent"
               >
                 <template #left>
-                  <AttendanceSummaryPanel :steps="state.steps" :recommended-next-label="recommendedNextLabel" :t="t" />
+                  <AttendanceSummarySection :steps="state.steps" :recommended-next-label="recommendedNextLabel" :t="t" />
                 </template>
 
                 <template #main>
-                  <TenantPanel :tenant="state.tenant" :t="t" :on-submit="submitTenant" />
+                  <TenantSection :tenant="state.tenant" :t="t" :on-submit="submitTenant" />
                 </template>
               </ThreePaneWorkbenchLayout>
               <WizardSection :visible="true" :steps="state.steps" :t="t" />
@@ -1010,6 +1087,25 @@ onBeforeUnmount(() => {
               :on-edit-employee="editEmployee"
               :on-edit-mapping="editMapping"
               :on-delete-employee="requestEmployeeDelete"
+            />
+
+            <ConnectorSection
+              :visible="activeSection === 'connector'"
+              :employees="state.employees"
+              :workplaces="state.workplaces"
+              :connector-workbench="state.connectorWorkbench"
+              :connector-form="state.connectorForm"
+              :connector-mapping-form="state.connectorMappingForm"
+              :connector-test-result="state.connectorTestResult"
+              :t="t"
+              :on-submit-connector="submitConnector"
+              :on-reset-connector="resetConnectorForm"
+              :on-edit-connector="editConnector"
+              :on-test-connector="submitConnectorTest"
+              :on-submit-mapping="submitConnectorMapping"
+              :on-reset-mapping="resetConnectorMappingForm"
+              :on-edit-mapping="editConnectorMapping"
+              :on-retry-log="submitConnectorRetry"
             />
 
             <RuleSection

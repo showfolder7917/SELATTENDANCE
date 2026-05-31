@@ -7,7 +7,7 @@ package com.sp.selfsp.attendance.bootstrap.service.impl;
 import com.sp.selfsp.attendance.bootstrap.dao.AttendanceBootstrapDao;
 import com.sp.selfsp.attendance.bootstrap.service.AttendanceBootstrapService;
 import com.sp.selfsp.attendance.common.AttendanceTenantContext;
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 import com.sp.selfsp.attendance.tenant.service.AttendanceTenantService;
 import java.util.ArrayList;
 import java.util.List;

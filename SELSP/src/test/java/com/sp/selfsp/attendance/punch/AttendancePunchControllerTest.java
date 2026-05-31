@@ -35,18 +35,20 @@ public class AttendancePunchControllerTest extends AttendanceControllerIntegrati
                 .param("page", "1")
                 .param("pageSize", "20"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.total").value(75))
+            // 当前重置数据已经扩充到第六、第七阶段样本，因此第三阶段总记录数与早期版本不同。
+            .andExpect(jsonPath("$.data.total").value(85))
             .andExpect(jsonPath("$.data.page").value(1))
             .andExpect(jsonPath("$.data.pageSize").value(20))
-            .andExpect(jsonPath("$.data.totalPages").value(4))
-            .andExpect(jsonPath("$.data.summary.processed").value(63))
+            .andExpect(jsonPath("$.data.totalPages").value(5))
+            // 顶部摘要同样要跟随当前测试种子口径，避免把种子扩充误判成业务回归。
+            .andExpect(jsonPath("$.data.summary.processed").value(73))
             .andExpect(jsonPath("$.data.summary.unmatched").value(4));
 
         mockMvc.perform(get("/api/attendance/punch/logs")
                 .param("page", "1")
                 .param("pageSize", "200"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.items.length()").value(75))
+            .andExpect(jsonPath("$.data.items.length()").value(85))
             .andExpect(jsonPath("$.data.pageSize").value(200))
             .andExpect(jsonPath("$.data.totalPages").value(1));
 

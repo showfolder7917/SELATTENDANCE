@@ -26,6 +26,15 @@ export {
   assignRule
 } from './ruleApi'
 
+// 暴露第八阶段外部接入接口，供连接器工作台、测试连接和同步重试复用。
+export {
+  fetchConnectorWorkbench,
+  createConnector,
+  updateConnector,
+  testConnector,
+  retryConnectorSyncLog
+} from './connectorApi'
+
 // 暴露班次模板读写接口，供班次区块和排班模板选择复用。
 export {
   listShiftTemplates,

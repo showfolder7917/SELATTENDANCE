@@ -4,7 +4,7 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.sp.selfsp.attendance.rule.dao.AttendanceRuleDao">
 
-  <resultMap id="RuleResultMap" type="com.sp.selfsp.attendance.domain.out.AttendanceOut$RuleOut">
+  <resultMap id="RuleResultMap" type="com.sp.selfsp.attendance.common.domain.out.AttendanceOut$RuleOut">
     <id column="id" property="id"/>
     <result column="rule_code" property="ruleCode"/>
     <result column="rule_name" property="ruleName"/>
@@ -24,7 +24,7 @@
     <result column="note" property="note"/>
   </resultMap>
 
-  <resultMap id="RuleAssignmentResultMap" type="com.sp.selfsp.attendance.domain.out.AttendanceOut$EmployeeRuleAssignmentOut">
+  <resultMap id="RuleAssignmentResultMap" type="com.sp.selfsp.attendance.common.domain.out.AttendanceOut$EmployeeRuleAssignmentOut">
     <id column="employee_id" property="employeeId"/>
     <result column="employee_no" property="employeeNo"/>
     <result column="employee_name" property="employeeName"/>

@@ -1,7 +1,7 @@
 package com.sp.selfsp.attendance.shifttemplate.service;
 
-import com.sp.selfsp.attendance.domain.in.AttendanceIn;
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.in.AttendanceIn;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 import java.util.List;
 
 public interface AttendanceShiftTemplateService {

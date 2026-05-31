@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.uniauth.role.dao.UniauthRoleDao">
+
+  <resultMap id="RoleItemResultMap" type="com.sp.selfsp.uniauth.role.domain.out.UniauthRoleItemOut">
+    <id column="id" property="id"/>
+    <result column="tenant_id" property="tenantId"/>
+    <result column="role_code" property="roleCode"/>
+    <result column="role_name" property="roleName"/>
+    <result column="role_desc" property="roleDesc"/>
+    <result column="builtin_flag" property="builtinFlag"/>
+    <result column="role_status" property="roleStatus"/>
+  </resultMap>
+
+  <sql id="RoleItemColumns">
+    id, tenant_id, role_code, role_name, role_desc, builtin_flag, role_status
+  </sql>
+
+  <insert id="insertRole">
+    INSERT INTO ua_role (
+      tenant_id, role_code, role_name, role_desc, builtin_flag, role_status
+    ) VALUES (
+      #{in.tenantId}, #{in.roleCode}, #{in.roleName}, #{in.roleDesc}, 0, 'ACTIVE'
+    )
+  </insert>
+
+  <update id="updateRole">
+    UPDATE ua_role
+    SET tenant_id = #{in.tenantId},
+        role_code = #{in.roleCode},
+        role_name = #{in.roleName},
+        role_desc = #{in.roleDesc},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = #{in.id}
+  </update>
+
+  <select id="selectRoleByCode" resultMap="RoleItemResultMap">
+    SELECT <include refid="RoleItemColumns"/>
+    FROM ua_role
+    WHERE role_code = #{roleCode}
+  </select>
+
+  <select id="selectRoleById" resultMap="RoleItemResultMap">
+    SELECT <include refid="RoleItemColumns"/>
+    FROM ua_role
+    WHERE id = #{id}
+  </select>
+
+  <delete id="deleteRolePermissions">
+    DELETE FROM ua_role_permission WHERE role_id = #{roleId}
+  </delete>
+
+  <delete id="deleteRoleMenus">
+    DELETE FROM ua_role_menu WHERE role_id = #{roleId}
+  </delete>
+
+  <delete id="deleteRoleDataScopes">
+    DELETE FROM ua_role_data_scope WHERE role_id = #{roleId}
+  </delete>
+
+  <select id="selectPermissionIdsByCodes" resultType="long">
+    SELECT id
+    FROM ua_permission
+    WHERE permission_code IN
+    <foreach collection="codes" item="code" open="(" separator="," close=")">
+      #{code}
+    </foreach>
+  </select>
+
+  <select id="selectMenuIdsByCodes" resultType="long">
+    SELECT id
+    FROM ua_menu
+    WHERE menu_code IN
+    <foreach collection="codes" item="code" open="(" separator="," close=")">
+      #{code}
+    </foreach>
+  </select>
+
+  <insert id="insertRolePermission">
+    INSERT INTO ua_role_permission (role_id, permission_id) VALUES (#{roleId}, #{permissionId})
+  </insert>
+
+  <insert id="insertRoleMenu">
+    INSERT INTO ua_role_menu (role_id, menu_id) VALUES (#{roleId}, #{menuId})
+  </insert>
+
+  <insert id="insertRoleDataScope">
+    INSERT INTO ua_role_data_scope (role_id, module_code, scope_type, scope_value)
+    VALUES (#{roleId}, #{moduleCode}, #{scopeType}, #{scopeValue})
+  </insert>
+</mapper>

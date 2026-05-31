@@ -4,7 +4,7 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.sp.selfsp.attendance.shifttemplate.dao.AttendanceShiftTemplateDao">
 
-  <resultMap id="ShiftTemplateResultMap" type="com.sp.selfsp.attendance.domain.out.AttendanceOut$ShiftTemplateOut">
+  <resultMap id="ShiftTemplateResultMap" type="com.sp.selfsp.attendance.common.domain.out.AttendanceOut$ShiftTemplateOut">
     <id column="id" property="id"/>
     <result column="template_code" property="templateCode"/>
     <result column="template_name" property="templateName"/>

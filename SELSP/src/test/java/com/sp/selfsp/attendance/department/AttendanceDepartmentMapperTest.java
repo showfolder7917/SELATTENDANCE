@@ -2,7 +2,7 @@ package com.sp.selfsp.attendance.department;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 import com.sp.selfsp.attendance.department.dao.AttendanceDepartmentDao;
 import com.sp.selfsp.attendance.support.AttendanceMapperIntegrationSupport;
 import java.util.List;

@@ -107,6 +107,19 @@ VALUES
   (1, 1, 'CSV_IMPORT', 'CSV 一括取込', NULL, NULL, NULL, NULL, 1, '{"encoding":"UTF-8","timezone":"Asia/Tokyo"}'),
   (2, 1, 'WEBHOOK', 'CUSTOM Webhook', 'https://example-gateway.local', 'demo-key', 'demo-secret', 'demo-hook-secret', 1, '{"mode":"push","timezone":"Asia/Tokyo"}');
 
+MERGE INTO attendance_punch_sync_log (
+    id, tenant_id, connector_id, source_system, trigger_type, external_request_id, sync_status, success_count, failed_count,
+    error_message, request_snapshot, result_snapshot, retry_flag, retry_count, created_at, updated_at
+)
+KEY (id)
+VALUES
+  (1, 1, 2, 'WEBHOOK', 'WEBHOOK', 'hook-ok-001', 'SUCCESS', 1, 0, NULL,
+   '{"tenantCode":"DEFAULT","sourceSystem":"WEBHOOK","sourceEventId":"hook-ok-001","externalEmployeeId":"KOT-0001","punchTime":"2026-05-28 09:00:00","punchType":"CLOCK_IN","deviceId":"gate-01","deviceName":"東京本部入口","rawData":{"event":"seed-success"}}',
+   '{"processStatus":"PROCESSED","messageCode":"punch.webhook.received"}', 0, 0, TIMESTAMP '2026-05-28 09:01:00', TIMESTAMP '2026-05-28 09:01:00'),
+  (2, 1, 2, 'WEBHOOK', 'WEBHOOK', 'hook-failed-001', 'FAILED', 0, 1, '未找到对应员工映射',
+   '{"tenantCode":"DEFAULT","sourceSystem":"WEBHOOK","sourceEventId":"hook-failed-001","externalEmployeeId":"WEBHOOK-NEW-9001","punchTime":"2026-05-28 18:00:00","punchType":"CLOCK_OUT","deviceId":"gate-02","deviceName":"東京本部出口","rawData":{"event":"seed-failed"}}',
+   '{"processStatus":"UNMATCHED","messageCode":"punch.webhook.received"}', 0, 0, TIMESTAMP '2026-05-28 18:01:00', TIMESTAMP '2026-05-28 18:01:00');
+
 MERGE INTO punch_import_batch (
     id, tenant_id, source_system, import_type, file_name, total_count, success_count, duplicate_count, unmatched_count, error_count, ignored_count, status, started_at, finished_at, created_by, created_at
 )

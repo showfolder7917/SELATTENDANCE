@@ -4,7 +4,7 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.sp.selfsp.attendance.workplace.dao.AttendanceWorkplaceDao">
 
-  <resultMap id="WorkplaceResultMap" type="com.sp.selfsp.attendance.domain.out.AttendanceOut$WorkplaceOut">
+  <resultMap id="WorkplaceResultMap" type="com.sp.selfsp.attendance.common.domain.out.AttendanceOut$WorkplaceOut">
     <id column="id" property="id"/>
     <result column="workplace_code" property="workplaceCode"/>
     <result column="workplace_name" property="workplaceName"/>

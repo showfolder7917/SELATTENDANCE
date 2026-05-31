@@ -4,8 +4,8 @@
  */
 package com.sp.selfsp.attendance.tenant.service;
 
-import com.sp.selfsp.attendance.domain.in.AttendanceIn;
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.in.AttendanceIn;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 
 /**
  * 租户服务接口。

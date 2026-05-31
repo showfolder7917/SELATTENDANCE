@@ -10,7 +10,7 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.sp.selfsp.attendance.tenant.dao.AttendanceTenantDao">
 
-  <select id="selectCurrentTenant" resultType="com.sp.selfsp.attendance.domain.out.AttendanceOut$TenantOut">
+  <select id="selectCurrentTenant" resultType="com.sp.selfsp.attendance.common.domain.out.AttendanceOut$TenantOut">
     SELECT id, tenant_code, tenant_name, status, contact_name, contact_phone, contact_email, timezone,
            created_at, updated_at
     FROM tenant

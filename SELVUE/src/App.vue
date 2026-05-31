@@ -8,23 +8,44 @@ import {
   resolveInitialProjectId,
   writeProjectIdToUrl
 } from './projects'
+import { readAuthSession, subscribeAuthSession } from './shared/services/authSession'
 
 // 用可写工程 id 维护当前宿主激活项目，保证切换器能直接切换工程而不是只读计算。
 const activeProjectId = ref(resolveInitialProjectId())
+// 宿主额外维护统一登录态，供工程显隐和后续顶部状态展示使用。
+const authSession = ref(readAuthSession())
+// 订阅清理函数单独缓存，保证宿主卸载时能安全解除登录态监听。
+let unsubscribeAuthSession = () => {}
 
 // 根据当前激活工程 id 解析工程元数据，供宿主渲染实际工程组件。
-const activeProject = computed(() => findProjectById(activeProjectId.value))
+const activeProject = computed(() =>
+  visibleProjects.value.find((projectEntry) => projectEntry.id === activeProjectId.value) || null
+)
 
 // 宿主切换器直接复用当前工程列表，保证安装或移除工程目录后列表自动变化。
 const projectOptions = computed(() => availableProjects)
+// 当前登录态带的菜单码决定哪些工程真正允许出现在宿主切换器里。
+const grantedMenuCodes = computed(() => authSession.value?.currentUser?.menuCodes || [])
+// 工程列表在宿主层按 publicEntry 和 requiredMenuCodes 双条件过滤，实现最小菜单权限消费。
+const visibleProjects = computed(() =>
+  projectOptions.value.filter((projectEntry) => {
+    if (projectEntry.publicEntry) {
+      return true
+    }
+    if (!projectEntry.requiredMenuCodes?.length) {
+      return true
+    }
+    return projectEntry.requiredMenuCodes.some((menuCode) => grantedMenuCodes.value.includes(menuCode))
+  })
+)
 
 // 是否显示工程切换器取决于当前是否存在多个工程，单工程时避免无意义控件干扰页面。
-const showProjectSwitcher = computed(() => projectOptions.value.length > 1)
+const showProjectSwitcher = computed(() => visibleProjects.value.length > 1)
 
 // 把 URL 中的 project 参数重新同步回宿主激活工程，支持浏览器前进后退或手工改 URL。
 const syncProjectFromUrl = () => {
   // 只接受当前仍然存在的工程 id，避免 URL 指向已移除工程目录时宿主报错。
-  const nextProjectId = normalizeProjectId(readProjectIdFromUrl()) || resolveInitialProjectId()
+  const nextProjectId = normalizeProjectId(readProjectIdFromUrl()) || visibleProjects.value[0]?.id || ''
   // 仅在工程 id 实际变化时更新宿主状态，减少无意义的重渲染。
   if (nextProjectId !== activeProjectId.value) {
     activeProjectId.value = nextProjectId
@@ -36,13 +57,25 @@ watch(activeProjectId, (nextProjectId) => {
   writeProjectIdToUrl(nextProjectId)
 })
 
+// 登录态或菜单权限变化时重新校正当前工程，避免用户停留在已无权限的模块。
+watch(visibleProjects, (nextVisibleProjects) => {
+  if (nextVisibleProjects.some((projectEntry) => projectEntry.id === activeProjectId.value)) {
+    return
+  }
+  activeProjectId.value = nextVisibleProjects[0]?.id || ''
+})
+
 // 页面挂载后监听浏览器历史变化，保证宿主地址栏和激活工程保持双向同步。
 onMounted(() => {
+  unsubscribeAuthSession = subscribeAuthSession((nextSession) => {
+    authSession.value = nextSession
+  })
   window.addEventListener('popstate', syncProjectFromUrl)
 })
 
 // 页面卸载时移除浏览器历史监听，避免宿主组件重复挂载后遗留事件处理器。
 onBeforeUnmount(() => {
+  unsubscribeAuthSession()
   window.removeEventListener('popstate', syncProjectFromUrl)
 })
 </script>
@@ -52,7 +85,7 @@ onBeforeUnmount(() => {
     <header v-if="showProjectSwitcher" class="project-host-switcher">
       <label class="project-host-switcher-label" for="project-host-select">Project</label>
       <select id="project-host-select" v-model="activeProjectId" class="project-host-switcher-select">
-        <option v-for="projectEntry in projectOptions" :key="projectEntry.id" :value="projectEntry.id">
+        <option v-for="projectEntry in visibleProjects" :key="projectEntry.id" :value="projectEntry.id">
           {{ projectEntry.label }}
         </option>
       </select>

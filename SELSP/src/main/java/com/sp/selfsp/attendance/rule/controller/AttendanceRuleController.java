@@ -1,7 +1,7 @@
 package com.sp.selfsp.attendance.rule.controller;
 
-import com.sp.selfsp.attendance.domain.in.AttendanceIn;
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.in.AttendanceIn;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 import com.sp.selfsp.attendance.rule.service.AttendanceRuleService;
 import com.sp.selfsp.common.util.CommonResponse;
 import org.springframework.web.bind.annotation.GetMapping;

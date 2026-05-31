@@ -1,0 +1,467 @@
+/* 权限中心全局壳只承接本工程的页面尺寸和局部布局，正式主题颜色继续复用 attendance 主题预设。 */
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+/* body 归零后让工作台可以完整吃到视口高度，避免浏览器默认 margin 破坏三分栏。 */
+body {
+  margin: 0;
+}
+
+/* 页面根壳沿用 attendance 的大宽度与双行网格节奏，让 hero 和 workbench 总体结构一致。 */
+.seladmin-page.seluniauth-page-shell {
+  width: min(calc(100vw - 32px), 2140px);
+  max-width: min(calc(100vw - 32px), 2140px);
+  height: calc(100vh - 16px);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+/* hero 补一层内部分栏，让左侧定位说明和右侧主题语言切换保持稳定对齐。 */
+.seluniauth-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
+}
+
+/* hero 右上操作列沿用 attendance 的纵向节奏，承接主题和语言切换控件。 */
+.selattendance-hero-actions {
+  display: grid;
+  gap: 12px;
+  justify-items: end;
+}
+
+/* 主题切换壳负责让 ThemeSwitch 在权限中心里也保持稳定排列。 */
+.selattendance-theme-switch {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+/* 主题切换标签沿用较弱色值，避免与主标题抢层级。 */
+.selattendance-theme-label {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* 消息条统一放在 workbench 上方，避免成功失败提示插进内容区打断编辑流程。 */
+.seluniauth-message {
+  padding: 14px 18px;
+  border-radius: 18px;
+  border: 1px solid transparent;
+}
+
+/* 成功消息直接沿用绿色强调，告诉管理员当前保存或刷新已经真正生效。 */
+.seluniauth-message.is-success {
+  background: rgba(21, 91, 56, 0.34);
+  border-color: rgba(88, 214, 147, 0.28);
+  color: #c6ffd9;
+}
+
+/* 错误消息统一用红色系高亮，帮助管理员区分鉴权失败、保存失败和桥接失败。 */
+.seluniauth-message.is-error {
+  background: rgba(113, 39, 48, 0.34);
+  border-color: rgba(244, 127, 127, 0.26);
+  color: #ffd0d0;
+}
+
+/* 普通消息承接退出登录等中性反馈，不抢过成功和错误提示的层级。 */
+.seluniauth-message.is-info {
+  background: rgba(40, 63, 105, 0.34);
+  border-color: rgba(115, 144, 202, 0.24);
+  color: #d7e5ff;
+}
+
+/* 未登录卡单独居中，避免登录状态下出现一整屏左导航空壳。 */
+.seluniauth-login-card {
+  width: min(760px, 100%);
+  justify-self: center;
+  display: grid;
+  gap: 18px;
+  padding: 28px 28px 24px;
+}
+
+/* 登录区文案保持紧凑竖向节奏，减少输入前的阅读跳跃。 */
+.seluniauth-login-copy {
+  display: grid;
+  gap: 8px;
+}
+
+/* 登录态下的工作台整体高度直接继承页面剩余视口，和 attendance 一样走局部滚动。 */
+.seluniauth-workbench {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 左侧导航卡完整复用 attendance 的侧栏节奏，让两个工程切换时不会像换了一套系统。 */
+.selattendance-sidebar {
+  display: grid;
+  gap: 18px;
+  height: 100%;
+  min-height: 0;
+  padding: 22px 18px;
+  overflow: auto;
+}
+
+/* 侧栏头部文案统一走竖向节奏，先看标题，再看当前导航说明。 */
+.selattendance-sidebar-header {
+  display: grid;
+  gap: 8px;
+}
+
+/* 模块按钮列表统一走 grid，和 attendance 左栏保持相同点击密度。 */
+.selattendance-section-menu {
+  display: grid;
+  gap: 10px;
+}
+
+/* 模块按钮继续复用 attendance 的大卡片式切换交互。 */
+.selattendance-section-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  min-height: 68px;
+  padding: 14px 16px;
+  border: 1px solid var(--seladmin-border, rgba(255, 255, 255, 0.12));
+  border-radius: 16px;
+  background: var(--seladmin-surface-muted, rgba(255, 255, 255, 0.04));
+  color: inherit;
+  text-align: left;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+/* hover 时轻微上浮，帮助管理员确认当前会切到哪个管理域。 */
+.selattendance-section-button:hover {
+  transform: translateY(-1px);
+  border-color: var(--seladmin-border, rgba(255, 255, 255, 0.22));
+  box-shadow: 0 16px 28px rgba(18, 24, 38, 0.12);
+}
+
+/* 激活按钮直接抬成高亮主题，和 attendance 的工作台导航保持同一个反馈语义。 */
+.selattendance-section-button.active {
+  background: var(--seladmin-gradient-primary, rgba(39, 141, 255, 0.95));
+  color: var(--seladmin-text, #fff);
+  box-shadow: 0 20px 32px rgba(28, 89, 151, 0.18);
+}
+
+/* 文案列负责承接模块名称和职责说明。 */
+.selattendance-section-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* 模块主标题保持清晰字号，方便快速扫读导航。 */
+.selattendance-section-copy strong {
+  font-size: 15px;
+}
+
+/* 模块说明弱化显示，避免抢走模块名称的视觉优先级。 */
+.selattendance-section-copy small {
+  color: var(--seladmin-text-muted, rgba(255, 255, 255, 0.66));
+  line-height: 1.45;
+}
+
+/* 激活态下说明文字改成继承色，保证在蓝色高亮背景上仍然清楚。 */
+.selattendance-section-button.active .selattendance-section-copy small {
+  color: inherit;
+  opacity: 0.92;
+}
+
+/* 角标统一承接当前模块数量，帮助管理员在不切换时先判断数据规模。 */
+.selattendance-section-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--seladmin-surface-button, rgba(255, 255, 255, 0.08));
+  font-weight: 700;
+}
+
+/* 激活态角标再提一层亮度，和按钮整体高亮保持一致。 */
+.selattendance-section-button.active .selattendance-section-badge {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* 侧栏动作区固定贴在导航底部，让刷新和退出按钮不会散落到中间。 */
+.seluniauth-sidebar-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: auto;
+}
+
+/* 主内容区按头部加区块本体纵向排列，和 attendance 的 main pane 节奏一致。 */
+.seluniauth-content {
+  display: grid;
+  gap: 18px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 当前区块头部直接复用 shared header，但仍保留本工程单独的间距变量。 */
+.seluniauth-content-header {
+  --shared-workbench-copy-min: 320px;
+  --shared-workbench-copy-max: 0.95fr;
+  --shared-workbench-metrics-min: 360px;
+  --shared-workbench-metrics-max: 1.05fr;
+}
+
+/* 头部状态区只承接当前用户和租户焦点，用胶囊徽标减少文字负担。 */
+.seluniauth-header-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* 状态胶囊把当前登录人和租户编码抬到头部动作位，减少回头看右栏的次数。 */
+.seluniauth-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 600;
+}
+
+/* 次级胶囊弱化展示，避免租户编码抢走当前用户名的视觉重心。 */
+.seluniauth-status-pill.is-muted {
+  color: rgba(218, 228, 255, 0.72);
+}
+
+/* 指标卡容器允许 shared metric cards 在较窄列宽下自动换行。 */
+.seluniauth-header-metrics {
+  --shared-metric-card-columns: 3;
+}
+
+/* 四个正式管理区统一走双栏网格，左表单右列表，和 attendance 各模块的编辑节奏一致。 */
+.seluniauth-section-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 1.18fr);
+  gap: 18px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 表单卡和表格卡统一承接深色表面和局部滚动，不再各自定义一套壳层。 */
+.seluniauth-editor-card,
+.seluniauth-table-card,
+.seluniauth-side-panel {
+  display: grid;
+  gap: 18px;
+  padding: 22px 24px;
+  min-height: 0;
+}
+
+/* 卡片头部统一解释当前区块职责，和 attendance 的每个 section 头部文字层级一致。 */
+.seluniauth-card-header,
+.seluniauth-side-panel-header {
+  display: grid;
+  gap: 8px;
+}
+
+/* 通用表单网格默认两列排布，便于在一个屏内展示更多管理字段。 */
+.seluniauth-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+/* 某些长文本字段需要吃满两列，避免权限码和菜单码文本区被挤成难以编辑的窄栏。 */
+.seluniauth-field-span-2 {
+  grid-column: 1 / -1;
+}
+
+/* 动作行统一放在表单底部，确保保存按钮总在最容易点击的位置。 */
+.seluniauth-action-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 菜单启用状态单独用内联 checkbox 展示，和 attendance 规则页的启用态表达保持接近。 */
+.seluniauth-inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+
+/* 表格容器单独滚动，避免大列表把整个工作台高度继续往下撑。 */
+.seluniauth-table-shell {
+  min-height: 0;
+  overflow: auto;
+  border-radius: 22px;
+  border: 1px solid rgba(115, 144, 202, 0.18);
+  position: relative;
+}
+
+/* 数据表本体采用粘性表头和整表宽度铺满，阅读体验对齐 attendance 列表区。 */
+.seluniauth-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* 表头固定在容器顶部，滚动时始终保留列含义。 */
+.seluniauth-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(28, 40, 67, 0.98), rgba(19, 29, 48, 0.98));
+  color: rgba(242, 246, 255, 0.94);
+  text-align: left;
+  font-size: 0.88rem;
+  font-weight: 700;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(115, 144, 202, 0.18),
+    0 8px 18px rgba(8, 12, 24, 0.24);
+  backdrop-filter: blur(14px);
+}
+
+/* 数据行保持清晰分隔，点击时有轻微悬浮反馈，方便管理员知道当前正在回填哪条记录。 */
+.seluniauth-table tbody td {
+  padding: 14px 16px;
+  border-top: 1px solid rgba(115, 144, 202, 0.12);
+  color: rgba(238, 244, 255, 0.88);
+}
+
+/* 鼠标悬停当前行时用较浅背景强调，贴近 attendance 的列表交互反馈。 */
+.seluniauth-table tbody tr {
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+/* 当前行 hover 提示“点击即可回填到左侧表单继续编辑”。 */
+.seluniauth-table tbody tr:hover {
+  background: rgba(88, 122, 196, 0.12);
+}
+
+/* 右侧辅助栏按卡片纵向堆叠，专门承接宿主桥接和权限参考，不再掺杂主编辑区。 */
+.seluniauth-side-stack {
+  display: grid;
+  gap: 18px;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* 当前用户键值列表统一用双列 definition list，让身份快照一眼可扫读。 */
+.seluniauth-key-value-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+/* 单行键值块保持标题和值上下结构，便于窄右栏中仍能稳定换行。 */
+.seluniauth-key-value-item {
+  display: grid;
+  gap: 4px;
+}
+
+/* 键名使用弱色值，避免与实际值抢主次。 */
+.seluniauth-key-value-item dt {
+  color: rgba(208, 224, 255, 0.62);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* 值字段强调当前登录人、租户和权限规模等实际业务结果。 */
+.seluniauth-key-value-item dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* 代码块用于展示宿主桥接 JSON，必须允许自动换行和局部滚动。 */
+.seluniauth-code-block {
+  margin: 0;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(7, 14, 28, 0.48);
+  border: 1px solid rgba(115, 144, 202, 0.16);
+  color: rgba(222, 234, 255, 0.86);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow: auto;
+}
+
+/* 权限参考列表用纵向清单展示，让角色页右栏不必再读原始 JSON。 */
+.seluniauth-reference-list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* 每条权限定义单独成块，方便管理员快速扫过权限码和类型说明。 */
+.seluniauth-reference-list li {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(115, 144, 202, 0.14);
+}
+
+/* 权限定义主标题强调当前权限业务含义，减少管理员只盯着代码串。 */
+.seluniauth-reference-list strong {
+  font-size: 14px;
+}
+
+/* 权限定义补充说明弱化显示，负责解释权限码、类型和作用域。 */
+.seluniauth-reference-list small {
+  color: rgba(218, 228, 255, 0.72);
+  line-height: 1.5;
+}
+
+/* 平板尺寸下先把主编辑区退成单列，避免右表格和左表单互相挤压。 */
+@media (max-width: 1180px) {
+  .seluniauth-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .seluniauth-section-shell {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 手机尺寸下进一步压缩表单成单列，保证双语字段在窄屏上仍然可编辑。 */
+@media (max-width: 720px) {
+  .seladmin-page.seluniauth-page-shell {
+    width: min(calc(100vw - 20px), 2140px);
+    max-width: min(calc(100vw - 20px), 2140px);
+    height: auto;
+    min-height: calc(100vh - 10px);
+  }
+
+  .seluniauth-login-card,
+  .seluniauth-editor-card,
+  .seluniauth-table-card,
+  .seluniauth-side-panel {
+    padding: 18px 16px;
+  }
+
+  .seluniauth-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

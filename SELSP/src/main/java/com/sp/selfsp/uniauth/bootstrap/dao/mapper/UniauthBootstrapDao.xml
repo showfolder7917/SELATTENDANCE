@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.uniauth.bootstrap.dao.UniauthBootstrapDao">
+
+  <resultMap id="ModuleListResultMap" type="com.sp.selfsp.uniauth.module.domain.out.UniauthModuleItemOut">
+    <id column="id" property="id"/>
+    <result column="module_code" property="moduleCode"/>
+    <result column="module_name" property="moduleName"/>
+    <result column="module_type" property="moduleType"/>
+    <result column="module_desc" property="moduleDesc"/>
+    <result column="entry_project" property="entryProject"/>
+    <result column="owner_system" property="ownerSystem"/>
+    <result column="route_key" property="routeKey"/>
+    <result column="enabled_flag" property="enabledFlag"/>
+  </resultMap>
+
+  <resultMap id="TenantListResultMap" type="com.sp.selfsp.uniauth.tenant.domain.out.UniauthTenantItemOut">
+    <id column="id" property="id"/>
+    <result column="tenant_code" property="tenantCode"/>
+    <result column="tenant_name" property="tenantName"/>
+    <result column="tenant_status" property="tenantStatus"/>
+    <result column="contact_name" property="contactName"/>
+    <result column="contact_email" property="contactEmail"/>
+    <result column="contact_phone" property="contactPhone"/>
+    <result column="created_at" property="createdAt"/>
+    <result column="updated_at" property="updatedAt"/>
+  </resultMap>
+
+  <resultMap id="UserListResultMap" type="com.sp.selfsp.uniauth.user.domain.out.UniauthUserItemOut">
+    <id column="id" property="id"/>
+    <result column="tenant_id" property="tenantId"/>
+    <result column="tenant_code" property="tenantCode"/>
+    <result column="login_name" property="loginName"/>
+    <result column="display_name" property="displayName"/>
+    <result column="display_name_kana" property="displayNameKana"/>
+    <result column="locale" property="locale"/>
+    <result column="email" property="email"/>
+    <result column="phone" property="phone"/>
+    <result column="user_status" property="userStatus"/>
+    <result column="locked_flag" property="lockedFlag"/>
+  </resultMap>
+
+  <resultMap id="RoleListResultMap" type="com.sp.selfsp.uniauth.role.domain.out.UniauthRoleItemOut">
+    <id column="id" property="id"/>
+    <result column="tenant_id" property="tenantId"/>
+    <result column="role_code" property="roleCode"/>
+    <result column="role_name" property="roleName"/>
+    <result column="role_desc" property="roleDesc"/>
+    <result column="builtin_flag" property="builtinFlag"/>
+    <result column="role_status" property="roleStatus"/>
+  </resultMap>
+
+  <resultMap id="MenuListResultMap" type="com.sp.selfsp.uniauth.menu.domain.out.UniauthMenuItemOut">
+    <id column="id" property="id"/>
+    <result column="module_code" property="moduleCode"/>
+    <result column="menu_code" property="menuCode"/>
+    <result column="parent_id" property="parentId"/>
+    <result column="menu_type" property="menuType"/>
+    <result column="route_path" property="routePath"/>
+    <result column="component_name" property="componentName"/>
+    <result column="icon_name" property="iconName"/>
+    <result column="sort_order" property="sortOrder"/>
+    <result column="title_zh" property="titleZh"/>
+    <result column="title_ja" property="titleJa"/>
+    <result column="enabled_flag" property="enabledFlag"/>
+  </resultMap>
+
+  <resultMap id="PermissionListResultMap" type="com.sp.selfsp.uniauth.bootstrap.domain.out.UniauthPermissionItemOut">
+    <id column="id" property="id"/>
+    <result column="module_code" property="moduleCode"/>
+    <result column="permission_code" property="permissionCode"/>
+    <result column="permission_name" property="permissionName"/>
+    <result column="permission_type" property="permissionType"/>
+    <result column="resource_key" property="resourceKey"/>
+    <result column="action_key" property="actionKey"/>
+    <result column="scope_type" property="scopeType"/>
+    <result column="enabled_flag" property="enabledFlag"/>
+  </resultMap>
+
+  <sql id="ModuleListColumns">
+    id, module_code, module_name, module_type, module_desc, entry_project, owner_system, route_key, enabled_flag
+  </sql>
+
+  <sql id="TenantListColumns">
+    id, tenant_code, tenant_name, tenant_status, contact_name, contact_email, contact_phone, created_at, updated_at
+  </sql>
+
+  <sql id="UserListColumns">
+    u.id, u.tenant_id, t.tenant_code, u.login_name, u.display_name, u.display_name_kana, u.locale, u.email, u.phone, u.user_status, u.locked_flag
+  </sql>
+
+  <sql id="RoleListColumns">
+    id, tenant_id, role_code, role_name, role_desc, builtin_flag, role_status
+  </sql>
+
+  <sql id="MenuListColumns">
+    id, module_code, menu_code, parent_id, menu_type, route_path, component_name, icon_name, sort_order, title_zh, title_ja, enabled_flag
+  </sql>
+
+  <sql id="PermissionListColumns">
+    id, module_code, permission_code, permission_name, permission_type, resource_key, action_key, scope_type, enabled_flag
+  </sql>
+
+  <select id="selectModuleList" resultMap="ModuleListResultMap">
+    SELECT <include refid="ModuleListColumns"/>
+    FROM ua_module
+    ORDER BY id
+  </select>
+
+  <select id="selectTenantList" resultMap="TenantListResultMap">
+    SELECT <include refid="TenantListColumns"/>
+    FROM ua_tenant
+    ORDER BY id
+  </select>
+
+  <select id="selectUserList" resultMap="UserListResultMap">
+    SELECT <include refid="UserListColumns"/>
+    FROM ua_user u
+    LEFT JOIN ua_tenant t ON t.id = u.tenant_id
+    ORDER BY u.id
+  </select>
+
+  <select id="selectRoleList" resultMap="RoleListResultMap">
+    SELECT <include refid="RoleListColumns"/>
+    FROM ua_role
+    ORDER BY id
+  </select>
+
+  <select id="selectMenuList" resultMap="MenuListResultMap">
+    SELECT <include refid="MenuListColumns"/>
+    FROM ua_menu
+    ORDER BY sort_order, id
+  </select>
+
+  <select id="selectPermissionList" resultMap="PermissionListResultMap">
+    SELECT <include refid="PermissionListColumns"/>
+    FROM ua_permission
+    ORDER BY id
+  </select>
+
+  <insert id="insertAuditLog">
+    INSERT INTO ua_audit_log (
+      tenant_id, operator_user_id, operator_name, module_code, action_type, target_type, target_id, result_status, request_path, detail_text
+    ) VALUES (
+      #{tenantId}, #{operatorUserId}, #{operatorName}, #{moduleCode}, #{actionType}, #{targetType}, #{targetId}, #{resultStatus}, #{requestPath}, #{detailText}
+    )
+  </insert>
+</mapper>

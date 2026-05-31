@@ -1,6 +1,6 @@
 package com.sp.selfsp.attendance.schedule.domain.out;
 
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;

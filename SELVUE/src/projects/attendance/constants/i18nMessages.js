@@ -41,6 +41,8 @@ export const messages = {
     navDepartment: '部门',
     // 维护 导航员工 字段，供当前前端状态或配置直接使用。
     navEmployee: '员工',
+    // 维护 导航接入 字段，供当前前端状态或配置直接使用。
+    navConnector: '外部接入',
     // 维护 导航规则 字段，供当前前端状态或配置直接使用。
     navRule: '日本规则',
     // 维护 导航班次 字段，供当前前端状态或配置直接使用。
@@ -69,6 +71,8 @@ export const messages = {
     sectionDepartmentHint: '维护组织部门，供员工主数据和后续排班关联。',
     // 维护 section员工Hint 字段，供当前前端状态或配置直接使用。
     sectionEmployeeHint: '处理员工主数据、CSV 导入导出和打卡 ID 绑定。',
+    // 维护 section接入Hint 字段，供当前前端状态或配置直接使用。
+    sectionConnectorHint: '配置外部打卡接入、维护员工映射，并查看同步日志和失败重试。',
     // 维护 section规则Hint 字段，供当前前端状态或配置直接使用。
     sectionRuleHint: '配置日本勤怠规则、绑定员工适用关系，并查看残业和有休预警。',
     // 维护 section班次Hint 字段，供当前前端状态或配置直接使用。
@@ -101,6 +105,8 @@ export const messages = {
     departmentTitle: '部门管理',
     // 维护 员工Title 字段，供当前前端状态或配置直接使用。
     employeeTitle: '员工管理',
+    // 维护 接入Title 字段，供当前前端状态或配置直接使用。
+    connectorTitle: '外部打卡接入',
     // 维护 规则Title 字段，供当前前端状态或配置直接使用。
     ruleTitle: '日本规则增强',
     // 维护 班次Title 字段，供当前前端状态或配置直接使用。
@@ -271,6 +277,34 @@ export const messages = {
     ruleReminderCount: '轻提醒',
     // 维护 已绑定员工卡片 字段，供当前前端状态或配置直接使用。
     ruleBoundEmployeeCount: '已绑定员工',
+    // 维护 启用接入卡片 字段，供当前前端状态或配置直接使用。
+    connectorActiveCount: '启用接入',
+    // 维护 已映射员工卡片 字段，供当前前端状态或配置直接使用。
+    connectorMappedCount: '已映射员工',
+    // 维护 失败同步卡片 字段，供当前前端状态或配置直接使用。
+    connectorFailedCount: '失败同步',
+    // 维护 接入加载失败 字段，供当前前端状态或配置直接使用。
+    connectorLoadFailed: '接入工作台加载失败',
+    // 维护 接入保存失败 字段，供当前前端状态或配置直接使用。
+    connectorSaveFailed: '接入配置保存失败',
+    // 维护 接入保存成功 字段，供当前前端状态或配置直接使用。
+    connectorToastSaved: '接入配置已保存',
+    // 维护 需要先保存接入 字段，供当前前端状态或配置直接使用。
+    connectorNeedSaveFirst: '请先保存接入配置，再测试连接',
+    // 维护 测试完成 字段，供当前前端状态或配置直接使用。
+    connectorTestFinished: '接入测试已完成',
+    // 维护 测试失败 字段，供当前前端状态或配置直接使用。
+    connectorTestFailed: '接入测试失败',
+    // 维护 映射未选员工 字段，供当前前端状态或配置直接使用。
+    connectorMappingNeedEmployee: '请先选择员工',
+    // 维护 映射保存成功 字段，供当前前端状态或配置直接使用。
+    connectorMappingSaved: '外部映射已保存',
+    // 维护 映射保存失败 字段，供当前前端状态或配置直接使用。
+    connectorMappingSaveFailed: '外部映射保存失败',
+    // 维护 重试成功 字段，供当前前端状态或配置直接使用。
+    connectorRetrySaved: '同步重试已提交',
+    // 维护 重试失败 字段，供当前前端状态或配置直接使用。
+    connectorRetryFailed: '同步重试失败',
     // 维护 规则载入失败 字段，供当前前端状态或配置直接使用。
     ruleLoadFailed: '规则工作台加载失败',
     // 维护 规则保存失败 字段，供当前前端状态或配置直接使用。
@@ -313,6 +347,56 @@ export const messages = {
     externalEmployeeNo: '外部打卡编号',
     // 维护 sourceSystem 字段，供当前前端状态或配置直接使用。
     sourceSystem: '外部系统',
+    // 维护 接入来源系统 字段，供当前前端状态或配置直接使用。
+    connectorSourceSystem: '接入编码',
+    // 维护 接入名称 字段，供当前前端状态或配置直接使用。
+    connectorName: '接入名称',
+    // 维护 接入平台类型 字段，供当前前端状态或配置直接使用。
+    connectorProviderType: '平台类型',
+    // 维护 接入方式 字段，供当前前端状态或配置直接使用。
+    connectorReceiveMode: '接收方式',
+    // 维护 API 基础地址 字段，供当前前端状态或配置直接使用。
+    connectorApiBaseUrl: 'API 地址',
+    // 维护 API Key 字段，供当前前端状态或配置直接使用。
+    connectorApiKey: 'API Key',
+    // 维护 API Secret 字段，供当前前端状态或配置直接使用。
+    connectorApiSecret: 'API Secret',
+    // 维护 Webhook Secret 字段，供当前前端状态或配置直接使用。
+    connectorWebhookSecret: 'Webhook Secret',
+    // 维护 Pull 表达式 字段，供当前前端状态或配置直接使用。
+    connectorSyncCron: '同步表达式',
+    // 维护 Webhook URL 字段，供当前前端状态或配置直接使用。
+    connectorWebhookUrl: 'Webhook 地址',
+    // 维护 请求编号 字段，供当前前端状态或配置直接使用。
+    connectorRequestId: '请求编号',
+    // 维护 触发方式 字段，供当前前端状态或配置直接使用。
+    connectorTriggerType: '触发方式',
+    // 维护 接入列表标题 字段，供当前前端状态或配置直接使用。
+    connectorListTitle: '接入配置清单',
+    // 维护 接入表单标题 字段，供当前前端状态或配置直接使用。
+    connectorFormTitle: '接入配置',
+    // 维护 接入映射标题 字段，供当前前端状态或配置直接使用。
+    connectorMappingTitle: '员工外部映射',
+    // 维护 接入映射列表标题 字段，供当前前端状态或配置直接使用。
+    connectorMappingListTitle: '映射清单',
+    // 维护 接入日志标题 字段，供当前前端状态或配置直接使用。
+    connectorSyncLogTitle: '同步日志',
+    // 维护 接入空状态 字段，供当前前端状态或配置直接使用。
+    connectorEmpty: '还没有正式接入配置，请先新增一条第三方打卡接入。',
+    // 维护 接入映射空状态 字段，供当前前端状态或配置直接使用。
+    connectorMappingEmpty: '当前筛选下还没有员工映射。',
+    // 维护 接入日志空状态 字段，供当前前端状态或配置直接使用。
+    connectorSyncEmpty: '当前筛选下还没有同步日志。',
+    // 维护 接入搜索提示 字段，供当前前端状态或配置直接使用。
+    connectorKeywordHint: '搜索接入名、请求编号或外部编号',
+    // 维护 接入仅看启用 字段，供当前前端状态或配置直接使用。
+    connectorActiveOnly: '仅看启用接入',
+    // 维护 接入测试按钮 字段，供当前前端状态或配置直接使用。
+    connectorTestAction: '测试连接',
+    // 维护 接入重试按钮 字段，供当前前端状态或配置直接使用。
+    connectorRetryAction: '重试同步',
+    // 维护 接入选择员工 字段，供当前前端状态或配置直接使用。
+    connectorSelectEmployee: '选择员工',
     // 维护 班次编码 字段，供当前前端状态或配置直接使用。
     shiftCode: '模板编码',
     // 维护 班次名称 字段，供当前前端状态或配置直接使用。
@@ -826,6 +910,8 @@ export const messages = {
     navDepartment: '部署',
     // 维护 导航员工 字段，供当前前端状态或配置直接使用。
     navEmployee: '社員',
+    // 维护 导航接入 字段，供当前前端状态或配置直接使用。
+    navConnector: '外部連携',
     // 维护 导航规则 字段，供当前前端状态或配置直接使用。
     navRule: '日本ルール',
     // 维护 导航班次 字段，供当前前端状态或配置直接使用。
@@ -854,6 +940,8 @@ export const messages = {
     sectionDepartmentHint: '組織部署を整備し、社員主データと後続シフトの紐付けに備えます。',
     // 维护 section员工Hint 字段，供当前前端状态或配置直接使用。
     sectionEmployeeHint: '社員主データ、CSV 取込 / 出力、打刻 ID 連携を処理します。',
+    // 维护 section接入Hint 字段，供当前前端状态或配置直接使用。
+    sectionConnectorHint: '外部打刻連携を設定し、社員マッピングと同期ログ・再試行を確認します。',
     // 维护 section规则Hint 字段，供当前前端状态或配置直接使用。
     sectionRuleHint: '日本勤怠ルールを設定し、社員への適用と残業・有休アラートを確認します。',
     // 维护 section班次Hint 字段，供当前前端状态或配置直接使用。
@@ -886,6 +974,8 @@ export const messages = {
     departmentTitle: '部署管理',
     // 维护 员工Title 字段，供当前前端状态或配置直接使用。
     employeeTitle: '社員管理',
+    // 维护 接入Title 字段，供当前前端状态或配置直接使用。
+    connectorTitle: '外部打刻連携',
     // 维护 规则Title 字段，供当前前端状态或配置直接使用。
     ruleTitle: '日本ルール強化',
     // 维护 班次Title 字段，供当前前端状态或配置直接使用。
@@ -1058,6 +1148,34 @@ export const messages = {
     ruleReminderCount: 'リマインド',
     // 维护 已绑定员工卡片 字段，供当前前端状态或配置直接使用。
     ruleBoundEmployeeCount: '適用済み社員',
+    // 维护 启用接入卡片 字段，供当前前端状态或配置直接使用。
+    connectorActiveCount: '有効連携',
+    // 维护 已映射员工卡片 字段，供当前前端状态或配置直接使用。
+    connectorMappedCount: '紐付け済み社員',
+    // 维护 失败同步卡片 字段，供当前前端状态或配置直接使用。
+    connectorFailedCount: '失敗同期',
+    // 维护 接入加载失败 字段，供当前前端状态或配置直接使用。
+    connectorLoadFailed: '連携ワークベンチの読込に失敗しました',
+    // 维护 接入保存失败 字段，供当前前端状态或配置直接使用。
+    connectorSaveFailed: '連携設定の保存に失敗しました',
+    // 维护 接入保存成功 字段，供当前前端状态或配置直接使用。
+    connectorToastSaved: '連携設定を保存しました',
+    // 维护 需要先保存接入 字段，供当前前端状态或配置直接使用。
+    connectorNeedSaveFirst: '先に連携設定を保存してから接続テストを実行してください',
+    // 维护 测试完成 字段，供当前前端状态或配置直接使用。
+    connectorTestFinished: '接続テストが完了しました',
+    // 维护 测试失败 字段，供当前前端状态或配置直接使用。
+    connectorTestFailed: '接続テストに失敗しました',
+    // 维护 映射未选员工 字段，供当前前端状态或配置直接使用。
+    connectorMappingNeedEmployee: '先に社員を選択してください',
+    // 维护 映射保存成功 字段，供当前前端状态或配置直接使用。
+    connectorMappingSaved: '外部マッピングを保存しました',
+    // 维护 映射保存失败 字段，供当前前端状态或配置直接使用。
+    connectorMappingSaveFailed: '外部マッピングの保存に失敗しました',
+    // 维护 重试成功 字段，供当前前端状态或配置直接使用。
+    connectorRetrySaved: '同期の再試行を送信しました',
+    // 维护 重试失败 字段，供当前前端状态或配置直接使用。
+    connectorRetryFailed: '同期の再試行に失敗しました',
     // 维护 规则载入失败 字段，供当前前端状态或配置直接使用。
     ruleLoadFailed: 'ルールワークベンチの読込に失敗しました',
     // 维护 规则保存失败 字段，供当前前端状态或配置直接使用。
@@ -1100,6 +1218,56 @@ export const messages = {
     externalEmployeeNo: '外部打刻番号',
     // 维护 sourceSystem 字段，供当前前端状态或配置直接使用。
     sourceSystem: '外部システム',
+    // 维护 接入来源系统 字段，供当前前端状态或配置直接使用。
+    connectorSourceSystem: '連携コード',
+    // 维护 接入名称 字段，供当前前端状态或配置直接使用。
+    connectorName: '連携名称',
+    // 维护 接入平台类型 字段，供当前前端状态或配置直接使用。
+    connectorProviderType: 'プラットフォーム種別',
+    // 维护 接入方式 字段，供当前前端状态或配置直接使用。
+    connectorReceiveMode: '受信方式',
+    // 维护 API 基础地址 字段，供当前前端状态或配置直接使用。
+    connectorApiBaseUrl: 'API URL',
+    // 维护 API Key 字段，供当前前端状态或配置直接使用。
+    connectorApiKey: 'API Key',
+    // 维护 API Secret 字段，供当前前端状态或配置直接使用。
+    connectorApiSecret: 'API Secret',
+    // 维护 Webhook Secret 字段，供当前前端状态或配置直接使用。
+    connectorWebhookSecret: 'Webhook Secret',
+    // 维护 Pull 表达式 字段，供当前前端状态或配置直接使用。
+    connectorSyncCron: '同期 Cron',
+    // 维护 Webhook URL 字段，供当前前端状态或配置直接使用。
+    connectorWebhookUrl: 'Webhook URL',
+    // 维护 请求编号 字段，供当前前端状态或配置直接使用。
+    connectorRequestId: 'リクエスト ID',
+    // 维护 触发方式 字段，供当前前端状态或配置直接使用。
+    connectorTriggerType: '実行種別',
+    // 维护 接入列表标题 字段，供当前前端状态或配置直接使用。
+    connectorListTitle: '連携設定一覧',
+    // 维护 接入表单标题 字段，供当前前端状态或配置直接使用。
+    connectorFormTitle: '連携設定',
+    // 维护 接入映射标题 字段，供当前前端状态或配置直接使用。
+    connectorMappingTitle: '社員外部マッピング',
+    // 维护 接入映射列表标题 字段，供当前前端状态或配置直接使用。
+    connectorMappingListTitle: 'マッピング一覧',
+    // 维护 接入日志标题 字段，供当前前端状态或配置直接使用。
+    connectorSyncLogTitle: '同期ログ',
+    // 维护 接入空状态 字段，供当前前端状态或配置直接使用。
+    connectorEmpty: '正式な連携設定がまだありません。まずは第三者打刻連携を追加してください。',
+    // 维护 接入映射空状态 字段，供当前前端状态或配置直接使用。
+    connectorMappingEmpty: '現在の条件では社員マッピングがありません。',
+    // 维护 接入日志空状态 字段，供当前前端状态或配置直接使用。
+    connectorSyncEmpty: '現在の条件では同期ログがありません。',
+    // 维护 接入搜索提示 字段，供当前前端状态或配置直接使用。
+    connectorKeywordHint: '連携名、リクエスト ID、外部番号で検索',
+    // 维护 接入仅看启用 字段，供当前前端状态或配置直接使用。
+    connectorActiveOnly: '有効な連携のみ',
+    // 维护 接入测试按钮 字段，供当前前端状态或配置直接使用。
+    connectorTestAction: '接続テスト',
+    // 维护 接入重试按钮 字段，供当前前端状态或配置直接使用。
+    connectorRetryAction: '再試行',
+    // 维护 接入选择员工 字段，供当前前端状态或配置直接使用。
+    connectorSelectEmployee: '社員を選択',
     // 维护 班次编码 字段，供当前前端状态或配置直接使用。
     shiftCode: 'テンプレートコード',
     // 维护 班次名称 字段，供当前前端状态或配置直接使用。

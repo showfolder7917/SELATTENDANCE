@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.attendance.punch.connector.dao.AttendanceConnectorDao">
+
+  <resultMap id="ConnectorMappingResultMap" type="com.sp.selfsp.attendance.punch.connector.domain.out.AttendanceConnectorOut$ConnectorEmployeeMappingOut">
+    <id column="employee_id" property="employeeId"/>
+    <result column="employee_no" property="employeeNo"/>
+    <result column="employee_name" property="employeeName"/>
+    <result column="workplace_name" property="workplaceName"/>
+    <result column="department_name" property="departmentName"/>
+    <result column="source_system" property="sourceSystem"/>
+    <result column="external_employee_id" property="externalEmployeeId"/>
+    <result column="external_employee_no" property="externalEmployeeNo"/>
+    <result column="status" property="status"/>
+  </resultMap>
+
+  <resultMap id="ConnectorSyncLogResultMap" type="com.sp.selfsp.attendance.punch.connector.domain.out.AttendanceConnectorOut$ConnectorSyncLogOut">
+    <id column="id" property="id"/>
+    <result column="connector_id" property="connectorId"/>
+    <result column="source_system" property="sourceSystem"/>
+    <result column="connector_name" property="connectorName"/>
+    <result column="trigger_type" property="triggerType"/>
+    <result column="external_request_id" property="externalRequestId"/>
+    <result column="sync_status" property="syncStatus"/>
+    <result column="success_count" property="successCount"/>
+    <result column="failed_count" property="failedCount"/>
+    <result column="error_message" property="errorMessage"/>
+    <result column="request_snapshot" property="requestSnapshot"/>
+    <result column="result_snapshot" property="resultSnapshot"/>
+    <result column="retry_flag" property="retryFlag"/>
+    <result column="retry_count" property="retryCount"/>
+    <result column="created_at" property="createdAt"/>
+    <result column="updated_at" property="updatedAt"/>
+  </resultMap>
+
+  <sql id="ConnectorKeywordWhere">
+    <if test="query != null and query.keyword != null and query.keyword != ''">
+      AND (
+        c.source_system LIKE CONCAT('%', #{query.keyword}, '%')
+        OR c.config_name LIKE CONCAT('%', #{query.keyword}, '%')
+      )
+    </if>
+    <if test="query != null and query.sourceSystem != null and query.sourceSystem != ''">
+      AND c.source_system = #{query.sourceSystem}
+    </if>
+    <if test="query != null and query.activeOnly != null and query.activeOnly">
+      AND c.enabled = 1
+    </if>
+  </sql>
+
+  <select id="selectConnectorConfigs" resultType="java.util.HashMap">
+    SELECT
+      c.id,
+      c.source_system AS sourceSystem,
+      c.config_name AS connectorName,
+      c.api_base_url AS apiBaseUrl,
+      c.api_key AS apiKey,
+      c.api_secret AS apiSecret,
+      c.webhook_secret AS webhookSecret,
+      c.enabled AS activeFlag,
+      c.config_json AS configJson,
+      c.created_at AS createdAt,
+      c.updated_at AS updatedAt
+    FROM punch_source_config c
+    WHERE c.tenant_id = #{tenantId}
+    <include refid="ConnectorKeywordWhere"/>
+    ORDER BY c.enabled DESC, c.source_system ASC
+  </select>
+
+  <select id="selectConnectorConfigById" resultType="java.util.HashMap">
+    SELECT
+      c.id,
+      c.source_system AS sourceSystem,
+      c.config_name AS connectorName,
+      c.api_base_url AS apiBaseUrl,
+      c.api_key AS apiKey,
+      c.api_secret AS apiSecret,
+      c.webhook_secret AS webhookSecret,
+      c.enabled AS activeFlag,
+      c.config_json AS configJson,
+      c.created_at AS createdAt,
+      c.updated_at AS updatedAt
+    FROM punch_source_config c
+    WHERE c.tenant_id = #{tenantId}
+      AND c.id = #{id}
+  </select>
+
+  <select id="selectConnectorConfigBySourceSystem" resultType="java.util.HashMap">
+    SELECT
+      c.id,
+      c.source_system AS sourceSystem,
+      c.config_name AS connectorName,
+      c.api_base_url AS apiBaseUrl,
+      c.api_key AS apiKey,
+      c.api_secret AS apiSecret,
+      c.webhook_secret AS webhookSecret,
+      c.enabled AS activeFlag,
+      c.config_json AS configJson,
+      c.created_at AS createdAt,
+      c.updated_at AS updatedAt
+    FROM punch_source_config c
+    WHERE c.tenant_id = #{tenantId}
+      AND c.source_system = #{sourceSystem}
+  </select>
+
+  <insert id="insertConnectorConfig">
+    INSERT INTO punch_source_config (
+      tenant_id, source_system, config_name, api_base_url, api_key, api_secret, webhook_secret, enabled, config_json
+    ) VALUES (
+      #{tenantId}, #{in.sourceSystem}, #{in.connectorName}, #{in.apiBaseUrl}, #{in.apiKey}, #{in.apiSecret}, #{in.webhookSecret},
+      CASE WHEN #{in.activeFlag} THEN 1 ELSE 0 END, #{configJson}
+    )
+  </insert>
+
+  <update id="updateConnectorConfig">
+    UPDATE punch_source_config
+    SET source_system = #{in.sourceSystem},
+        config_name = #{in.connectorName},
+        api_base_url = #{in.apiBaseUrl},
+        api_key = #{in.apiKey},
+        api_secret = #{in.apiSecret},
+        webhook_secret = #{in.webhookSecret},
+        enabled = CASE WHEN #{in.activeFlag} THEN 1 ELSE 0 END,
+        config_json = #{configJson},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+
+  <select id="selectConnectorMappings" resultMap="ConnectorMappingResultMap">
+    SELECT
+      e.id AS employee_id,
+      e.employee_no,
+      e.employee_name,
+      w.workplace_name,
+      d.department_name,
+      m.source_system,
+      m.external_employee_id,
+      m.external_employee_no,
+      m.status
+    FROM employee_external_mapping m
+    INNER JOIN employee e ON e.id = m.employee_id AND e.tenant_id = m.tenant_id
+    LEFT JOIN workplace w ON w.id = e.workplace_id AND w.tenant_id = e.tenant_id
+    LEFT JOIN department d ON d.id = e.department_id AND d.tenant_id = e.tenant_id
+    WHERE m.tenant_id = #{tenantId}
+    <if test="query != null and query.sourceSystem != null and query.sourceSystem != ''">
+      AND m.source_system = #{query.sourceSystem}
+    </if>
+    <if test="query != null and query.keyword != null and query.keyword != ''">
+      AND (
+        e.employee_no LIKE CONCAT('%', #{query.keyword}, '%')
+        OR e.employee_name LIKE CONCAT('%', #{query.keyword}, '%')
+        OR m.external_employee_id LIKE CONCAT('%', #{query.keyword}, '%')
+        OR m.external_employee_no LIKE CONCAT('%', #{query.keyword}, '%')
+      )
+    </if>
+    ORDER BY e.employee_no ASC
+  </select>
+
+  <select id="selectConnectorSyncLogs" resultMap="ConnectorSyncLogResultMap">
+    SELECT
+      s.id,
+      s.connector_id,
+      s.source_system,
+      c.config_name AS connector_name,
+      s.trigger_type,
+      s.external_request_id,
+      s.sync_status,
+      s.success_count,
+      s.failed_count,
+      s.error_message,
+      s.request_snapshot,
+      s.result_snapshot,
+      s.retry_flag,
+      s.retry_count,
+      s.created_at,
+      s.updated_at
+    FROM attendance_punch_sync_log s
+    LEFT JOIN punch_source_config c ON c.id = s.connector_id AND c.tenant_id = s.tenant_id
+    WHERE s.tenant_id = #{tenantId}
+    <if test="query != null and query.sourceSystem != null and query.sourceSystem != ''">
+      AND s.source_system = #{query.sourceSystem}
+    </if>
+    <if test="query != null and query.keyword != null and query.keyword != ''">
+      AND (
+        s.source_system LIKE CONCAT('%', #{query.keyword}, '%')
+        OR c.config_name LIKE CONCAT('%', #{query.keyword}, '%')
+        OR s.external_request_id LIKE CONCAT('%', #{query.keyword}, '%')
+      )
+    </if>
+    ORDER BY s.created_at DESC, s.id DESC
+    LIMIT 30
+  </select>
+
+  <select id="selectConnectorSyncLogById" resultMap="ConnectorSyncLogResultMap">
+    SELECT
+      s.id,
+      s.connector_id,
+      s.source_system,
+      c.config_name AS connector_name,
+      s.trigger_type,
+      s.external_request_id,
+      s.sync_status,
+      s.success_count,
+      s.failed_count,
+      s.error_message,
+      s.request_snapshot,
+      s.result_snapshot,
+      s.retry_flag,
+      s.retry_count,
+      s.created_at,
+      s.updated_at
+    FROM attendance_punch_sync_log s
+    LEFT JOIN punch_source_config c ON c.id = s.connector_id AND c.tenant_id = s.tenant_id
+    WHERE s.tenant_id = #{tenantId}
+      AND s.id = #{id}
+  </select>
+
+  <insert id="insertConnectorSyncLog">
+    INSERT INTO attendance_punch_sync_log (
+      tenant_id, connector_id, source_system, trigger_type, external_request_id, sync_status, success_count,
+      failed_count, error_message, request_snapshot, result_snapshot, retry_flag, retry_count
+    ) VALUES (
+      #{tenantId}, #{connectorId}, #{sourceSystem}, #{triggerType}, #{externalRequestId}, #{syncStatus}, #{successCount},
+      #{failedCount}, #{errorMessage}, #{requestSnapshot}, #{resultSnapshot},
+      CASE WHEN #{retryFlag} THEN 1 ELSE 0 END, #{retryCount}
+    )
+  </insert>
+
+  <update id="updateConnectorSyncLogRetryResult">
+    UPDATE attendance_punch_sync_log
+    SET sync_status = #{syncStatus},
+        success_count = #{successCount},
+        failed_count = #{failedCount},
+        error_message = #{errorMessage},
+        result_snapshot = #{resultSnapshot},
+        retry_flag = 1,
+        retry_count = retry_count + 1,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = #{tenantId}
+      AND id = #{id}
+  </update>
+</mapper>

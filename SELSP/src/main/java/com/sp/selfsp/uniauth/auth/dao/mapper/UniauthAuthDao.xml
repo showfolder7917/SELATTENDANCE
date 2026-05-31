@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.selfsp.uniauth.auth.dao.UniauthAuthDao">
+
+  <resultMap id="AuthUserResultMap" type="com.sp.selfsp.uniauth.auth.domain.UniauthAuthUser">
+    <id column="id" property="id"/>
+    <result column="tenant_id" property="tenantId"/>
+    <result column="login_name" property="loginName"/>
+    <result column="password_hash" property="passwordHash"/>
+    <result column="display_name" property="displayName"/>
+    <result column="display_name_kana" property="displayNameKana"/>
+    <result column="locale" property="locale"/>
+    <result column="email" property="email"/>
+    <result column="phone" property="phone"/>
+    <result column="user_status" property="userStatus"/>
+    <result column="locked_flag" property="lockedFlag"/>
+    <result column="tenant_code" property="tenantCode"/>
+    <result column="tenant_status" property="tenantStatus"/>
+  </resultMap>
+
+  <sql id="AuthUserColumns">
+    u.id, u.tenant_id, u.login_name, u.password_hash, u.display_name, u.display_name_kana, u.locale, u.email, u.phone, u.user_status, u.locked_flag, t.tenant_code, t.tenant_status
+  </sql>
+
+  <select id="selectUserByLoginName" resultMap="AuthUserResultMap">
+    SELECT <include refid="AuthUserColumns"/>
+    FROM ua_user u
+    LEFT JOIN ua_tenant t ON t.id = u.tenant_id
+    WHERE u.login_name = #{loginName}
+  </select>
+
+  <select id="selectPermissionCodesByUserId" resultType="string">
+    SELECT DISTINCT p.permission_code
+    FROM ua_user_role ur
+    INNER JOIN ua_role_permission rp ON rp.role_id = ur.role_id
+    INNER JOIN ua_permission p ON p.id = rp.permission_id
+    WHERE ur.user_id = #{userId}
+      AND p.enabled_flag = 1
+  </select>
+
+  <select id="selectMenuCodesByUserId" resultType="string">
+    SELECT DISTINCT m.menu_code
+    FROM ua_user_role ur
+    INNER JOIN ua_role_menu rm ON rm.role_id = ur.role_id
+    INNER JOIN ua_menu m ON m.id = rm.menu_id
+    WHERE ur.user_id = #{userId}
+      AND m.enabled_flag = 1
+  </select>
+
+  <select id="selectDataScopesByUserId" resultType="string">
+    SELECT DISTINCT CONCAT(rds.module_code, ':', rds.scope_type, ':', COALESCE(rds.scope_value, ''))
+    FROM ua_user_role ur
+    INNER JOIN ua_role_data_scope rds ON rds.role_id = ur.role_id
+    WHERE ur.user_id = #{userId}
+  </select>
+
+  <insert id="insertLoginSession">
+    INSERT INTO ua_login_session (
+      user_id, refresh_token_hash, device_info, login_ip, expire_at
+    ) VALUES (
+      #{userId}, #{refreshTokenHash}, #{deviceInfo}, #{loginIp}, #{expireAt}
+    )
+  </insert>
+</mapper>

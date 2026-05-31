@@ -5,8 +5,8 @@
 package com.sp.selfsp.attendance.tenant.service.impl;
 
 import com.sp.selfsp.attendance.common.AttendanceTenantContext;
-import com.sp.selfsp.attendance.domain.in.AttendanceIn;
-import com.sp.selfsp.attendance.domain.out.AttendanceOut;
+import com.sp.selfsp.attendance.common.domain.in.AttendanceIn;
+import com.sp.selfsp.attendance.common.domain.out.AttendanceOut;
 import com.sp.selfsp.attendance.tenant.dao.AttendanceTenantDao;
 import com.sp.selfsp.attendance.tenant.service.AttendanceTenantService;
 import org.springframework.stereotype.Service;
