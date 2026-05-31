@@ -48,6 +48,7 @@ const {
   t,
   reloadWorkbench,
   submitLogin,
+  restartLogin,
   signOut,
   submitModule,
   submitTenant,
@@ -80,6 +81,15 @@ const { themeId, themeOptions } = useUniauthTheme()
         <LanguageSwitch v-model="locale" :options="localeOptions" />
         <!-- 宿主 project 切换器通过 teleport 挂进这里，并固定排在语言切换器后面。 -->
         <div id="project-host-toolbar-target" class="selattendance-hero-toolbar-slot"></div>
+        <!-- 已登录时额外提供重新登录快捷入口，让令牌失效或切换账号时不用先去侧栏找退出。 -->
+        <button
+          v-if="authSession?.accessToken"
+          type="button"
+          class="selattendance-hero-action-button"
+          @click="restartLogin"
+        >
+          {{ t('relogin') }}
+        </button>
       </div>
     </header>
 

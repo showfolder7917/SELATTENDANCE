@@ -447,6 +447,16 @@ export function useUniauthWorkbench() {
     setMessage('info', t('signOut'))
   }
 
+  // 重新登录动作和普通退出区分开来，重点是把管理员直接带回登录页继续输入账号密码。
+  function restartLogin() {
+    // 先清理统一会话，确保旧 token、当前用户快照和宿主侧权限消费一起失效。
+    clearAuthSession()
+    // 再把当前工作台局部状态整体重置为未登录初始态，立即切回登录区块。
+    resetWorkbenchState()
+    // 最后用当前语言提示已经回到登录页，避免用户误以为只是普通刷新。
+    setMessage('info', t('reloginReady'))
+  }
+
   // 模块保存负责把当前模块表单转换成稳定 payload，并在成功后回刷工作台。
   async function submitModule() {
     savePending.value = true
@@ -676,6 +686,7 @@ export function useUniauthWorkbench() {
     t,
     reloadWorkbench,
     submitLogin,
+    restartLogin,
     signOut,
     submitModule,
     submitTenant,
