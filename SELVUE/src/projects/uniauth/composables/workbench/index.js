@@ -5,6 +5,7 @@ import {
   subscribeAuthSession,
   writeAuthSession
 } from '../../../../shared/services/authSession'
+import { resolveLocalizedRequestError } from '../../../../shared/services/request'
 import { localeOptions, messages } from '../../constants/i18nMessages'
 import { buildWorkbenchSectionItems, uniauthSectionKeys } from '../../constants/workbenchSections'
 import {
@@ -393,7 +394,7 @@ export function useUniauthWorkbench() {
       }
     } catch (error) {
       // 读取失败时回显错误，帮助用户区分是 token 失效还是工作台空数据。
-      setMessage('error', error.message || 'load failed')
+      setMessage('error', resolveErrorMessage(error))
     } finally {
       // 刷新结束后立刻关闭等待态，允许用户再次操作。
       reloadPending.value = false
@@ -429,7 +430,7 @@ export function useUniauthWorkbench() {
       setMessage('success', `${t('successPrefix')}${t('signIn')}`)
     } catch (error) {
       // 登录失败时直接回显接口错误，帮助用户排查账号、密码或后端状态。
-      setMessage('error', error.message || 'login failed')
+      setMessage('error', resolveErrorMessage(error))
     } finally {
       // 登录流程结束后立即关闭等待态。
       loginPending.value = false
@@ -467,7 +468,7 @@ export function useUniauthWorkbench() {
       moduleForm.value = createModuleForm()
       setMessage('success', `${t('successPrefix')}${t('moduleTitle')}`)
     } catch (error) {
-      setMessage('error', error.message || 'save module failed')
+      setMessage('error', resolveErrorMessage(error))
     } finally {
       savePending.value = false
     }
@@ -492,7 +493,7 @@ export function useUniauthWorkbench() {
       tenantForm.value = createTenantForm()
       setMessage('success', `${t('successPrefix')}${t('tenantTitle')}`)
     } catch (error) {
-      setMessage('error', error.message || 'save tenant failed')
+      setMessage('error', resolveErrorMessage(error))
     } finally {
       savePending.value = false
     }
@@ -519,7 +520,7 @@ export function useUniauthWorkbench() {
       userForm.value = createUserForm()
       setMessage('success', `${t('successPrefix')}${t('userTitle')}`)
     } catch (error) {
-      setMessage('error', error.message || 'save user failed')
+      setMessage('error', resolveErrorMessage(error))
     } finally {
       savePending.value = false
     }
@@ -545,7 +546,7 @@ export function useUniauthWorkbench() {
       roleForm.value = createRoleForm()
       setMessage('success', `${t('successPrefix')}${t('roleTitle')}`)
     } catch (error) {
-      setMessage('error', error.message || 'save role failed')
+      setMessage('error', resolveErrorMessage(error))
     } finally {
       savePending.value = false
     }
@@ -573,7 +574,7 @@ export function useUniauthWorkbench() {
       menuForm.value = createMenuForm()
       setMessage('success', `${t('successPrefix')}${t('menuTitle')}`)
     } catch (error) {
-      setMessage('error', error.message || 'save menu failed')
+      setMessage('error', resolveErrorMessage(error))
     } finally {
       savePending.value = false
     }
@@ -692,6 +693,12 @@ export function useUniauthWorkbench() {
   function setMessage(tone, text) {
     messageTone.value = tone
     messageText.value = text
+  }
+
+  // 页面级错误解析统一优先消费 shared request 写入的稳定错误码，再回退到原始消息。
+  function resolveErrorMessage(error) {
+    // 通过共享错误解析器把鉴权类异常翻译成当前语言，未知错误继续保留后端真实文案。
+    return resolveLocalizedRequestError(error, t)
   }
 
   // 整个工作台重置时同时清理数据表、表单和宿主桥接快照，回到未登录初始状态。
