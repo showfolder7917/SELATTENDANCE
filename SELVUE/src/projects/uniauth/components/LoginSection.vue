@@ -19,7 +19,7 @@ defineEmits(['submit'])
 
 <template>
   <!-- 未登录时只展示登录卡，避免管理区块在没有统一会话时提前暴露。 -->
-  <section class="seluniauth-login-card seladmin-surface">
+  <section class="seluniauth-login-card seladmin-surface selshared-entry-card">
     <!-- 标题区直接解释当前要先完成统一权限中心登录。 -->
     <header class="seluniauth-login-copy">
       <p class="seladmin-eyebrow">UniAuth / Login</p>

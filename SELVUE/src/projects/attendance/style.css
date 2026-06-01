@@ -9,17 +9,7 @@ body {
   margin: 0;
 }
 
-.seladmin-page.selattendance-page-shell {
-  width: min(calc(100vw - 32px), 2140px);
-  max-width: min(calc(100vw - 32px), 2140px);
-  height: calc(100vh - 16px);
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  overflow: hidden;
-}
-
 .selattendance-workbench {
-  margin-top: 20px;
   min-height: 0;
   overflow: hidden;
 }
@@ -586,62 +576,6 @@ body {
   /* 排班 section 需要吃满内容区剩余高度，左中右三栏才能各自拥有独立滚动容器。 */
   height: 100%;
   min-height: 0;
-}
-
-.selattendance-resizable-split {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-}
-
-.selattendance-resizable-split.dragging {
-  cursor: col-resize;
-  user-select: none;
-}
-
-.selattendance-resizable-pane {
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-}
-
-.selattendance-resizable-pane-left {
-  flex: 0 0 var(--selattendance-left-pane-percent, 60%);
-  max-width: var(--selattendance-left-pane-percent, 60%);
-}
-
-.selattendance-resizable-pane-right {
-  flex: 1 1 auto;
-}
-
-.selattendance-resize-handle {
-  flex: 0 0 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  border: 0;
-  padding: 0;
-  margin: 0 6px;
-  background: transparent;
-  cursor: col-resize;
-}
-
-.selattendance-resize-handle span {
-  width: 3px;
-  height: 64px;
-  border-radius: 999px;
-  background: rgba(117, 135, 156, 0.34);
-  transition: background 160ms ease, transform 160ms ease;
-}
-
-.selattendance-resize-handle:hover span,
-.selattendance-resizable-split.dragging .selattendance-resize-handle span {
-  background: rgba(87, 131, 216, 0.58);
-  transform: scaleY(1.04);
 }
 
 .selattendance-data-panel,
@@ -1392,63 +1326,7 @@ body {
   color: var(--seladmin-text-muted, rgba(255, 255, 255, 0.76));
 }
 
-@media (min-width: 1660px) {
-  .seladmin-page.selattendance-page-shell {
-    width: min(calc(100vw - 36px), 2280px);
-    max-width: min(calc(100vw - 36px), 2280px);
-  }
-
-  .selattendance-workbench-shell {
-    --selattendance-left-pane-percent: 14%;
-  }
-
-  .selattendance-overview-split {
-    --selattendance-left-pane-percent: 65%;
-  }
-}
-
-@media (min-width: 1960px) {
-  .selattendance-workbench-shell {
-    --selattendance-left-pane-percent: 12%;
-  }
-
-  .selattendance-overview-split {
-    --selattendance-left-pane-percent: 67%;
-  }
-}
-
-@media (min-width: 3000px) {
-  .seladmin-page.selattendance-page-shell {
-    width: min(calc(100vw - 40px), 3400px);
-    max-width: min(calc(100vw - 40px), 3400px);
-  }
-
-  .selattendance-workbench-shell {
-    --selattendance-left-pane-percent: 10%;
-  }
-
-  .selattendance-overview-split {
-    --selattendance-left-pane-percent: 69%;
-  }
-}
-
 @media (max-width: 1180px) {
-  .selattendance-resizable-split {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-
-  .selattendance-resizable-pane-left,
-  .selattendance-resizable-pane-right {
-    flex: initial;
-    max-width: none;
-  }
-
-  .selattendance-resize-handle {
-    display: none;
-  }
-
   .selattendance-workbench-header-toolbar--monthly,
   .selattendance-workbench-header-toolbar--case {
     grid-template-columns: repeat(3, minmax(220px, 1fr));
@@ -1460,22 +1338,6 @@ body {
 }
 
 @media (max-width: 900px) {
-  .seladmin-page.selattendance-page-shell {
-    width: min(100vw, 100%);
-    max-width: min(100vw, 100%);
-  }
-
-  .selattendance-hero-actions {
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-
-  .selattendance-theme-switch {
-    width: 100%;
-    justify-content: space-between;
-  }
-
   .selattendance-content-header {
     flex-direction: column;
   }

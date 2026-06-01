@@ -3,7 +3,7 @@ import EmptyGuide from '../../../shared/components/EmptyGuide.vue'
 import SharedDataTable from '../../../shared/components/SharedDataTable.vue'
 import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
 import { computed } from 'vue'
-import { attendanceMasterDataLayoutPreset } from '../constants/workbenchLayoutPresets'
+import { attendanceMasterDataLayoutPreset } from '../../../shared/constants/workbenchLayoutConfig'
 
 const props = defineProps({
   visible: { type: Boolean, required: true },

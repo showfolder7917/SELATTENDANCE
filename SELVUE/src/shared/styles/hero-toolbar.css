@@ -120,3 +120,56 @@
   outline: 2px solid rgba(122, 168, 255, 0.52);
   outline-offset: 2px;
 }
+
+/* 手机宽度下把顶部工具带切成可换行的纵向编排，避免主题/语言/project 在窄屏上横向溢出。 */
+@media (max-width: 720px) {
+  .selattendance-hero-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-content: stretch;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .selattendance-theme-switch {
+    width: 100%;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .selattendance-theme-switch .seladmin-locale-switch,
+  .selattendance-hero-actions > .seladmin-locale-switch {
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .selattendance-hero-actions .seladmin-locale-button {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+    width: auto;
+    justify-content: space-between;
+  }
+
+  .selattendance-hero-actions > .seladmin-locale-switch .seladmin-locale-button {
+    flex-basis: 100%;
+  }
+
+  .project-host-switcher-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .project-host-switcher-select {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+    max-width: none;
+  }
+
+  .selattendance-hero-action-button {
+    width: 100%;
+    justify-content: center;
+  }
+}

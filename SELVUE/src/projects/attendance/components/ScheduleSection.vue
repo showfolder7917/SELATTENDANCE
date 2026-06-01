@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 import EmptyGuide from '../../../shared/components/EmptyGuide.vue'
 import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
+import { attendanceScheduleLayoutPreset } from '../../../shared/constants/workbenchLayoutConfig'
 import { getJapanCalendarMeta } from '../../../utils/japanHolidayCalendar'
-import { attendanceScheduleLayoutPreset } from '../constants/workbenchLayoutPresets'
 
 const props = defineProps({
   visible: { type: Boolean, required: true },

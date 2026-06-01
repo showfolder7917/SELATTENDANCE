@@ -11,6 +11,8 @@ import {
 import { readAuthSession, subscribeAuthSession } from './shared/services/authSession'
 // 宿主入口统一引入 hero 顶部工具带共享样式，让 attendance 和 uniauth 共用同一套主题/语言/project 布局规则。
 import './shared/styles/hero-toolbar.css'
+// 宿主入口再统一引入首屏壳共享样式，让各工程 hero 和空态卡片走同一套公共主题层。
+import './shared/styles/project-entry-shell.css'
 
 // 用可写工程 id 维护当前宿主激活项目，保证切换器能直接切换工程而不是只读计算。
 const activeProjectId = ref(resolveInitialProjectId())
@@ -131,8 +133,8 @@ async function refreshToolbarTargetState() {
 
     <component :is="activeProject.component" v-if="activeProject" />
 
-    <main v-else class="project-host-empty-state">
-      <section class="project-host-empty-card">
+    <main v-else class="project-host-empty-state selshared-entry-stage">
+      <section class="project-host-empty-card selshared-entry-card">
         <p class="project-host-eyebrow">Project Host</p>
         <h1>No project is currently registered</h1>
         <p>
@@ -160,8 +162,6 @@ async function refreshToolbarTargetState() {
 
 .project-host-empty-state {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
   padding: 32px;
   background:
     radial-gradient(circle at top, rgba(93, 141, 217, 0.16), transparent 30%),
@@ -171,13 +171,8 @@ async function refreshToolbarTargetState() {
 
 .project-host-empty-card {
   width: min(100%, 640px);
-  display: grid;
   gap: 12px;
   padding: 28px;
-  border: 1px solid rgba(196, 214, 242, 0.18);
-  border-radius: 24px;
-  background: rgba(14, 21, 33, 0.78);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.24);
 }
 
 .project-host-eyebrow {

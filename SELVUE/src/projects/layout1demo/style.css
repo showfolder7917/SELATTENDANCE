@@ -1,0 +1,390 @@
+/* 布局1号根壳继续复用 shared 首屏壳，只在本工程补工作台三栏和局部卡片样式。 */
+.sellayout1-page-shell {
+  color: var(--seladmin-text, #f7fbff);
+}
+
+/* 布局1号改接共享分栏后，工作台根壳负责承接 shared split 的高度和顶部间距。 */
+.sellayout1-workbench {
+  margin-top: 20px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 布局1号工作台壳需要和 attendance 一样吃满 hero 下剩余高度，才能在宽屏下真正向两侧扩展。 */
+.sellayout1-workbench-shell {
+  align-items: stretch;
+  height: 100%;
+  min-height: 0;
+}
+
+/* 布局1号外层和内层拖拽柄略收紧横向边距，避免侵占中栏表格的可视空间。 */
+.sellayout1-workbench-shell > .selattendance-resize-handle,
+.sellayout1-side > .selattendance-resize-handle {
+  margin: 0 4px;
+}
+
+/* 布局1号拖拽柄高度跟随整屏工作台，帮助用户更直观看到左右区域可继续扩展。 */
+.sellayout1-workbench-shell > .selattendance-resize-handle span,
+.sellayout1-side > .selattendance-resize-handle span {
+  height: min(72vh, 840px);
+}
+
+/* 布局1号左栏外层占位容器和内部吸附容器对齐 attendance 的几何链路，避免吸附后布局抖动。 */
+.sellayout1-sidebar-pane,
+.sellayout1-sidebar-stick {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+/* 左栏默认先走 sticky，滚动越过阈值后再由脚本切到 fixed，同步 attendance 的导航停留节奏。 */
+.sellayout1-sidebar-stick {
+  position: sticky;
+  top: 20px;
+  align-self: start;
+  max-height: none;
+}
+
+/* 英雄栏左侧文案列固定给标题、说明和联调状态留出稳定宽度。 */
+.sellayout1-hero-copy {
+  display: grid;
+  gap: 10px;
+  max-width: 760px;
+}
+
+/* 英雄栏元信息固定用胶囊展示接口路径和当前数据来源。 */
+.sellayout1-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* 英雄栏胶囊统一承接联调信息和提示词说明。 */
+.sellayout1-hero-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+}
+
+/* 次级胶囊弱化展示，避免数据来源抢过主路径信息。 */
+.sellayout1-hero-pill.is-muted {
+  color: rgba(220, 232, 255, 0.72);
+}
+
+/* 左导航、中表格、右侧栏都要允许局部滚动，避免再次把浏览器整体撑长。 */
+.sellayout1-nav,
+.sellayout1-table-panel,
+.sellayout1-form-panel,
+.sellayout1-action-panel {
+  min-height: 0;
+}
+
+/* 左侧导航固定承接模块列表，内部单独滚动。 */
+.sellayout1-nav {
+  display: grid;
+  gap: 16px;
+  padding: 20px 16px;
+  overflow: auto;
+}
+
+/* 通用区块头负责解释每一栏在布局1号中的职责。 */
+.sellayout1-panel-header {
+  display: grid;
+  gap: 8px;
+}
+
+/* 区块标题统一控制字号和留白。 */
+.sellayout1-panel-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+/* 左栏导航列表固定纵向堆叠。 */
+.sellayout1-nav-list {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* 单个导航项采用卡片式块，方便 AI 后续照着重建“标题 + 说明 + 数量”结构。 */
+.sellayout1-nav-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(13, 47, 67, 0.38);
+  border: 1px solid rgba(67, 204, 255, 0.14);
+}
+
+/* 导航文案列固定纵向排列标题和说明。 */
+.sellayout1-nav-copy {
+  display: grid;
+  gap: 6px;
+}
+
+/* 导航说明保持弱色，避免压过模块标题。 */
+.sellayout1-nav-copy small {
+  color: rgba(220, 232, 255, 0.72);
+  line-height: 1.45;
+}
+
+/* 数量角标固定使用圆角胶囊，帮助左栏同时承接统计。 */
+.sellayout1-nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(67, 204, 255, 0.18);
+  font-weight: 700;
+}
+
+/* 中间表格面板固定由头部、筛选栏和表格主体组成。 */
+.sellayout1-table-panel {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 18px;
+  padding: 20px;
+  overflow: hidden;
+}
+
+/* 中栏头部采用左右布局，左边是标题，右边是摘要卡。 */
+.sellayout1-table-panel > .sellayout1-panel-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+}
+
+/* 摘要卡区域固定横向展开。 */
+.sellayout1-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+/* 摘要卡采用紧凑玻璃卡片，承接中栏快速统计。 */
+.sellayout1-summary-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(28, 40, 67, 0.88);
+  border: 1px solid rgba(115, 144, 202, 0.14);
+}
+
+/* 摘要卡主数值保持明显字号。 */
+.sellayout1-summary-card strong {
+  font-size: 28px;
+}
+
+/* 摘要卡说明维持弱色。 */
+.sellayout1-summary-card small {
+  color: rgba(220, 232, 255, 0.72);
+}
+
+/* 不同 tone 负责表示处理中、警告、失败和中性归档。 */
+.sellayout1-summary-card.is-info {
+  background: rgba(37, 57, 96, 0.88);
+}
+
+.sellayout1-summary-card.is-warning {
+  background: rgba(71, 52, 37, 0.88);
+}
+
+.sellayout1-summary-card.is-danger {
+  background: rgba(88, 38, 52, 0.88);
+}
+
+.sellayout1-summary-card.is-muted {
+  background: rgba(38, 50, 71, 0.88);
+}
+
+/* 筛选栏固定五列排布，演示布局1号里搜索条件应放在表格上方。 */
+.sellayout1-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+/* 中栏表格容器单独滚动，保证长表格不会挤坏左右栏。 */
+.sellayout1-table-shell {
+  min-height: 0;
+  overflow: auto;
+  border-radius: 20px;
+  border: 1px solid rgba(115, 144, 202, 0.18);
+}
+
+/* 表格本体固定铺满容器。 */
+.sellayout1-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* 表头固定保持玻璃深色背景。 */
+.sellayout1-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(28, 40, 67, 0.98), rgba(19, 29, 48, 0.98));
+  text-align: left;
+  font-size: 13px;
+}
+
+/* 表格正文单元格统一控制内边距和分隔线。 */
+.sellayout1-table tbody td {
+  padding: 14px 16px;
+  border-top: 1px solid rgba(115, 144, 202, 0.12);
+}
+
+/* 状态胶囊负责把处理中、忽略、失败等结果抬出来。 */
+.sellayout1-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+}
+
+/* processed 状态强调正常处理成功。 */
+.sellayout1-status-pill.is-processed {
+  background: rgba(61, 90, 184, 0.34);
+}
+
+/* ignored 状态强调该记录被规则忽略。 */
+.sellayout1-status-pill.is-ignored {
+  background: rgba(79, 88, 109, 0.34);
+}
+
+/* failed 状态强调当前记录处理失败。 */
+.sellayout1-status-pill.is-failed {
+  background: rgba(136, 52, 74, 0.34);
+}
+
+/* 右栏固定纵向堆叠表单和其他处理项。 */
+.sellayout1-side {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 18px;
+  min-height: 0;
+}
+
+/* 右栏表单面板固定承接主编辑动作。 */
+.sellayout1-form-panel {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+/* 右栏表单字段固定纵向排列。 */
+.sellayout1-form-grid {
+  display: grid;
+  gap: 12px;
+}
+
+/* 右栏处理项面板单独滚动，适合放导入、提示词和补充动作。 */
+.sellayout1-action-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 16px;
+  padding: 20px;
+  overflow: auto;
+}
+
+/* 动作卡列表固定纵向堆叠。 */
+.sellayout1-action-list {
+  display: grid;
+  gap: 12px;
+}
+
+/* 单张动作卡固定展示标题、说明、主值和补充信息。 */
+.sellayout1-action-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(115, 144, 202, 0.14);
+}
+
+/* 动作卡说明保持合适行高。 */
+.sellayout1-action-card p,
+.sellayout1-action-card small {
+  margin: 0;
+  color: rgba(220, 232, 255, 0.72);
+  line-height: 1.45;
+}
+
+/* 提示词框固定放在右栏底部，作为“以后直接说布局1号”的使用说明。 */
+.sellayout1-prompt-box {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(10, 24, 43, 0.72);
+  border: 1px solid rgba(67, 204, 255, 0.14);
+}
+
+/* 提示词标签用大写弱色强调这是一份固定参考文档。 */
+.sellayout1-prompt-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(220, 232, 255, 0.72);
+}
+
+/* fallback 说明用弱红色展示，提示当前后端可能还未刷新。 */
+.sellayout1-fallback-note {
+  margin: 0;
+  color: #ffb7b7;
+}
+
+/* 平板宽度下先把右栏降到表格下方，保持主表格可读宽度。 */
+@media (max-width: 1280px) {
+  .sellayout1-side {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+  }
+
+  .sellayout1-summary-grid {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+
+  .sellayout1-filter-bar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* 手机宽度下直接改成单列滚动，保证布局1号在移动端也能完整阅读。 */
+@media (max-width: 720px) {
+  .sellayout1-workbench {
+    overflow: visible;
+  }
+
+  .sellayout1-table-panel > .sellayout1-panel-header {
+    grid-template-columns: 1fr;
+  }
+
+  .sellayout1-summary-grid,
+  .sellayout1-filter-bar,
+  .sellayout1-side {
+    grid-template-columns: 1fr;
+  }
+}

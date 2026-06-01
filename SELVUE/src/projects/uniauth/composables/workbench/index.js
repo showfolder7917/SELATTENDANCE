@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import {
   clearAuthSession,
   readAuthSession,
@@ -116,6 +116,12 @@ export function useUniauthWorkbench() {
   const messageText = ref('')
   // 页面级消息语气决定提示条颜色和强调层级。
   const messageTone = ref('info')
+  // 错误弹出框单独承接失败反馈，避免错误消息再挤占 hero 下方可视高度。
+  const errorDialog = reactive({
+    open: false,
+    title: '',
+    message: ''
+  })
   // 登录动作等待态单独维护，避免保存动作和登录动作互相污染按钮状态。
   const loginPending = ref(false)
   // 保存等待态统一覆盖四类写操作，避免同一时间重复提交多个管理动作。
@@ -660,6 +666,7 @@ export function useUniauthWorkbench() {
     activeSection,
     messageText,
     messageTone,
+    errorDialog,
     loginPending,
     savePending,
     reloadPending,
@@ -697,13 +704,23 @@ export function useUniauthWorkbench() {
     editTenant,
     editUser,
     editRole,
-    editMenu
+    editMenu,
+    closeErrorDialog
   }
 
   // 页面级消息设置统一收口，避免成功、失败和退出提示各自拼装 tone。
   function setMessage(tone, text) {
-    messageTone.value = tone
-    messageText.value = text
+    // 失败提示统一切到弹出框，让用户在任何区块都能立即看到完整错误内容。
+    if (tone === 'error') {
+      messageTone.value = 'info'
+      messageText.value = ''
+      openErrorDialog(text)
+      return
+    }
+    // 非错误提示不再渲染任何页内布局，只负责顺手关闭上一次错误弹出框残留状态。
+    closeErrorDialog()
+    messageTone.value = 'info'
+    messageText.value = ''
   }
 
   // 页面级错误解析统一优先消费 shared request 写入的稳定错误码，再回退到原始消息。
@@ -730,10 +747,25 @@ export function useUniauthWorkbench() {
     roleForm.value = createRoleForm()
     menuForm.value = createMenuForm()
     loginForm.value = createLoginForm()
+    closeErrorDialog()
     if (!options.keepMessage) {
       messageText.value = ''
       messageTone.value = 'info'
     }
+  }
+
+  // 打开错误弹出框时统一覆盖标题和正文，保证所有失败提示入口只维护一套交互。
+  function openErrorDialog(message) {
+    errorDialog.open = true
+    errorDialog.title = t('errorDialogTitle')
+    errorDialog.message = message
+  }
+
+  // 关闭错误弹出框时同时清空旧文案，避免下一次错误瞬间闪出上一轮内容。
+  function closeErrorDialog() {
+    errorDialog.open = false
+    errorDialog.title = ''
+    errorDialog.message = ''
   }
 }
 

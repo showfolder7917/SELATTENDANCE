@@ -10,65 +10,102 @@ body {
   margin: 0;
 }
 
-/* 页面根壳沿用 attendance 的大宽度与双行网格节奏，让 hero 和 workbench 总体结构一致。 */
-.seladmin-page.seluniauth-page-shell {
-  width: min(calc(100vw - 32px), 2140px);
-  max-width: min(calc(100vw - 32px), 2140px);
-  height: calc(100vh - 16px);
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
-  overflow: hidden;
-}
-
-/* hero 补一层内部分栏，让左侧定位说明和右侧主题语言切换保持稳定对齐。 */
-.seluniauth-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 20px;
-  align-items: start;
-}
-
-/* 消息条统一放在 workbench 上方，避免成功失败提示插进内容区打断编辑流程。 */
-.seluniauth-message {
-  padding: 14px 18px;
-  border-radius: 18px;
-  border: 1px solid transparent;
-}
-
-/* 成功消息直接沿用绿色强调，告诉管理员当前保存或刷新已经真正生效。 */
-.seluniauth-message.is-success {
-  background: rgba(21, 91, 56, 0.34);
-  border-color: rgba(88, 214, 147, 0.28);
-  color: #c6ffd9;
-}
-
-/* 错误消息统一用红色系高亮，帮助管理员区分鉴权失败、保存失败和桥接失败。 */
-.seluniauth-message.is-error {
-  background: rgba(113, 39, 48, 0.34);
-  border-color: rgba(244, 127, 127, 0.26);
-  color: #ffd0d0;
-}
-
-/* 普通消息承接退出登录等中性反馈，不抢过成功和错误提示的层级。 */
-.seluniauth-message.is-info {
-  background: rgba(40, 63, 105, 0.34);
-  border-color: rgba(115, 144, 202, 0.24);
-  color: #d7e5ff;
-}
-
 /* 未登录卡单独居中，避免登录状态下出现一整屏左导航空壳。 */
 .seluniauth-login-card {
-  width: min(760px, 100%);
+  width: min(860px, 100%);
   justify-self: center;
-  display: grid;
-  gap: 18px;
-  padding: 28px 28px 24px;
+  padding: 34px 34px 30px;
 }
 
 /* 登录区文案保持紧凑竖向节奏，减少输入前的阅读跳跃。 */
 .seluniauth-login-copy {
+  position: relative;
+  z-index: 1;
   display: grid;
-  gap: 8px;
+  gap: 10px;
+  max-width: 620px;
+}
+
+/* 登录标题做得更饱满一些，让首屏焦点先落在“进入权限中心”上。 */
+.seluniauth-login-copy h2 {
+  margin: 0;
+  font-size: clamp(34px, 4vw, 44px);
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+}
+
+/* 说明文案限制宽度，避免长句在宽卡片上拉得太散。 */
+.seluniauth-login-copy .seladmin-copy {
+  max-width: 58ch;
+}
+
+/* 登录表单区维持两列输入，但把自身抬到内容层，避免被装饰柔光压住。 */
+.seluniauth-login-card .seluniauth-form-grid {
+  position: relative;
+  z-index: 1;
+}
+
+/* 登录字段额外收口标签和输入的垂直节奏，让空态表单显得更精致。 */
+.seluniauth-login-card .seladmin-field {
+  display: grid;
+  gap: 10px;
+}
+
+/* 标签用大写小号提示语气，和 hero/tool bar 的辅助信息层级统一。 */
+.seluniauth-login-card .seladmin-field span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(219, 230, 255, 0.76);
+}
+
+/* 输入框改成更厚的玻璃暗底和更明确的聚焦边界，便于快速录入。 */
+.seluniauth-login-card .seladmin-field input {
+  min-height: 58px;
+  padding: 0 18px;
+  border: 1px solid rgba(128, 158, 233, 0.18);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(8, 15, 29, 0.92), rgba(10, 16, 30, 0.82)),
+    rgba(12, 19, 35, 0.88);
+  color: #f5f8ff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 12px 26px rgba(6, 11, 23, 0.22);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+/* placeholder 统一弱化，避免和真实输入抢同等视觉权重。 */
+.seluniauth-login-card .seladmin-field input::placeholder {
+  color: rgba(193, 207, 239, 0.44);
+}
+
+/* 聚焦时给出更明确的发光边界，帮助用户知道当前输入光标所在。 */
+.seluniauth-login-card .seladmin-field input:focus {
+  outline: none;
+  border-color: rgba(124, 162, 255, 0.54);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 0 4px rgba(88, 122, 196, 0.16),
+    0 20px 34px rgba(6, 11, 23, 0.28);
+  transform: translateY(-1px);
+}
+
+/* 登录按钮区提升到内容层，并和卡片边缘保持更稳的呼吸感。 */
+.seluniauth-login-card .seluniauth-action-row {
+  position: relative;
+  z-index: 1;
+  margin-top: 6px;
+}
+
+/* 主按钮在登录态默认更宽更饱满，避免右下角只剩一个偏小按钮。 */
+.seluniauth-login-card .seladmin-button-primary {
+  min-width: 168px;
+  min-height: 52px;
+  padding: 0 24px;
+  border-radius: 18px;
+  box-shadow: 0 18px 34px rgba(57, 96, 188, 0.26);
 }
 
 /* 登录态下的工作台整体高度直接继承页面剩余视口，和 attendance 一样走局部滚动。 */
@@ -76,6 +113,27 @@ body {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+}
+
+/* 权限中心工作台外壳继续补一层最小高度兜底，避免首次回算前出现塌陷。 */
+.seluniauth-workbench-shell {
+  min-height: 520px;
+}
+
+/* 左栏占位容器负责在吸附态下保留原高度，避免中栏内容突然整体上跳。 */
+.seluniauth-sidebar-pane {
+  min-height: 0;
+}
+
+/* 左栏吸附容器继续承接实际导航卡，默认保持自然文档流高度。 */
+.seluniauth-sidebar-stick {
+  min-height: 0;
+}
+
+/* 左栏导航卡补充布局1号同口径的最小高度和阴影，让侧栏更像正式工作台导航。 */
+.seluniauth-sidebar-card {
+  min-height: 100%;
+  box-shadow: 0 20px 42px rgba(6, 11, 23, 0.18);
 }
 
 /* 左侧导航卡完整复用 attendance 的侧栏节奏，让两个工程切换时不会像换了一套系统。 */
@@ -185,9 +243,19 @@ body {
 /* 主内容区按头部加区块本体纵向排列，和 attendance 的 main pane 节奏一致。 */
 .seluniauth-content {
   display: grid;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 中栏主板卡把头部和当前模块工作区包进同一块表格式舞台，更接近布局1号主栏节奏。 */
+.seluniauth-main-board {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 18px;
   height: 100%;
   min-height: 0;
+  padding: 22px 24px;
   overflow: hidden;
 }
 
@@ -197,6 +265,19 @@ body {
   --shared-workbench-copy-max: 0.95fr;
   --shared-workbench-metrics-min: 360px;
   --shared-workbench-metrics-max: 1.05fr;
+}
+
+/* 中栏当前模块工作区本体继续占满剩余高度，确保表单区和表格区都能局部滚动。 */
+.seluniauth-main-shell {
+  display: grid;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 中栏当前主表格卡固定吃满主工作板剩余高度，让列表滚动留在表格内部。 */
+.seluniauth-main-shell > .seluniauth-table-card {
+  height: 100%;
+  overflow: hidden;
 }
 
 /* 头部状态区只承接当前用户和租户焦点，用胶囊徽标减少文字负担。 */
@@ -229,15 +310,6 @@ body {
   --shared-metric-card-columns: 3;
 }
 
-/* 四个正式管理区统一走双栏网格，左表单右列表，和 attendance 各模块的编辑节奏一致。 */
-.seluniauth-section-shell {
-  display: grid;
-  grid-template-columns: minmax(0, 1.02fr) minmax(0, 1.18fr);
-  gap: 18px;
-  min-height: 0;
-  overflow: hidden;
-}
-
 /* 表单卡和表格卡统一承接深色表面和局部滚动，不再各自定义一套壳层。 */
 .seluniauth-editor-card,
 .seluniauth-table-card,
@@ -246,6 +318,11 @@ body {
   gap: 18px;
   padding: 22px 24px;
   min-height: 0;
+}
+
+/* 右栏当前记录表单卡优先保持自然高度并向上对齐，下面再接用户快照和宿主处理项。 */
+.seluniauth-side-stack > .seluniauth-editor-card {
+  align-content: start;
 }
 
 /* 卡片头部统一解释当前区块职责，和 attendance 的每个 section 头部文字层级一致。 */
@@ -339,6 +416,7 @@ body {
   gap: 18px;
   min-height: 0;
   overflow: auto;
+  align-content: start;
 }
 
 /* 当前用户键值列表统一用双列 definition list，让身份快照一眼可扫读。 */
@@ -414,35 +492,21 @@ body {
 
 /* 平板尺寸下先把主编辑区退成单列，避免右表格和左表单互相挤压。 */
 @media (max-width: 1180px) {
-  .seluniauth-hero {
-    grid-template-columns: 1fr;
+  .seluniauth-sidebar-pane,
+  .seluniauth-sidebar-stick {
+    min-height: auto;
   }
 
-  .selattendance-hero-actions {
-    flex-wrap: wrap;
-    justify-content: flex-start;
+  .seluniauth-main-board {
+    padding: 18px;
   }
 
-  .selattendance-theme-switch {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .seluniauth-section-shell {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* 手机尺寸下进一步压缩表单成单列，保证双语字段在窄屏上仍然可编辑。 */
 @media (max-width: 720px) {
-  .seladmin-page.seluniauth-page-shell {
-    width: min(calc(100vw - 20px), 2140px);
-    max-width: min(calc(100vw - 20px), 2140px);
-    height: auto;
-    min-height: calc(100vh - 10px);
-  }
-
   .seluniauth-login-card,
+  .seluniauth-main-board,
   .seluniauth-editor-card,
   .seluniauth-table-card,
   .seluniauth-side-panel {
@@ -451,5 +515,21 @@ body {
 
   .seluniauth-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .seluniauth-login-card {
+    padding: 18px 16px;
+  }
+
+  .seluniauth-login-copy h2 {
+    font-size: 30px;
+  }
+
+  .seluniauth-login-card .seladmin-button-primary {
+    width: 100%;
+  }
+
+  .seluniauth-login-card .seluniauth-action-row {
+    justify-content: stretch;
   }
 }

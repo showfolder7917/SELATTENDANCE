@@ -7,6 +7,13 @@ import SharedMetricCards from '../../../shared/components/SharedMetricCards.vue'
 import SharedWorkbenchHeader from '../../../shared/components/SharedWorkbenchHeader.vue'
 import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
 import ThemeSwitch from '../../../shared/components/ThemeSwitch.vue'
+import { useWorkbenchShellStyle } from '../../../shared/composables/useWorkbenchShellStyle'
+import {
+  attendanceOverviewLayoutPreset,
+  attendanceShellLayoutPreset,
+  workbenchViewportBreakpoints,
+  workbenchViewportMetrics
+} from '../../../shared/constants/workbenchLayoutConfig'
 import AttendanceSectionNav from '../components/AttendanceSectionNav.vue'
 import AttendanceSummarySection from '../components/AttendanceSummarySection.vue'
 import CaseSection from '../components/CaseSection.vue'
@@ -22,10 +29,6 @@ import ShiftTemplateSection from '../components/ShiftTemplateSection.vue'
 import TenantSection from '../components/TenantSection.vue'
 import WizardSection from '../components/WizardSection.vue'
 import WorkplaceSection from '../components/WorkplaceSection.vue'
-import {
-  attendanceOverviewLayoutPreset,
-  attendanceShellLayoutPreset
-} from '../constants/workbenchLayoutPresets'
 import { useAttendanceWorkbench } from '../composables/useAttendanceWorkbench'
 import { useAttendanceTheme } from '../composables/useAttendanceTheme'
 
@@ -136,6 +139,8 @@ const {
 
 // 主题切换独立于业务工作台状态，避免保存表单时误触发主题重置。
 const { themeId, themeOptions } = useAttendanceTheme()
+// 考勤工作台根壳宽度统一改由 shared 配置入口驱动，不再在 attendance 页面样式里重复维护宽屏上限。
+const { shellStyle } = useWorkbenchShellStyle('wideWorkbench')
 
 // 导入文本更新入口显式落回工作台状态，避免模板自动解包 ref 后触发无效 prop 警告。
 function updateImportCsvText(nextValue) {
@@ -500,15 +505,23 @@ let heroResizeObserver = null
 function syncWorkbenchViewportHeight() {
   if (!heroSectionRef.value) return
   const heroBottom = heroSectionRef.value.getBoundingClientRect().bottom
-  // 预留 workbench 顶部间距和底部呼吸空间，避免内部滚动条紧贴浏览器边缘。
-  workbenchViewportHeight.value = Math.max(420, Math.floor(window.innerHeight - heroBottom - 16))
+  // 顶部间距和底部呼吸空间统一复用 shared 指标，保证 attendance 和其他工程首屏节奏完全一致。
+  workbenchViewportHeight.value = Math.max(
+    420,
+    Math.floor(
+      window.innerHeight -
+        heroBottom -
+        workbenchViewportMetrics.topGapPx -
+        workbenchViewportMetrics.bottomBreathingPx
+    )
+  )
 }
 
 // 根据当前滚动位置和左栏几何信息决定侧栏是否需要固定停留在视口中。
 function syncSidebarFloating() {
   if (!sidebarPaneRef.value || !sidebarStickRef.value) return
   // 窄屏仍走原本自然文档流，避免固定侧栏挤压移动端内容。
-  if (window.innerWidth <= 1180) {
+  if (window.innerWidth <= workbenchViewportBreakpoints.splitStackedMaxWidth) {
     sidebarFloatingState.value = { active: false, left: 0, width: 0, height: 0 }
     return
   }
@@ -576,8 +589,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="seladmin-page selattendance-page-shell">
-    <header ref="heroSectionRef" class="seladmin-hero seladmin-surface">
+  <div
+    class="seladmin-page selattendance-page-shell selshared-entry-page-shell selshared-entry-page-shell--hero-workbench selshared-entry-page-shell--wide-workbench"
+    :style="shellStyle"
+  >
+    <header ref="heroSectionRef" class="seladmin-hero seladmin-surface selshared-entry-hero">
       <div>
         <p class="seladmin-eyebrow">{{ t('liveTag') }}</p>
         <h1>{{ t('appTitle') }}</h1>

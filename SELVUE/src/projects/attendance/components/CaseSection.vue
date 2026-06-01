@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import SharedDataTable from '../../../shared/components/SharedDataTable.vue'
 import SharedPaginationBar from '../../../shared/components/SharedPaginationBar.vue'
 import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
-import { attendanceCaseLayoutPreset } from '../constants/workbenchLayoutPresets'
+import { attendanceCaseLayoutPreset } from '../../../shared/constants/workbenchLayoutConfig'
 
 const props = defineProps({
   visible: { type: Boolean, required: true },

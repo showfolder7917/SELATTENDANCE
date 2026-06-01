@@ -1,0 +1,176 @@
+/* 共享入口壳统一承接各工程首屏的宽度、hero 节奏和空态舞台，不让同类骨架继续散落在业务页面里。 */
+.selshared-entry-page-shell {
+  width: min(calc(100vw - var(--selshared-shell-edge-gap, 32px)), var(--selshared-shell-max-width, 2140px));
+  max-width: min(calc(100vw - var(--selshared-shell-edge-gap, 32px)), var(--selshared-shell-max-width, 2140px));
+}
+
+/* hero 直连 workbench 的页面统一吃满首屏高度，并把 hero 放在第一行。 */
+.selshared-entry-page-shell--hero-workbench {
+  --selshared-workbench-top-gap: 20px;
+  height: calc(100vh - 16px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+/* 宽屏工作台类页面继续保留语义类名，但真正的壳宽档位改由 shared JS 配置入口统一注入。 */
+.selshared-entry-page-shell--wide-workbench {}
+
+/* hero 下还要插提示条的页面保留第二行提示区，再把剩余高度交给主体内容。 */
+.selshared-entry-page-shell--hero-message-workbench {
+  --selshared-workbench-top-gap: 20px;
+  height: calc(100vh - 16px);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+/* hero 下正式工作台统一吃 shared 顶部间距，避免业务页继续各自写 margin-top。 */
+.selshared-entry-page-shell--hero-workbench > .selshared-three-pane-layout,
+.selshared-entry-page-shell--hero-message-workbench > .selshared-three-pane-layout {
+  margin-top: var(--selshared-workbench-top-gap, 20px);
+}
+
+/* 共享 hero 负责统一两栏排布和玻璃高光，让不同工程首屏仍保持同一产品语气。 */
+.selshared-entry-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* hero 顶部补一层大范围柔光，让工具带和标题区更像一个整体。 */
+.selshared-entry-hero::before,
+.selshared-entry-hero::after {
+  content: '';
+  position: absolute;
+  inset: auto;
+  pointer-events: none;
+  border-radius: 999px;
+  z-index: -1;
+}
+
+.selshared-entry-hero::before {
+  top: -120px;
+  right: 18%;
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(90, 125, 255, 0.18) 0%, rgba(90, 125, 255, 0) 72%);
+}
+
+.selshared-entry-hero::after {
+  left: 12%;
+  bottom: -140px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(76, 198, 255, 0.12) 0%, rgba(76, 198, 255, 0) 74%);
+}
+
+/* 共享首屏舞台负责把空态卡片稳定放进 hero 下方剩余空间，而不是任由页面自己拼凑居中逻辑。 */
+.selshared-entry-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: clamp(24px, 4vh, 40px);
+  overflow: hidden;
+}
+
+/* 空态舞台的双重柔光统一做在 shared 层，避免 uniauth 和宿主空态重复维护相同氛围。 */
+.selshared-entry-stage::before,
+.selshared-entry-stage::after {
+  content: '';
+  position: absolute;
+  inset: auto;
+  border-radius: 999px;
+  pointer-events: none;
+  filter: blur(10px);
+}
+
+.selshared-entry-stage::before {
+  width: 420px;
+  height: 420px;
+  top: 8%;
+  left: 10%;
+  background: radial-gradient(circle, rgba(83, 126, 255, 0.24) 0%, rgba(83, 126, 255, 0) 72%);
+}
+
+.selshared-entry-stage::after {
+  width: 360px;
+  height: 360px;
+  right: 8%;
+  bottom: 2%;
+  background: radial-gradient(circle, rgba(76, 198, 255, 0.18) 0%, rgba(76, 198, 255, 0) 74%);
+}
+
+/* 共享玻璃卡片收口深色首屏里的主要信息块，让登录卡和宿主空态卡共用同一层次体系。 */
+.selshared-entry-card {
+  position: relative;
+  display: grid;
+  gap: 22px;
+  border: 1px solid rgba(142, 173, 255, 0.22);
+  border-radius: 30px;
+  background:
+    linear-gradient(145deg, rgba(18, 29, 51, 0.94), rgba(12, 20, 37, 0.9)),
+    linear-gradient(180deg, rgba(92, 127, 219, 0.12), rgba(92, 127, 219, 0));
+  box-shadow:
+    0 40px 100px rgba(3, 8, 20, 0.44),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+/* 顶部高光切面帮助玻璃卡和纯色业务卡拉开层级。 */
+.selshared-entry-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(173, 198, 255, 0.76), rgba(255, 255, 255, 0));
+}
+
+/* 右上角冷光点缀让首屏主卡在深色背景中更聚焦。 */
+.selshared-entry-card::after {
+  content: '';
+  position: absolute;
+  top: -96px;
+  right: -48px;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(109, 144, 255, 0.26) 0%, rgba(109, 144, 255, 0) 72%);
+  pointer-events: none;
+}
+
+@media (max-width: 1180px) {
+  .selshared-entry-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .selshared-entry-stage::before {
+    left: -4%;
+  }
+
+  .selshared-entry-stage::after {
+    right: -8%;
+  }
+}
+
+@media (max-width: 720px) {
+  .selshared-entry-page-shell--hero-workbench,
+  .selshared-entry-page-shell--hero-message-workbench {
+    height: auto;
+    min-height: calc(100vh - 10px);
+  }
+
+  .selshared-entry-stage {
+    padding: 18px 0 22px;
+  }
+
+  .selshared-entry-card {
+    gap: 18px;
+    border-radius: 24px;
+  }
+}
