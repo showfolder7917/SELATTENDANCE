@@ -93,6 +93,28 @@ export const messages = {
     wizardHint: '基础资料、排班、打卡、日次和异常审批已经接通；当前已进入第六阶段月次汇总与月结闭环。',
     // 维护 nextAction 字段，供当前前端状态或配置直接使用。
     nextAction: '推荐下一步',
+    // 维护 wizardOverviewTag 字段，供初始化向导总览顶部标签直接使用。
+    wizardOverviewTag: '推荐下一步',
+    // 维护 wizardProgressLabel 字段，供初始化向导进度卡说明当前百分比含义。
+    wizardProgressLabel: '当前完成进度',
+    // 维护 wizardStepCount 字段，供初始化向导进度卡直接拼接完成步数和总步数。
+    wizardStepCount: '{done}/{total} 步已完成',
+    // 维护 wizardActionableCount 字段，供初始化向导总览展示当前待处理步骤数量。
+    wizardActionableCount: '待处理步骤',
+    // 维护 wizardLockedCount 字段，供初始化向导总览展示仍处于下一阶段锁定的步骤数量。
+    wizardLockedCount: '待开放步骤',
+    // 维护 wizardFocusTitle 字段，供初始化向导聚焦卡突出当前最该先做的动作。
+    wizardFocusTitle: '当前最该先做',
+    // 维护 wizardRoadmapTitle 字段，供初始化向导阶段轨道与详细步骤共用标题。
+    wizardRoadmapTitle: '阶段进度',
+    // 维护 wizardRoadmapHint 字段，供初始化向导阶段轨道说明浏览方式。
+    wizardRoadmapHint: '先完成当前推荐项，再继续推进后续阶段。',
+    // 维护 wizardDetailTitle 字段，供初始化向导详细步骤区块头部使用。
+    wizardDetailTitle: '全部步骤',
+    // 维护 wizardDetailHint 字段，供初始化向导详细步骤区块说明展示内容。
+    wizardDetailHint: '每一步都保留说明、状态和当前数量，方便顺序检查准备情况。',
+    // 维护 wizardCountLabel 字段，供初始化向导步骤卡底部说明数字含义。
+    wizardCountLabel: '当前数量',
     // 维护 phaseLocked 字段，供当前前端状态或配置直接使用。
     phaseLocked: '下一阶段开放',
     // 维护 状态Completed 字段，供当前前端状态或配置直接使用。
@@ -962,6 +984,28 @@ export const messages = {
     wizardHint: '基本マスタ、シフト、打刻、日次、異常承認は接続済みで、現在は Phase 6 の月次集計と月締めクローズへ進んでいます。',
     // 维护 nextAction 字段，供当前前端状态或配置直接使用。
     nextAction: '次の推奨アクション',
+    // 维护 wizardOverviewTag 字段，供初始化向导总览顶部标签直接使用。
+    wizardOverviewTag: '次の推奨アクション',
+    // 维护 wizardProgressLabel 字段，供初始化向导进度卡说明当前百分比含义。
+    wizardProgressLabel: '現在の進捗',
+    // 维护 wizardStepCount 字段，供初始化向导进度卡直接拼接完成步数和总步数。
+    wizardStepCount: '{done}/{total} ステップ完了',
+    // 维护 wizardActionableCount 字段，供初始化向导总览展示当前待处理步骤数量。
+    wizardActionableCount: '対応が必要なステップ',
+    // 维护 wizardLockedCount 字段，供初始化向导总览展示仍处于下一阶段锁定的步骤数量。
+    wizardLockedCount: '次段階待ちステップ',
+    // 维护 wizardFocusTitle 字段，供初始化向导聚焦卡突出当前最该先做的动作。
+    wizardFocusTitle: '今いちばん先にやること',
+    // 维护 wizardRoadmapTitle 字段，供初始化向导阶段轨道与详细步骤共用标题。
+    wizardRoadmapTitle: 'フェーズ進行',
+    // 维护 wizardRoadmapHint 字段，供初始化向导阶段轨道说明浏览方式。
+    wizardRoadmapHint: 'まず現在の推奨項目を終えてから、次のフェーズへ進めます。',
+    // 维护 wizardDetailTitle 字段，供初始化向导详细步骤区块头部使用。
+    wizardDetailTitle: '全ステップ',
+    // 维护 wizardDetailHint 字段，供初始化向导详细步骤区块说明展示内容。
+    wizardDetailHint: '各ステップの説明、状態、現在件数をまとめて確認できます。',
+    // 维护 wizardCountLabel 字段，供初始化向导步骤卡底部说明数字含义。
+    wizardCountLabel: '現在件数',
     // 维护 phaseLocked 字段，供当前前端状态或配置直接使用。
     phaseLocked: '次フェーズで公開',
     // 维护 状态Completed 字段，供当前前端状态或配置直接使用。

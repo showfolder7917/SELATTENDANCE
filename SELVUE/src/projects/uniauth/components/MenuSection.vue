@@ -23,8 +23,13 @@ defineEmits(['submit', 'edit'])
 
 <template>
   <!-- 右栏表单模式只承接菜单节点编辑，把动态路由和双语标题统一收口到右栏。 -->
-  <form v-if="pane === 'form'" class="seluniauth-editor-card seladmin-surface" @submit.prevent="$emit('submit')">
-    <header class="seluniauth-card-header">
+  <form
+    v-if="pane === 'form'"
+    class="seladmin-panel seladmin-surface selattendance-form-panel seluniauth-editor-card seluniauth-module-form-card"
+    @submit.prevent="$emit('submit')"
+  >
+    <header class="seladmin-panel-header seluniauth-card-header">
+      <p class="seladmin-eyebrow">{{ t('moduleFormEyebrow') }}</p>
       <h3>{{ t('menuTitle') }}</h3>
       <p class="seladmin-copy">{{ t('menuLead') }}</p>
     </header>
@@ -84,12 +89,7 @@ defineEmits(['submit', 'edit'])
   </form>
 
   <!-- 中栏表格模式只负责展示菜单节点列表，点击后把节点回填到右栏。 -->
-  <section v-else class="seluniauth-table-card seladmin-surface">
-    <header class="seluniauth-card-header">
-      <h3>{{ t('summaryMenu') }}</h3>
-      <p class="seladmin-copy">{{ t('editHint') }}</p>
-    </header>
-
+  <section v-else class="seladmin-panel seladmin-surface selattendance-data-panel seluniauth-table-card seluniauth-module-list-panel">
     <div class="seluniauth-table-shell">
       <table class="seluniauth-table">
         <thead>

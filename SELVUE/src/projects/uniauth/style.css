@@ -267,6 +267,39 @@ body {
   --shared-workbench-metrics-max: 1.05fr;
 }
 
+/* 模块管理改成打卡记录式英雄头后，先用一整块 hero 解释当前模块职责，再进入下方工作板。 */
+.seluniauth-module-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
+  padding: 20px 22px;
+  border-radius: 22px;
+}
+
+/* 模块英雄头左侧固定承接标题与说明，避免统计卡把文字区域压成窄列。 */
+.seluniauth-module-hero-copy {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* 模块英雄头标题直接对齐打卡记录共享头部的标题节奏，避免视觉权重继续偏大。 */
+.seluniauth-module-hero-copy h2 {
+  margin: 6px 0 8px;
+}
+
+/* 眉标和说明文案跟打卡记录头部保持同样的贴边关系，避免模块英雄头显得更散。 */
+.seluniauth-module-hero-copy .seladmin-eyebrow,
+.seluniauth-module-hero-copy .seladmin-copy {
+  margin: 0;
+}
+
+/* 英雄头指标区允许三张统计卡横向排开，对齐打卡记录顶部的统计节奏。 */
+.seluniauth-module-hero-metrics {
+  align-self: stretch;
+}
+
 /* 中栏当前模块工作区本体继续占满剩余高度，确保表单区和表格区都能局部滚动。 */
 .seluniauth-main-shell {
   display: grid;
@@ -278,6 +311,64 @@ body {
 .seluniauth-main-shell > .seluniauth-table-card {
   height: 100%;
   overflow: hidden;
+}
+
+/* 模块列表板现在只保留列表主体，让表格直接承接英雄头之后的主内容。 */
+.seluniauth-module-list-panel {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* 摘要卡区域直接对齐布局1号的横向统计节奏。 */
+.seluniauth-module-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(136px, 1fr));
+  gap: 10px;
+}
+
+/* 模块摘要卡采用布局1号的紧凑玻璃卡片，让统计信息不再漂在主头部外面。 */
+.seluniauth-module-summary-card {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(28, 40, 67, 0.88);
+  border: 1px solid rgba(115, 144, 202, 0.14);
+}
+
+/* 摘要卡主数值保持明显字号，方便先扫范围再看表格。 */
+.seluniauth-module-summary-card strong {
+  font-size: 28px;
+}
+
+/* 摘要卡说明弱化显示，维持数字优先级。 */
+.seluniauth-module-summary-card small {
+  color: rgba(220, 232, 255, 0.72);
+}
+
+/* 默认卡承接整体模块规模。 */
+.seluniauth-module-summary-card.is-default {
+  background: rgba(37, 57, 96, 0.88);
+}
+
+/* warm 卡强调启用模块数量，贴近当前截图里的第二张统计卡语义。 */
+.seluniauth-module-summary-card.is-warm {
+  background: rgba(71, 52, 37, 0.88);
+}
+
+/* muted 卡用于入口工程数量，避免和启用量争同等注意力。 */
+.seluniauth-module-summary-card.is-muted {
+  background: rgba(38, 50, 71, 0.88);
+}
+
+/* danger 卡用于账号锁定等风险类指标，保持和打卡记录异常卡同级但不抢主标题。 */
+.seluniauth-module-summary-card.is-danger {
+  background: rgba(84, 34, 49, 0.9);
+}
+
+/* 模块表单卡补一个眉标层，让右栏编辑区和中栏主表格形成清晰主次。 */
+.seluniauth-module-form-card .seladmin-eyebrow {
+  margin: 0;
 }
 
 /* 头部状态区只承接当前用户和租户焦点，用胶囊徽标减少文字负担。 */
@@ -325,6 +416,33 @@ body {
   align-content: start;
 }
 
+/* 模块专用右栏直接拆成两个独立业务块，和打卡记录右栏的“补录 + 导入/详情”节奏一致。 */
+.seluniauth-module-side {
+  align-content: start;
+}
+
+/* 模块右栏单块卡片继续沿用统一面板边界，但内部自己管理字段和动作节奏。 */
+.seluniauth-module-side-block {
+  display: grid;
+  gap: 18px;
+  padding: 18px 18px 20px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(115, 144, 202, 0.16);
+}
+
+/* 模块表单本体单独成组，避免第二个详情块参与表单提交。 */
+.seluniauth-module-form {
+  display: grid;
+  gap: 18px;
+}
+
+/* 右栏动作行允许保存和新增并排出现，方便管理员在编辑和新建之间快速切换。 */
+.seluniauth-module-side-actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
 /* 卡片头部统一解释当前区块职责，和 attendance 的每个 section 头部文字层级一致。 */
 .seluniauth-card-header,
 .seluniauth-side-panel-header {
@@ -365,6 +483,7 @@ body {
   border-radius: 22px;
   border: 1px solid rgba(115, 144, 202, 0.18);
   position: relative;
+  background: rgba(11, 18, 34, 0.22);
 }
 
 /* 数据表本体采用粘性表头和整表宽度铺满，阅读体验对齐 attendance 列表区。 */
@@ -397,6 +516,27 @@ body {
   padding: 14px 16px;
   border-top: 1px solid rgba(115, 144, 202, 0.12);
   color: rgba(238, 244, 255, 0.88);
+  vertical-align: top;
+}
+
+/* 列表中的主副文案采用上下结构，帮助中栏直接承接模块类型和描述摘要。 */
+.seluniauth-table tbody td strong,
+.seluniauth-table tbody td small {
+  display: block;
+}
+
+/* 单元格辅助文案弱化展示，避免模块类型和描述抢走主字段的权重。 */
+.seluniauth-table tbody td small {
+  margin-top: 6px;
+  color: rgba(208, 224, 255, 0.62);
+  line-height: 1.45;
+}
+
+/* 空表格时把说明放回表格主体中心，避免留下大片没有意义的留白。 */
+.seluniauth-table-empty-cell {
+  padding: 48px 24px;
+  color: rgba(208, 224, 255, 0.68);
+  text-align: center;
 }
 
 /* 鼠标悬停当前行时用较浅背景强调，贴近 attendance 的列表交互反馈。 */
@@ -408,6 +548,29 @@ body {
 /* 当前行 hover 提示“点击即可回填到左侧表单继续编辑”。 */
 .seluniauth-table tbody tr:hover {
   background: rgba(88, 122, 196, 0.12);
+}
+
+/* 模块启用态在列表里单独做成状态胶囊，帮助用户快速分辨可用工程。 */
+.seluniauth-module-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* 启用模块保持偏蓝色高亮，语义与工作台主色保持一致。 */
+.seluniauth-module-status.is-enabled {
+  background: rgba(60, 91, 167, 0.38);
+  color: rgba(238, 244, 255, 0.96);
+}
+
+/* 未启用模块改成灰色弱化，不与启用模块争同等视觉注意力。 */
+.seluniauth-module-status.is-disabled {
+  background: rgba(90, 99, 122, 0.26);
+  color: rgba(210, 220, 242, 0.76);
 }
 
 /* 右侧辅助栏按卡片纵向堆叠，专门承接宿主桥接和权限参考，不再掺杂主编辑区。 */
@@ -499,6 +662,11 @@ body {
 
   .seluniauth-main-board {
     padding: 18px;
+  }
+
+  .seluniauth-module-hero,
+  .seluniauth-module-summary-grid {
+    grid-template-columns: 1fr;
   }
 
 }

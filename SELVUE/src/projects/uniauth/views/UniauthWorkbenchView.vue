@@ -2,8 +2,6 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import AlertDialog from '../../../shared/components/AlertDialog.vue'
 import LanguageSwitch from '../../../shared/components/LanguageSwitch.vue'
-import SharedMetricCards from '../../../shared/components/SharedMetricCards.vue'
-import SharedWorkbenchHeader from '../../../shared/components/SharedWorkbenchHeader.vue'
 import ThemeSwitch from '../../../shared/components/ThemeSwitch.vue'
 import ThreePaneWorkbenchLayout from '../../../shared/components/ThreePaneWorkbenchLayout.vue'
 import { useWorkbenchShellStyle } from '../../../shared/composables/useWorkbenchShellStyle'
@@ -13,7 +11,6 @@ import {
   workbenchViewportBreakpoints,
   workbenchViewportMetrics
 } from '../../../shared/constants/workbenchLayoutConfig'
-import HostContextSection from '../components/HostContextSection.vue'
 import LoginSection from '../components/LoginSection.vue'
 import MenuSection from '../components/MenuSection.vue'
 import ModuleSection from '../components/ModuleSection.vue'
@@ -34,8 +31,6 @@ const {
   loginPending,
   savePending,
   reloadPending,
-  currentUser,
-  hostContext,
   loginForm,
   moduleForm,
   tenantForm,
@@ -50,9 +45,6 @@ const {
   navItems,
   activeSectionMeta,
   metricItems,
-  currentUserEntries,
-  hostContextPreview,
-  permissionReferenceRows,
   t,
   reloadWorkbench,
   submitLogin,
@@ -158,6 +150,26 @@ const sidebarStickStyle = computed(() => {
   }
 })
 
+// 模块管理英雄头需要独立承接统计卡，所以在 view 层直接按当前模块列表计算一组稳定指标。
+const moduleHeroMetrics = computed(() => [
+  { key: 'moduleCount', value: moduleRows.value.length, label: t('summaryModule'), tone: 'default' },
+  {
+    key: 'enabledModuleCount',
+    value: moduleRows.value.filter((row) => row.enabledFlag).length,
+    label: t('enabledFlag'),
+    tone: 'warm'
+  },
+  {
+    key: 'entryProjectCount',
+    value: new Set(moduleRows.value.map((row) => row.entryProject).filter(Boolean)).size,
+    label: t('entryProject'),
+    tone: 'muted'
+  }
+])
+
+// 所有管理区块统一走同一套英雄头卡片；模块管理继续保留已经确认的指标算法，其余区块复用 metricItems。
+const heroMetrics = computed(() => (activeSection.value === 'module' ? moduleHeroMetrics.value : metricItems.value))
+
 // 顶部监听器只需要关注 hero 尺寸变化，因为页内消息布局已经被删除。
 function bindHeroResizeObserver() {
   heroResizeObserver?.disconnect()
@@ -200,6 +212,11 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', syncWorkbenchViewportHeight)
   window.removeEventListener('resize', syncSidebarFloating)
 })
+
+// 模块管理需要保留一个显式“新建模块”入口，所以这里直接复用编辑回填逻辑把表单复位到默认值。
+function resetModuleForm() {
+  editModule({})
+}
 </script>
 
 <template>
@@ -297,30 +314,24 @@ onBeforeUnmount(() => {
         <!-- 中栏正式收口成布局1号的主工作板：先头部，再当前模块的双栏编辑区。 -->
         <main class="seluniauth-content">
           <section class="seluniauth-main-board seladmin-surface">
-            <SharedWorkbenchHeader
-              class="seluniauth-content-header"
-              :eyebrow="t('workspaceStatus')"
-              :title="activeSectionMeta.title"
-              :lead="activeSectionMeta.lead"
-              split-mode="left-summary-right-metrics"
-            >
-              <template #metrics>
-                <!-- 当前区块摘要卡直接复用 attendance 的共享指标卡。 -->
-                <SharedMetricCards class="seluniauth-header-metrics" :items="metricItems" />
-              </template>
-
-              <template #actions>
-                <!-- 头部只保留当前用户与租户焦点，帮助管理员确认当前操作上下文。 -->
-                <div class="seluniauth-header-status">
-                  <span class="seluniauth-status-pill">
-                    {{ currentUser?.displayName || t('noSession') }}
-                  </span>
-                  <span class="seluniauth-status-pill is-muted">
-                    {{ currentUser?.tenantCode || '-' }}
-                  </span>
-                </div>
-              </template>
-            </SharedWorkbenchHeader>
+            <section class="seladmin-hero seladmin-surface seluniauth-module-hero">
+              <div class="seluniauth-module-hero-copy">
+                <p class="seladmin-eyebrow">{{ t('workspaceStatus') }}</p>
+                <h2>{{ activeSectionMeta.title }}</h2>
+                <p class="seladmin-copy">{{ activeSectionMeta.lead }}</p>
+              </div>
+              <div class="seluniauth-module-summary-grid seluniauth-module-hero-metrics">
+                <article
+                  v-for="card in heroMetrics"
+                  :key="card.key"
+                  class="seluniauth-module-summary-card"
+                  :class="`is-${card.tone}`"
+                >
+                  <strong>{{ card.value }}</strong>
+                  <small>{{ card.label }}</small>
+                </article>
+              </div>
+            </section>
 
             <div class="seluniauth-main-shell">
               <!-- 模块管理区块在中栏只保留主列表，让布局1号的主工作板职责回到表格浏览。 -->
@@ -333,6 +344,7 @@ onBeforeUnmount(() => {
                 :t="t"
                 @submit="submitModule"
                 @edit="editModule"
+                @reset="resetModuleForm"
               />
 
               <!-- 租户管理区块在中栏只保留租户列表，当前记录编辑改由右栏承接。 -->
@@ -400,6 +412,7 @@ onBeforeUnmount(() => {
             :t="t"
             @submit="submitModule"
             @edit="editModule"
+            @reset="resetModuleForm"
           />
 
           <!-- 租户管理区块在右栏承接当前租户编辑表单。 -->
@@ -450,39 +463,6 @@ onBeforeUnmount(() => {
             @edit="editMenu"
           />
 
-          <section class="seluniauth-side-panel seladmin-surface">
-            <header class="seluniauth-side-panel-header">
-              <h3>{{ t('currentUser') }}</h3>
-              <p class="seladmin-copy">{{ t('workspaceStatus') }}</p>
-            </header>
-
-            <dl class="seluniauth-key-value-list">
-              <div v-for="entry in currentUserEntries" :key="entry.key" class="seluniauth-key-value-item">
-                <dt>{{ entry.label }}</dt>
-                <dd>{{ entry.value }}</dd>
-              </div>
-            </dl>
-          </section>
-
-          <HostContextSection
-            :title="t('hostCheck')"
-            :lead="hostContext ? t('hostContextReady') : t('hostContextMissing')"
-            :preview="hostContextPreview"
-          />
-
-          <section v-if="activeSection === 'role'" class="seluniauth-side-panel seladmin-surface">
-            <header class="seluniauth-side-panel-header">
-              <h3>{{ t('permissionReference') }}</h3>
-              <p class="seladmin-copy">{{ t('sectionRoleHint') }}</p>
-            </header>
-
-            <ul class="seluniauth-reference-list">
-              <li v-for="item in permissionReferenceRows" :key="item.id">
-                <strong>{{ item.label }}</strong>
-                <small>{{ item.hint }}</small>
-              </li>
-            </ul>
-          </section>
         </aside>
       </template>
     </ThreePaneWorkbenchLayout>

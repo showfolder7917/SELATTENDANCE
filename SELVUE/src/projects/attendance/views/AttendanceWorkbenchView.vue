@@ -1045,14 +1045,24 @@ onBeforeUnmount(() => {
                 :outer-max-left-percent="attendanceOverviewLayoutPreset.outerMaxLeftPercent"
               >
                 <template #left>
-                  <AttendanceSummarySection :steps="state.steps" :recommended-next-label="recommendedNextLabel" :t="t" />
+                  <AttendanceSummarySection
+                    :steps="state.steps"
+                    :recommended-next-key="state.recommendedNextAction || state.bootstrapShell.recommendedNextAction || 'wizard.schedule'"
+                    :recommended-next-label="recommendedNextLabel"
+                    :t="t"
+                  />
                 </template>
 
                 <template #main>
                   <TenantSection :tenant="state.tenant" :t="t" :on-submit="submitTenant" />
                 </template>
               </ThreePaneWorkbenchLayout>
-              <WizardSection :visible="true" :steps="state.steps" :t="t" />
+              <WizardSection
+                :visible="true"
+                :steps="state.steps"
+                :recommended-next-key="state.recommendedNextAction || state.bootstrapShell.recommendedNextAction || 'wizard.schedule'"
+                :t="t"
+              />
             </template>
 
             <WorkplaceSection
