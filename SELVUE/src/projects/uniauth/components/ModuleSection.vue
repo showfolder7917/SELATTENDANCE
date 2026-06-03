@@ -67,19 +67,28 @@ const emit = defineEmits(['submit', 'edit', 'reset'])
             <span>{{ t('moduleDesc') }}</span>
             <textarea v-model="moduleForm.moduleDesc" rows="4" />
           </label>
-          <label class="seluniauth-inline-check">
-            <input v-model="moduleForm.enabledFlag" type="checkbox" />
-            <span>{{ t('enabledFlag') }}</span>
-          </label>
         </div>
 
-        <div class="seluniauth-action-row seluniauth-module-side-actions">
-          <button type="submit" class="seladmin-button seladmin-button-primary" :disabled="savePending">
-            {{ savePending ? `${t('save')}...` : t('save') }}
-          </button>
-          <button type="button" class="seladmin-button seladmin-button-secondary" @click="emit('reset')">
-            {{ t('moduleCreateNew') }}
-          </button>
+        <!-- 表单底部统一收口成“状态信息 + 主动作”底栏，避免勾选区和按钮组各自漂浮导致右栏重心分散。 -->
+        <div class="seluniauth-module-form-footer">
+          <!-- 启用状态单独作为左侧信息块展示，让管理员先确认模块是否生效，再决定保存或新建。 -->
+          <label class="seluniauth-inline-check seluniauth-module-flag-card">
+            <input v-model="moduleForm.enabledFlag" type="checkbox" />
+            <span class="seluniauth-module-flag-copy">
+              <strong>{{ t('enabledFlag') }}</strong>
+              <small>{{ moduleForm.enabledFlag ? t('enabledYes') : t('enabledNo') }}</small>
+            </span>
+          </label>
+
+          <!-- 右侧按钮组继续保留保存和新增模块两类动作，但通过底栏对齐统一收口视觉重心。 -->
+          <div class="seluniauth-action-row seluniauth-module-side-actions">
+            <button type="submit" class="seladmin-button seladmin-button-primary" :disabled="savePending">
+              {{ savePending ? `${t('save')}...` : t('save') }}
+            </button>
+            <button type="button" class="seladmin-button seladmin-button-secondary" @click="emit('reset')">
+              {{ t('moduleCreateNew') }}
+            </button>
+          </div>
         </div>
       </form>
     </section>

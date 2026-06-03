@@ -43,11 +43,11 @@ public class UniauthTenantServiceImpl implements UniauthTenantService {
         // 平台管理员必须先拥有租户写权限，才能新增或修改租户资料。
         uniauthPermissionGuard.ensurePermission(currentUser, "uniauth.tenant.write");
         // 租户编码是平台稳定键，不能为空。
-        UniauthValueSupport.requireText(saveIn == null ? null : saveIn.tenantCode, "tenantCode 不能为空");
+        UniauthValueSupport.requireText(saveIn == null ? null : saveIn.getTenantCode(), "tenantCode 不能为空");
         // 租户名称是平台展示主字段，不能为空。
-        UniauthValueSupport.requireText(saveIn.tenantName, "tenantName 不能为空");
+        UniauthValueSupport.requireText(saveIn.getTenantName(), "tenantName 不能为空");
         // 没有 id 时按新增路径写租户主表。
-        if (saveIn.id == null) {
+        if (saveIn.getId() == null) {
             // 新增租户直接写主表，后续按编码回查最终结果。
             uniauthTenantDao.insertTenant(saveIn);
         } else {
@@ -55,7 +55,7 @@ public class UniauthTenantServiceImpl implements UniauthTenantService {
             uniauthTenantDao.updateTenant(saveIn);
         }
         // 按租户编码回查正式结果，保证返回给前端的是数据库真实状态。
-        UniauthTenantItemOut tenantRow = uniauthTenantDao.selectTenantByCode(saveIn.tenantCode.trim());
+        UniauthTenantItemOut tenantRow = uniauthTenantDao.selectTenantByCode(saveIn.getTenantCode().trim());
         // 租户维护完成后写审计日志，方便平台追踪谁调整过租户资料。
         uniauthAuditLogWriter.write(currentUser, "save-tenant", "tenant", String.valueOf(tenantRow.getId()), requestPath, "success");
         return tenantRow;

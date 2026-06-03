@@ -46,11 +46,11 @@ public class UniauthModuleServiceImpl implements UniauthModuleService {
             throw new IllegalArgumentException("module payload 不能为空");
         }
         // 模块编码是权限、菜单和数据范围的共同稳定键，因此不能为空。
-        UniauthValueSupport.requireText(saveIn.moduleCode, "moduleCode 不能为空");
+        UniauthValueSupport.requireText(saveIn.getModuleCode(), "moduleCode 不能为空");
         // 模块名称是管理台和角色引用时的主展示字段，因此不能为空。
-        UniauthValueSupport.requireText(saveIn.moduleName, "moduleName 不能为空");
+        UniauthValueSupport.requireText(saveIn.getModuleName(), "moduleName 不能为空");
         // 新增模块时要求当前账号具备模块创建权限，避免任意账号扩展系统边界。
-        if (saveIn.id == null) {
+        if (saveIn.getId() == null) {
             // 当前新增路径显式要求 create 权限，和细粒度权限码清单保持一致。
             uniauthPermissionGuard.ensurePermission(currentUser, "uniauth.module.create");
         } else {
@@ -58,13 +58,13 @@ public class UniauthModuleServiceImpl implements UniauthModuleService {
             uniauthPermissionGuard.ensurePermission(currentUser, "uniauth.module.update");
         }
         // 模块类型缺失时默认写成 business，避免新增业务域时每次手工补固定值。
-        saveIn.moduleType = UniauthValueSupport.blankToDefault(saveIn.moduleType, "business");
+        saveIn.setModuleType(UniauthValueSupport.blankToDefault(saveIn.getModuleType(), "business"));
         // 归属系统缺失时默认回到 moduleCode，避免空 ownerSystem 破坏列表展示。
-        saveIn.ownerSystem = UniauthValueSupport.blankToDefault(saveIn.ownerSystem, saveIn.moduleCode.trim());
+        saveIn.setOwnerSystem(UniauthValueSupport.blankToDefault(saveIn.getOwnerSystem(), saveIn.getModuleCode().trim()));
         // 启用标记缺失时默认启用，保证新模块创建后可直接被菜单和角色消费。
-        saveIn.enabledFlag = saveIn.enabledFlag == null ? Boolean.TRUE : saveIn.enabledFlag;
+        saveIn.setEnabledFlag(saveIn.getEnabledFlag() == null ? Boolean.TRUE : saveIn.getEnabledFlag());
         // 没有 id 时按新增路径写入模块主表。
-        if (saveIn.id == null) {
+        if (saveIn.getId() == null) {
             // 新增模块只写模块主表，不在这里隐式创建菜单和权限定义，避免职责混叠。
             uniauthModuleDao.insertModule(saveIn);
         } else {
@@ -72,7 +72,7 @@ public class UniauthModuleServiceImpl implements UniauthModuleService {
             uniauthModuleDao.updateModule(saveIn);
         }
         // 按模块编码回查正式结果，保证返回对象和数据库真实状态一致。
-        UniauthModuleItemOut moduleRow = uniauthModuleDao.selectModuleByCode(saveIn.moduleCode.trim());
+        UniauthModuleItemOut moduleRow = uniauthModuleDao.selectModuleByCode(saveIn.getModuleCode().trim());
         // 模块保存成功后记录审计日志，方便后续追踪谁改动了模块边界。
         uniauthAuditLogWriter.write(currentUser, "save-module", "module", String.valueOf(moduleRow.getId()), requestPath, "success");
         return moduleRow;

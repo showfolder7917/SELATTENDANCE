@@ -49,19 +49,19 @@ public class UniauthUserServiceImpl implements UniauthUserService {
         // 用户保存前必须先拥有账号维护权限，避免租户管理员误碰平台账号。
         uniauthPermissionGuard.ensurePermission(currentUser, "uniauth.user.write");
         // 登录名是权限中心账号稳定键，不能为空。
-        UniauthValueSupport.requireText(saveIn == null ? null : saveIn.loginName, "loginName 不能为空");
+        UniauthValueSupport.requireText(saveIn == null ? null : saveIn.getLoginName(), "loginName 不能为空");
         // 展示名是界面和日志主名称，不能为空。
-        UniauthValueSupport.requireText(saveIn.displayName, "displayName 不能为空");
+        UniauthValueSupport.requireText(saveIn.getDisplayName(), "displayName 不能为空");
         // locale 缺失时默认使用中文，保证最小闭环界面有稳定文案。
-        saveIn.locale = UniauthValueSupport.blankToDefault(saveIn.locale, "zh-CN");
+        saveIn.setLocale(UniauthValueSupport.blankToDefault(saveIn.getLocale(), "zh-CN"));
         // userStatus 缺失时默认激活，减少首次创建账号的额外动作。
-        saveIn.userStatus = UniauthValueSupport.blankToDefault(saveIn.userStatus, "ACTIVE");
+        saveIn.setUserStatus(UniauthValueSupport.blankToDefault(saveIn.getUserStatus(), "ACTIVE"));
         // 只有显式传入新密码时才重算摘要，避免更新资料时意外覆盖旧密码。
-        String passwordHash = saveIn.password == null || saveIn.password.isBlank()
+        String passwordHash = saveIn.getPassword() == null || saveIn.getPassword().isBlank()
             ? ""
-            : uniauthJwtSupport.hashPassword(saveIn.password.trim());
+            : uniauthJwtSupport.hashPassword(saveIn.getPassword().trim());
         // 没有 id 时按新增账号路径写主表。
-        if (saveIn.id == null) {
+        if (saveIn.getId() == null) {
             // 新增账号时必须显式提供密码，否则无法形成可登录账号。
             if (passwordHash.isEmpty()) {
                 throw new IllegalArgumentException("新增用户时 password 不能为空");
@@ -69,22 +69,22 @@ public class UniauthUserServiceImpl implements UniauthUserService {
             // 先写入账号主表，再按登录名回查新主键。
             uniauthUserDao.insertUser(saveIn, passwordHash);
             // 把数据库生成的主键写回输入对象，供后续关系表保存复用。
-            saveIn.id = UniauthValueSupport.longValue(uniauthUserDao.selectUserByLoginName(saveIn.loginName.trim()).getId());
+            saveIn.setId(UniauthValueSupport.longValue(uniauthUserDao.selectUserByLoginName(saveIn.getLoginName().trim()).getId()));
         } else {
             // 带 id 时按更新账号路径覆盖资料和可选密码摘要。
             uniauthUserDao.updateUser(saveIn, passwordHash);
         }
         // 先删除旧角色关系，保证本次提交结果就是账号最终角色集合。
-        uniauthUserDao.deleteUserRoles(saveIn.id);
+        uniauthUserDao.deleteUserRoles(saveIn.getId());
         // 逐个写入当前账号应绑定的角色主键集合。
-        for (Long roleId : UniauthValueSupport.nullSafeLongList(saveIn.roleIds)) {
+        for (Long roleId : UniauthValueSupport.nullSafeLongList(saveIn.getRoleIds())) {
             // 每条关系单独写入，表达账号拥有哪些角色授权来源。
-            uniauthUserDao.insertUserRole(saveIn.id, roleId);
+            uniauthUserDao.insertUserRole(saveIn.getId(), roleId);
         }
         // 回查正式账号结果，保证返回值和数据库一致。
-        UniauthUserItemOut userRow = uniauthUserDao.selectUserById(saveIn.id);
+        UniauthUserItemOut userRow = uniauthUserDao.selectUserById(saveIn.getId());
         // 用户维护成功后写审计日志，方便后续追踪账号改动来源。
-        uniauthAuditLogWriter.write(currentUser, "save-user", "user", String.valueOf(saveIn.id), requestPath, "success");
+        uniauthAuditLogWriter.write(currentUser, "save-user", "user", String.valueOf(saveIn.getId()), requestPath, "success");
         return userRow;
     }
 }

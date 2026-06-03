@@ -110,8 +110,8 @@ export function useUniauthWorkbench() {
   const authSession = ref(readAuthSession())
   // 当前页面语言优先继承登录用户 locale，未登录时回退到中文默认。
   const locale = ref(resolveInitialLocale(authSession.value?.currentUser?.locale))
-  // 当前激活区块固定在五个正式管理域中切换。
-  const activeSection = ref(uniauthSectionKeys[0])
+  // 当前激活区块默认仍落在模块管理，避免仅因左侧导航顺序调整就改变管理员进入工作台后的首屏落点。
+  const activeSection = ref('module')
   // 页面级消息文本统一放在 view 外层，避免每个区块各自维护提示条。
   const messageText = ref('')
   // 页面级消息语气决定提示条颜色和强调层级。

@@ -44,49 +44,52 @@ public class UniauthRoleServiceImpl implements UniauthRoleService {
         // 角色维护前必须先具备角色写权限，避免普通账号越权改授权模型。
         uniauthPermissionGuard.ensurePermission(currentUser, "uniauth.role.write");
         // 角色编码是稳定排查键，不能为空。
-        UniauthValueSupport.requireText(saveIn == null ? null : saveIn.roleCode, "roleCode 不能为空");
+        UniauthValueSupport.requireText(saveIn == null ? null : saveIn.getRoleCode(), "roleCode 不能为空");
         // 角色名称是前端展示主字段，不能为空。
-        UniauthValueSupport.requireText(saveIn.roleName, "roleName 不能为空");
+        UniauthValueSupport.requireText(saveIn.getRoleName(), "roleName 不能为空");
         // 没有 id 时按新增角色路径写主表。
-        if (saveIn.id == null) {
+        if (saveIn.getId() == null) {
             // 先插入角色主表，再按编码回查真实主键。
             uniauthRoleDao.insertRole(saveIn);
             // 把数据库生成的角色主键写回输入对象，供关系表写入复用。
-            saveIn.id = UniauthValueSupport.longValue(uniauthRoleDao.selectRoleByCode(saveIn.roleCode.trim()).getId());
+            saveIn.setId(UniauthValueSupport.longValue(uniauthRoleDao.selectRoleByCode(saveIn.getRoleCode().trim()).getId()));
         } else {
             // 带 id 时按更新路径覆盖角色主资料。
             uniauthRoleDao.updateRole(saveIn);
         }
         // 先清掉旧权限关系，保证当前提交结果就是最终授权集合。
-        uniauthRoleDao.deleteRolePermissions(saveIn.id);
+        uniauthRoleDao.deleteRolePermissions(saveIn.getId());
         // 先清掉旧菜单关系，保证菜单显隐立即与本次保存一致。
-        uniauthRoleDao.deleteRoleMenus(saveIn.id);
+        uniauthRoleDao.deleteRoleMenus(saveIn.getId());
         // 先清掉旧数据范围，避免历史范围残留造成宿主越权。
-        uniauthRoleDao.deleteRoleDataScopes(saveIn.id);
+        uniauthRoleDao.deleteRoleDataScopes(saveIn.getId());
         // 权限码列表统一转空安全集合，避免空列表拼出非法 SQL。
-        List<String> permissionCodes = UniauthValueSupport.nullSafeStringList(saveIn.permissionCodes);
+        List<String> permissionCodes = UniauthValueSupport.nullSafeStringList(saveIn.getPermissionCodes());
         // 权限码有值时才查询主键并重建权限关系。
         for (Long permissionId : permissionCodes.isEmpty() ? List.<Long>of() : uniauthRoleDao.selectPermissionIdsByCodes(permissionCodes)) {
             // 每条关系单独写入，表达角色拥有的单个权限定义。
-            uniauthRoleDao.insertRolePermission(saveIn.id, permissionId);
+            uniauthRoleDao.insertRolePermission(saveIn.getId(), permissionId);
         }
         // 菜单码列表统一转空安全集合，避免空 IN 条件。
-        List<String> menuCodes = UniauthValueSupport.nullSafeStringList(saveIn.menuCodes);
+        List<String> menuCodes = UniauthValueSupport.nullSafeStringList(saveIn.getMenuCodes());
         // 菜单码有值时才查询主键并重建菜单关系。
         for (Long menuId : menuCodes.isEmpty() ? List.<Long>of() : uniauthRoleDao.selectMenuIdsByCodes(menuCodes)) {
             // 每条关系单独写入，表达角色可见的单个菜单节点。
-            uniauthRoleDao.insertRoleMenu(saveIn.id, menuId);
+            uniauthRoleDao.insertRoleMenu(saveIn.getId(), menuId);
         }
         // 数据范围类型缺失时默认给租户范围，确保宿主至少不越租户。
-        String scopeType = UniauthValueSupport.blankToDefault(saveIn.dataScopeType, "tenant");
+        String scopeType = UniauthValueSupport.blankToDefault(saveIn.getDataScopeType(), "tenant");
         // 数据范围值为空时优先落真实租户主键，只有都没有时才回退示例值。
-        String scopeValue = UniauthValueSupport.blankToDefault(saveIn.dataScopeValue, saveIn.tenantId == null ? "1" : String.valueOf(saveIn.tenantId));
+        String scopeValue = UniauthValueSupport.blankToDefault(
+            saveIn.getDataScopeValue(),
+            saveIn.getTenantId() == null ? "1" : String.valueOf(saveIn.getTenantId())
+        );
         // 写入 attendance 模块数据范围，供宿主查询层后续消费。
-        uniauthRoleDao.insertRoleDataScope(saveIn.id, "attendance", scopeType, scopeValue);
+        uniauthRoleDao.insertRoleDataScope(saveIn.getId(), "attendance", scopeType, scopeValue);
         // 回查角色主表结果，保证返回值与数据库真实状态一致。
-        UniauthRoleItemOut roleRow = uniauthRoleDao.selectRoleById(saveIn.id);
+        UniauthRoleItemOut roleRow = uniauthRoleDao.selectRoleById(saveIn.getId());
         // 角色维护成功后写审计日志，方便回溯谁改动了授权模型。
-        uniauthAuditLogWriter.write(currentUser, "save-role", "role", String.valueOf(saveIn.id), requestPath, "success");
+        uniauthAuditLogWriter.write(currentUser, "save-role", "role", String.valueOf(saveIn.getId()), requestPath, "success");
         return roleRow;
     }
 }

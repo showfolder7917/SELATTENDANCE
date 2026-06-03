@@ -437,10 +437,26 @@ body {
   gap: 18px;
 }
 
+.seluniauth-module-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 4px;
+}
+
 /* 右栏动作行允许保存和新增并排出现，方便管理员在编辑和新建之间快速切换。 */
 .seluniauth-module-side-actions {
-  justify-content: flex-start;
-  flex-wrap: wrap;
+  width: auto;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 12px;
+}
+
+.seluniauth-module-side-actions .seladmin-button {
+  flex: 0 0 auto;
+  min-width: 96px;
 }
 
 /* 卡片头部统一解释当前区块职责，和 attendance 的每个 section 头部文字层级一致。 */
@@ -474,6 +490,34 @@ body {
   align-items: center;
   gap: 10px;
   min-height: 44px;
+}
+
+.seluniauth-module-flag-card {
+  display: flex;
+  align-items: center;
+  width: auto;
+  min-width: fit-content;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(115, 144, 202, 0.16);
+  background: rgba(9, 15, 30, 0.38);
+}
+
+.seluniauth-module-flag-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.seluniauth-module-flag-copy strong {
+  font-size: 14px;
+  color: rgba(245, 248, 255, 0.96);
+  white-space: nowrap;
+}
+
+.seluniauth-module-flag-copy small {
+  font-size: 12px;
+  color: rgba(186, 199, 223, 0.76);
+  white-space: nowrap;
 }
 
 /* 表格容器单独滚动，避免大列表把整个工作台高度继续往下撑。 */
@@ -683,6 +727,25 @@ body {
 
   .seluniauth-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .seluniauth-module-form-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .seluniauth-module-flag-card,
+  .seluniauth-module-side-actions {
+    width: 100%;
+  }
+
+  .seluniauth-module-side-actions {
+    justify-content: stretch;
+  }
+
+  .seluniauth-module-side-actions .seladmin-button {
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   .seluniauth-login-card {

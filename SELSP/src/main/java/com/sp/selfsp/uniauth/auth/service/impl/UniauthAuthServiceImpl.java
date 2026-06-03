@@ -62,11 +62,11 @@ public class UniauthAuthServiceImpl implements UniauthAuthService {
     @Transactional(transactionManager = "uniauthTransactionManager")
     public UniauthLoginOut login(UniauthLoginIn loginIn, String requestPath, String clientIp) {
         // 登录名为空时直接阻断，避免查全表或出现无语义错误。
-        UniauthValueSupport.requireText(loginIn == null ? null : loginIn.loginName, "loginName 不能为空");
+        UniauthValueSupport.requireText(loginIn == null ? null : loginIn.getLoginName(), "loginName 不能为空");
         // 密码为空时直接阻断，避免空密码被误传入摘要算法。
-        UniauthValueSupport.requireText(loginIn.password, "password 不能为空");
+        UniauthValueSupport.requireText(loginIn == null ? null : loginIn.getPassword(), "password 不能为空");
         // 先按登录名读取用户主数据，判断账号是否存在。
-        UniauthAuthUser userRow = uniauthAuthDao.selectUserByLoginName(loginIn.loginName.trim());
+        UniauthAuthUser userRow = uniauthAuthDao.selectUserByLoginName(loginIn.getLoginName().trim());
         // 查不到账号时直接提示账号或密码错误，避免暴露用户是否存在。
         if (userRow == null) {
             throw new IllegalArgumentException("账号或密码错误");
@@ -80,7 +80,7 @@ public class UniauthAuthServiceImpl implements UniauthAuthService {
             throw new IllegalArgumentException("当前账号已锁定");
         }
         // 把当前输入密码按统一口径摘要，准备和库中的摘要比对。
-        String incomingPasswordHash = uniauthJwtSupport.hashPassword(loginIn.password.trim());
+        String incomingPasswordHash = uniauthJwtSupport.hashPassword(loginIn.getPassword().trim());
         // 密码摘要不一致时直接阻断登录。
         if (!incomingPasswordHash.equals(UniauthValueSupport.blankToDefault(userRow.getPasswordHash(), ""))) {
             throw new IllegalArgumentException("账号或密码错误");

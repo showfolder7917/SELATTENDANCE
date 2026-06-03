@@ -43,17 +43,17 @@ public class UniauthMenuServiceImpl implements UniauthMenuService {
         // 菜单维护前必须先具备菜单写权限，避免普通账号改宿主导航。
         uniauthPermissionGuard.ensurePermission(currentUser, "uniauth.menu.write");
         // 菜单编码是前后端稳定键，不能为空。
-        UniauthValueSupport.requireText(saveIn == null ? null : saveIn.menuCode, "menuCode 不能为空");
+        UniauthValueSupport.requireText(saveIn == null ? null : saveIn.getMenuCode(), "menuCode 不能为空");
         // 中文标题不能为空，否则中文界面会出现空白节点。
-        UniauthValueSupport.requireText(saveIn.titleZh, "titleZh 不能为空");
+        UniauthValueSupport.requireText(saveIn.getTitleZh(), "titleZh 不能为空");
         // 日文标题不能为空，否则日文界面无法完成双语切换。
-        UniauthValueSupport.requireText(saveIn.titleJa, "titleJa 不能为空");
+        UniauthValueSupport.requireText(saveIn.getTitleJa(), "titleJa 不能为空");
         // 排序缺失时默认给 0，保证新节点仍能进树。
-        saveIn.sortOrder = saveIn.sortOrder == null ? 0 : saveIn.sortOrder;
+        saveIn.setSortOrder(saveIn.getSortOrder() == null ? 0 : saveIn.getSortOrder());
         // 启用标记缺失时默认启用，减少首次建节点时的额外操作。
-        saveIn.enabledFlag = saveIn.enabledFlag == null ? Boolean.TRUE : saveIn.enabledFlag;
+        saveIn.setEnabledFlag(saveIn.getEnabledFlag() == null ? Boolean.TRUE : saveIn.getEnabledFlag());
         // 没有 id 时按新增节点路径写菜单表。
-        if (saveIn.id == null) {
+        if (saveIn.getId() == null) {
             // 新增节点直接写菜单主表，后续按编码回查真实结果。
             uniauthMenuDao.insertMenu(saveIn);
         } else {
@@ -61,7 +61,7 @@ public class UniauthMenuServiceImpl implements UniauthMenuService {
             uniauthMenuDao.updateMenu(saveIn);
         }
         // 按菜单编码回查正式结果，保证返回值与数据库一致。
-        UniauthMenuItemOut menuRow = uniauthMenuDao.selectMenuByCode(saveIn.menuCode.trim());
+        UniauthMenuItemOut menuRow = uniauthMenuDao.selectMenuByCode(saveIn.getMenuCode().trim());
         // 菜单维护成功后写审计日志，方便定位谁改动了导航树。
         uniauthAuditLogWriter.write(currentUser, "save-menu", "menu", String.valueOf(menuRow.getId()), requestPath, "success");
         return menuRow;
