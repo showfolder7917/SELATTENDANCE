@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SELATTENDANCE Uniauth 用户模块架构说明</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --ink: #1f2933;
+      --muted: #52606d;
+      --line: #d9e2ec;
+      --accent: #0b6e4f;
+      --accent-soft: #e6f4ef;
+      --warn: #8d2b0b;
+      --warn-soft: #fde8df;
+      --code: #102a43;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, #eef3f6 0%, #f8fafb 100%);
+      line-height: 1.6;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #12343b 0%, #255f5a 100%);
+      color: #fff;
+      border-radius: 24px;
+      padding: 28px 32px;
+      box-shadow: 0 18px 40px rgba(18, 52, 59, 0.22);
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .meta span {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .section {
+      margin-top: 24px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 22px;
+    }
+
+    .section h3 {
+      margin: 20px 0 10px;
+      font-size: 17px;
+    }
+
+    .lead {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .card {
+      background: #fbfcfd;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--accent-soft);
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .warn {
+      background: var(--warn-soft);
+      color: var(--warn);
+    }
+
+    .flow {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .flow-step {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      background: #fcfdfd;
+    }
+
+    .flow-step strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--code);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #f7fafc;
+    }
+
+    code,
+    pre {
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    code {
+      background: #f2f6fa;
+      color: var(--code);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    pre {
+      margin: 14px 0 0;
+      padding: 16px;
+      background: #0f172a;
+      color: #dbeafe;
+      border-radius: 14px;
+      overflow: auto;
+      font-size: 13px;
+    }
+
+    ul {
+      margin: 10px 0 0 18px;
+      padding: 0;
+    }
+
+    li + li {
+      margin-top: 6px;
+    }
+
+    .footer {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>SELATTENDANCE Uniauth 用户模块架构说明</h1>
+      <p>本说明聚焦统一权限中心中“用户”模块的实现方式，覆盖前端区块装配、会话与请求链、后端控制器/服务/DAO、MyBatis SQL 以及新增/编辑用户时的完整数据流。</p>
+      <div class="meta">
+        <span>生成日期：2026-06-03</span>
+        <span>范围：SELVUE + SELSP</span>
+        <span>模块：Uniauth / User</span>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>1. 一句话结论</h2>
+      <p class="lead">“用户”模块不是独立页面，而是 <code>UniauthWorkbenchView</code> 五个管理域中的一个区块。前端通过 bootstrap 聚合接口一次性拿到用户列表，通过单独的用户保存接口维护账号资料与角色绑定；后端则把用户主表 <code>ua_user</code> 与角色关系表 <code>ua_user_role</code> 的维护收口在 <code>UniauthUserServiceImpl</code> 中处理。</p>
+    </section>
+
+    <section class="section">
+      <h2>2. 前端实现分层</h2>
+      <div class="grid">
+        <article class="card">
+          <div class="tag">入口视图</div>
+          <h3>UniauthWorkbenchView.vue</h3>
+          <p>统一权限中心总页面。它负责三栏工作台装配，并在当前激活区块为 <code>user</code> 时，把用户列表区和用户表单区挂到中栏与右栏。</p>
+          <p><code>路径：SELVUE/src/projects/uniauth/views/UniauthWorkbenchView.vue</code></p>
+        </article>
+        <article class="card">
+          <div class="tag">区块切换</div>
+          <h3>UniauthSectionNav.vue</h3>
+          <p>左侧导航只负责切换区块，不负责请求。用户模块的左侧显示文字来自 <code>navUser</code> 和 <code>sectionUserHint</code> 国际化文案。</p>
+          <p><code>路径：SELVUE/src/projects/uniauth/components/UniauthSectionNav.vue</code></p>
+        </article>
+        <article class="card">
+          <div class="tag">状态编排</div>
+          <h3>useUniauthWorkbench</h3>
+          <p>这是用户模块真正的前端业务中枢。它维护 <code>userRows</code>、<code>userForm</code>、<code>submitUser()</code>、<code>editUser()</code> 和整页 bootstrap 回刷。</p>
+          <p><code>路径：SELVUE/src/projects/uniauth/composables/workbench/index.js</code></p>
+        </article>
+        <article class="card">
+          <div class="tag">展示组件</div>
+          <h3>UserSection.vue</h3>
+          <p>只负责渲染，不直接发请求。<code>pane="table"</code> 时显示用户表格，<code>pane="form"</code> 时显示账号编辑表单。</p>
+          <p><code>路径：SELVUE/src/projects/uniauth/components/UserSection.vue</code></p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>3. 用户区块前端数据结构</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>状态名</th>
+            <th>位置</th>
+            <th>作用</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>userRows</code></td>
+            <td><code>useUniauthWorkbench()</code></td>
+            <td>承接 bootstrap 返回的用户列表，供中栏表格渲染。</td>
+          </tr>
+          <tr>
+            <td><code>userForm</code></td>
+            <td><code>useUniauthWorkbench()</code></td>
+            <td>承接当前编辑中的账号主资料与角色绑定表达。</td>
+          </tr>
+          <tr>
+            <td><code>SUMMARY_DEFAULTS.userCount</code></td>
+            <td><code>useUniauthWorkbench()</code></td>
+            <td>驱动左侧导航 badge 和摘要卡中的用户数量。</td>
+          </tr>
+          <tr>
+            <td><code>editUser(row)</code></td>
+            <td><code>useUniauthWorkbench()</code></td>
+            <td>点击用户表格行后，把当前行字段回填到右侧表单。</td>
+          </tr>
+          <tr>
+            <td><code>submitUser()</code></td>
+            <td><code>useUniauthWorkbench()</code></td>
+            <td>把表单归一化后调用保存接口，成功后重新刷新整页 workbench。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>4. 前端请求链</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <strong>4.1 首屏读取用户列表</strong>
+          <span><code>reloadWorkbench()</code> 调用 <code>fetchUniauthWorkbench()</code>，请求 <code>GET /api/uniauth/bootstrap</code>，后端一次性返回 <code>users</code>、<code>summary.userCount</code> 和 <code>currentUser</code>。</span>
+        </div>
+        <div class="flow-step">
+          <strong>4.2 表格点击进入编辑</strong>
+          <span><code>UserSection.vue</code> 点击行后触发 <code>edit</code> 事件，交给 <code>editUser(row)</code> 回填到 <code>userForm</code>。</span>
+        </div>
+        <div class="flow-step">
+          <strong>4.3 保存用户</strong>
+          <span><code>submitUser()</code> 把 <code>roleIdsText</code> 通过 <code>parseNumberList()</code> 变成 <code>roleIds</code> 数组，然后调用 <code>saveUser()</code>，请求 <code>POST /api/uniauth/users</code>。</span>
+        </div>
+        <div class="flow-step">
+          <strong>4.4 保存成功后的回刷</strong>
+          <span>保存成功后不直接手工改局部列表，而是再次执行 <code>reloadWorkbench({ silent: true })</code>，让用户列表、摘要卡、当前用户快照重新走同一口径。</span>
+        </div>
+      </div>
+
+      <pre>SELVUE
+UserSection.vue
+  -> emit('submit')
+  -> useUniauthWorkbench.submitUser()
+  -> saveUser(payload)
+  -> requestJson('/api/uniauth/users', { method: 'POST' })
+  -> 后端返回成功
+  -> reloadWorkbench()
+  -> requestJson('/api/uniauth/bootstrap')
+  -> userRows / summary / currentUser 全量刷新</pre>
+    </section>
+
+    <section class="section">
+      <h2>5. 会话与鉴权链</h2>
+      <div class="grid">
+        <article class="card">
+          <div class="tag">前端会话</div>
+          <h3>authSession.js</h3>
+          <p>登录态保存在浏览器 <code>localStorage</code> 的 <code>selattendance.uniauth.session</code>。<code>readAccessToken()</code> 专门提供 token 给请求层使用。</p>
+        </article>
+        <article class="card">
+          <div class="tag">请求层</div>
+          <h3>request.js</h3>
+          <p><code>requestJson()</code> 每次发请求前都会读取最新 token，并自动加上 <code>Authorization: Bearer ...</code> 请求头。</p>
+        </article>
+        <article class="card">
+          <div class="tag">后端拦截</div>
+          <h3>UniauthWebMvcConfig</h3>
+          <p>拦截 <code>/api/uniauth/**</code>，解析 Bearer Token，并把当前用户装进 <code>UniauthCurrentUserContext</code>。</p>
+        </article>
+        <article class="card">
+          <div class="tag warn">强制登录</div>
+          <h3>requireUser + PermissionGuard</h3>
+          <p>控制器通过 <code>UniauthCurrentUserContext.requireUser()</code> 要求当前请求必须已有登录用户；服务层再用 <code>UniauthPermissionGuard.ensurePermission(...)</code> 校验 <code>uniauth.user.write</code> 等权限码。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>6. 后端实现分层</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>层</th>
+            <th>文件</th>
+            <th>职责</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>读取入口</td>
+            <td><code>bootstrap/controller/UniauthBootstrapController.java</code></td>
+            <td>提供 <code>GET /api/uniauth/bootstrap</code>，一次性返回用户列表和其他管理域列表。</td>
+          </tr>
+          <tr>
+            <td>读取服务</td>
+            <td><code>bootstrap/service/impl/UniauthBootstrapServiceImpl.java</code></td>
+            <td>校验 <code>uniauth.bootstrap.read</code> 后，调用 DAO 聚合读取 <code>users</code>、<code>summary</code> 和 <code>currentUser</code>。</td>
+          </tr>
+          <tr>
+            <td>写入入口</td>
+            <td><code>user/controller/UniauthUserController.java</code></td>
+            <td>提供 <code>POST /api/uniauth/users</code>，统一承接新增和更新。</td>
+          </tr>
+          <tr>
+            <td>写入服务</td>
+            <td><code>user/service/impl/UniauthUserServiceImpl.java</code></td>
+            <td>校验权限、补默认值、可选重算密码摘要、重建用户角色关系、写审计日志。</td>
+          </tr>
+          <tr>
+            <td>DAO 接口</td>
+            <td><code>user/dao/UniauthUserDao.java</code></td>
+            <td>定义用户主表插入/更新、按登录名和主键查询、删除角色关系、插入用户角色关系。</td>
+          </tr>
+          <tr>
+            <td>SQL 映射</td>
+            <td><code>user/dao/mapper/UniauthUserDao.xml</code></td>
+            <td>真正执行 <code>ua_user</code> 和 <code>ua_user_role</code> 的 SQL。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>7. 数据库读写口径</h2>
+      <div class="grid">
+        <article class="card">
+          <div class="tag">列表读取</div>
+          <h3>bootstrap user list</h3>
+          <p><code>UniauthBootstrapDao.xml</code> 里的 <code>selectUserList</code> 从 <code>ua_user u</code> 左连接 <code>ua_tenant t</code>，把 <code>tenant_code</code> 一起带回前端表格。</p>
+          <pre>SELECT u.id, u.tenant_id, t.tenant_code, u.login_name, u.display_name,
+u.display_name_kana, u.locale, u.email, u.phone, u.user_status, u.locked_flag
+FROM ua_user u
+LEFT JOIN ua_tenant t ON t.id = u.tenant_id
+ORDER BY u.id</pre>
+        </article>
+        <article class="card">
+          <div class="tag">主表写入</div>
+          <h3>ua_user</h3>
+          <p>新增时写入 <code>tenant_id</code>、<code>login_name</code>、<code>password_hash</code>、<code>display_name</code>、<code>locale</code>、<code>user_status</code> 等字段；更新时支持“有密码则更新密码、无密码则保留旧密码”。</p>
+        </article>
+        <article class="card">
+          <div class="tag">关系写入</div>
+          <h3>ua_user_role</h3>
+          <p>每次保存用户都先删掉旧关系，再逐条插入新的 <code>role_id</code> 集合，因此前端提交的角色列表就是用户最终绑定结果。</p>
+        </article>
+        <article class="card">
+          <div class="tag">审计日志</div>
+          <h3>ua_audit_log</h3>
+          <p>保存成功后调用公共审计写入器，记录 <code>save-user</code> 动作，便于追踪是谁改了哪个账号。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>8. 用户保存完整时序</h2>
+      <pre>浏览器右栏表单输入
+  -> submitUser()
+  -> saveUser(payload)
+  -> POST /api/uniauth/users
+  -> UniauthUserController.saveUser()
+  -> UniauthCurrentUserContext.requireUser()
+  -> UniauthUserServiceImpl.saveUser()
+       -> ensurePermission("uniauth.user.write")
+       -> requireText(loginName)
+       -> requireText(displayName)
+       -> locale 默认 zh-CN
+       -> userStatus 默认 ACTIVE
+       -> 有 password 时生成 passwordHash
+       -> insertUser 或 updateUser
+       -> deleteUserRoles(userId)
+       -> insertUserRole(userId, roleId...)
+       -> selectUserById(userId)
+       -> write audit log
+  -> CommonResponse.success(userRow)
+  -> 前端 reloadWorkbench()
+  -> GET /api/uniauth/bootstrap
+  -> 用户表格与摘要刷新</pre>
+    </section>
+
+    <section class="section">
+      <h2>9. 关键实现特点</h2>
+      <ul>
+        <li>用户模块目前没有单独的“查询用户接口”，而是复用 bootstrap 聚合接口统一读取。</li>
+        <li>用户编辑区不是弹窗，而是工作台右栏固定表单，点击中栏表格行后回填编辑。</li>
+        <li>角色绑定不是前端多选组件，而是文本形式的 <code>roleIdsText</code>，提交前再转成数字数组。</li>
+        <li>密码更新采用“可选覆盖”模式，更新资料时不传密码就不会修改旧密码摘要。</li>
+        <li>权限中心是独立数据源，Uniauth DAO 通过单独的 <code>uniauthSqlSessionFactory</code> 访问权限库，而不是 attendance 主库。</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>10. 关键文件索引</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>用途</th>
+            <th>文件路径</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>左侧“用户”导航文案</td>
+            <td><code>SELVUE/src/projects/uniauth/constants/i18nMessages.js</code></td>
+          </tr>
+          <tr>
+            <td>左侧区块项定义</td>
+            <td><code>SELVUE/src/projects/uniauth/constants/workbenchSections.js</code></td>
+          </tr>
+          <tr>
+            <td>用户区块展示组件</td>
+            <td><code>SELVUE/src/projects/uniauth/components/UserSection.vue</code></td>
+          </tr>
+          <tr>
+            <td>用户区块状态与动作编排</td>
+            <td><code>SELVUE/src/projects/uniauth/composables/workbench/index.js</code></td>
+          </tr>
+          <tr>
+            <td>用户保存接口</td>
+            <td><code>SELVUE/src/projects/uniauth/services/userApi.js</code></td>
+          </tr>
+          <tr>
+            <td>bootstrap 聚合接口</td>
+            <td><code>SELVUE/src/projects/uniauth/services/bootstrapApi.js</code></td>
+          </tr>
+          <tr>
+            <td>会话与 token 读取</td>
+            <td><code>SELVUE/src/shared/services/authSession.js</code></td>
+          </tr>
+          <tr>
+            <td>请求统一附带 Bearer Token</td>
+            <td><code>SELVUE/src/shared/services/request.js</code></td>
+          </tr>
+          <tr>
+            <td>用户保存控制器</td>
+            <td><code>SELSP/src/main/java/com/sp/selfsp/uniauth/user/controller/UniauthUserController.java</code></td>
+          </tr>
+          <tr>
+            <td>用户保存服务</td>
+            <td><code>SELSP/src/main/java/com/sp/selfsp/uniauth/user/service/impl/UniauthUserServiceImpl.java</code></td>
+          </tr>
+          <tr>
+            <td>用户 DAO SQL</td>
+            <td><code>SELSP/src/main/java/com/sp/selfsp/uniauth/user/dao/mapper/UniauthUserDao.xml</code></td>
+          </tr>
+          <tr>
+            <td>用户列表聚合 SQL</td>
+            <td><code>SELSP/src/main/java/com/sp/selfsp/uniauth/bootstrap/dao/mapper/UniauthBootstrapDao.xml</code></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="footer">说明：本文件基于 2026-06-03 时点代码结构整理，重点描述当前已落地实现，不包含未来规划。</p>
+    </section>
+  </div>
+</body>
+</html>
