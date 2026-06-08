@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SELATTENDANCE Uniauth 当前权限架构说明</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --ink: #1f2933;
+      --muted: #52606d;
+      --line: #d9e2ec;
+      --accent: #14532d;
+      --accent-soft: #e8f5ec;
+      --warn: #8d2b0b;
+      --warn-soft: #fde8df;
+      --code: #102a43;
+      --hero-a: #14343c;
+      --hero-b: #295e56;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, #eef3f6 0%, #f8fafb 100%);
+      line-height: 1.6;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--hero-a) 0%, var(--hero-b) 100%);
+      color: #fff;
+      border-radius: 24px;
+      padding: 28px 32px;
+      box-shadow: 0 18px 40px rgba(18, 52, 59, 0.22);
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .meta span {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .section {
+      margin-top: 24px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 22px;
+    }
+
+    .section h3 {
+      margin: 20px 0 10px;
+      font-size: 17px;
+    }
+
+    .lead {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .card {
+      background: #fbfcfd;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--accent-soft);
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .warn {
+      background: var(--warn-soft);
+      color: var(--warn);
+    }
+
+    .flow {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .flow-step {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      background: #fcfdfd;
+    }
+
+    .flow-step strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--code);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #f7fafc;
+    }
+
+    code,
+    pre {
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    code {
+      background: #f2f6fa;
+      color: var(--code);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    pre {
+      margin: 14px 0 0;
+      padding: 16px;
+      background: #0f172a;
+      color: #dbeafe;
+      border-radius: 14px;
+      overflow: auto;
+      font-size: 13px;
+    }
+
+    ul {
+      margin: 10px 0 0 18px;
+      padding: 0;
+    }
+
+    li + li {
+      margin-top: 6px;
+    }
+
+    .footer {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>SELATTENDANCE Uniauth 当前权限架构说明</h1>
+      <p>本说明基于当前 <code>SELATTENDANCE / SELSP + SELVUE</code> 实现，整理统一权限中心 <code>uniauth</code> 的运行时权限主链路、授权聚合方式和 <code>Module</code> 在系统中的真实职责边界。</p>
+      <div class="meta">
+        <span>生成日期：2026-06-04</span>
+        <span>范围：SELVUE + SELSP</span>
+        <span>主题：Tenant / User / Role / Menu / Permission / DataScope / Module</span>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>1. 一句话结论</h2>
+      <p class="lead">当前系统采用基于 RBAC 的权限模型。权限主链路是 <code>Tenant -&gt; User -&gt; UserRole -&gt; Role</code>，角色统一聚合并下发 <code>menuCodes</code>、<code>permissionCodes</code>、<code>dataScopes</code> 三类运行时授权信息；<code>Module</code> 负责业务域和工程主数据登记，是 <code>Menu</code>、<code>Permission</code>、<code>DataScope</code> 的归属维度，但不直接参与运行时放行判断。</p>
+    </section>
+
+    <section class="section">
+      <h2>2. 权限主链路</h2>
+      <pre>               【Module】
+                    ▲
+                    │（归属 / namespace）
+    ┌───────────────┼────────────────┐
+    │               │                │
+ 【Menu】      【Permission】    【Data Scope】
+    ▲               ▲                ▲
+    │               │                │
+ menuCodes   permissionCodes    dataScopes
+    ▲               ▲                ▲
+    └───────┬───────┴───────┬────────┘
+            │               │
+            ▼               ▼
+         【Role】（权限集合）
+            ▲
+            │（M:N）
+         【UserRole】
+            ▲
+            │
+         【User】
+            ▲
+            │
+        【Tenant】</pre>
+      <div class="flow">
+        <article class="flow-step">
+          <strong>Tenant -&gt; User</strong>
+          用户主表 <code>ua_user</code> 带有 <code>tenant_id</code>，说明一个租户下可以有多个用户，而用户当前归属一个租户。
+        </article>
+        <article class="flow-step">
+          <strong>User -&gt; UserRole -&gt; Role</strong>
+          用户与角色通过关系表形成多对多绑定。角色不是只承接显示名称，而是系统真正的授权聚合单元。
+        </article>
+        <article class="flow-step">
+          <strong>Role -&gt; menuCodes / permissionCodes / dataScopes</strong>
+          当前实现里，角色同时下发页面权限、操作权限和数据范围表达，运行时统一进入当前用户上下文。
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>3. 三类授权的职责划分</h2>
+      <div class="grid">
+        <article class="card">
+          <div class="tag">页面权限</div>
+          <h3>menuCodes</h3>
+          <p>负责控制页面与工程入口可见性。前端宿主会把当前登录态中的 <code>menuCodes</code> 与各工程声明的 <code>requiredMenuCodes</code> 对比，决定项目切换器里是否显示对应工程。</p>
+        </article>
+        <article class="card">
+          <div class="tag">操作权限</div>
+          <h3>permissionCodes</h3>
+          <p>负责控制接口和按钮级操作。后端 <code>controller/service</code> 通过权限守卫按权限码阻断越权保存、维护和读取动作。</p>
+        </article>
+        <article class="card">
+          <div class="tag">数据权限</div>
+          <h3>dataScopes</h3>
+          <p>负责表达用户可访问的数据范围。当前口径主要服务于 <code>attendance</code> 宿主，把租户级、部门级或本人级过滤条件带到后续业务查询。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>4. currentUser 运行时上下文</h2>
+      <p class="lead">登录成功后，系统不会让前端再去分别查角色、菜单、权限和数据范围，而是把当前用户的有效授权关系聚合成一个统一上下文，供前后端共同消费。</p>
+      <table>
+        <thead>
+          <tr>
+            <th>字段</th>
+            <th>作用</th>
+            <th>主要消费方</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>tenantId</code> / <code>tenantCode</code></td>
+            <td>表达当前用户所在租户，作为业务系统默认数据隔离边界。</td>
+            <td>权限中心头部、attendance 宿主、后端查询过滤</td>
+          </tr>
+          <tr>
+            <td><code>menuCodes</code></td>
+            <td>表达当前用户可见的菜单与工程入口。</td>
+            <td>SELVUE 宿主项目切换、菜单显隐</td>
+          </tr>
+          <tr>
+            <td><code>permissionCodes</code></td>
+            <td>表达当前用户允许执行的接口和按钮动作。</td>
+            <td>后端权限守卫、前端按钮显隐</td>
+          </tr>
+          <tr>
+            <td><code>dataScopes</code></td>
+            <td>表达当前用户可访问的数据范围集合。</td>
+            <td>attendance 侧业务查询、后续 SQL / 条件拼装</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>5. Module 的真实职责</h2>
+      <div class="grid">
+        <article class="card">
+          <div class="tag">主数据</div>
+          <h3>模块登记</h3>
+          <p><code>Module</code> 用来定义系统里有哪些业务域或工程，例如 <code>attendance</code>、<code>uniauth</code>、<code>seltheme</code>。</p>
+        </article>
+        <article class="card">
+          <div class="tag">入口信息</div>
+          <h3>工程入口元数据</h3>
+          <p>模块表会保存 <code>entryProject</code>、<code>routeKey</code>、<code>ownerSystem</code> 等信息，方便宿主和管理台识别模块属于哪个前端入口、默认落点在哪。</p>
+        </article>
+        <article class="card">
+          <div class="tag">归属维度</div>
+          <h3>namespace</h3>
+          <p><code>moduleCode</code> 会出现在 <code>Menu</code>、<code>Permission</code>、<code>DataScope</code> 等定义里，作为这些授权对象的归属维度和命名空间。</p>
+        </article>
+        <article class="card">
+          <div class="tag warn">边界说明</div>
+          <h3>不直接参与放行</h3>
+          <p>当前模块服务只维护模块主表，不会在保存模块时隐式创建菜单和权限，也不会直接决定某个请求是否放行。真正参与运行时判断的是 <code>menuCodes</code>、<code>permissionCodes</code>、<code>dataScopes</code>。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>6. 当前实现里的典型运行路径</h2>
+      <div class="flow">
+        <article class="flow-step">
+          <strong>步骤 1：用户登录</strong>
+          登录链路先按账号读取用户主数据和租户状态，再组装当前用户上下文。
+        </article>
+        <article class="flow-step">
+          <strong>步骤 2：聚合授权</strong>
+          系统按用户主键读取该用户绑定角色所对应的 <code>permissionCodes</code>、<code>menuCodes</code> 和 <code>dataScopes</code>。
+        </article>
+        <article class="flow-step">
+          <strong>步骤 3：签发 currentUser</strong>
+          JWT 和当前用户快照中都会带上租户、菜单、权限和数据范围，避免前端初始化时重复查多张关系表。
+        </article>
+        <article class="flow-step">
+          <strong>步骤 4：宿主消费 menuCodes</strong>
+          宿主根据工程声明的 <code>requiredMenuCodes</code> 和当前用户的 <code>menuCodes</code> 决定显示哪些工程入口。
+        </article>
+        <article class="flow-step">
+          <strong>步骤 5：后端消费 permissionCodes / dataScopes</strong>
+          后端接口用权限码阻断越权操作，业务系统后续再根据数据范围拼装租户级或更细粒度的过滤条件。
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>7. 现状边界与注意事项</h2>
+      <ul>
+        <li>当前系统已经形成完整的 <code>Tenant -&gt; User -&gt; Role</code> 授权链和 <code>currentUser</code> 聚合输出。</li>
+        <li><code>menuCodes</code> 已真实参与前端工程显隐，不只是设计概念。</li>
+        <li><code>permissionCodes</code> 已真实参与后端保存与维护接口的权限校验。</li>
+        <li><code>dataScopes</code> 当前主要面向 <code>attendance</code> 宿主的数据过滤场景，后续如果扩展更多业务系统，需要继续把消费口径补齐到各模块查询链。</li>
+        <li><code>Module</code> 当前是主数据和归属维度，不应误写成直接参与运行时访问控制的对象。</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>8. 结论</h2>
+      <p class="lead">因此，当前 <code>SELATTENDANCE</code> 的 <code>uniauth</code> 权限架构可以概括为：以租户为隔离边界、以用户为登录主体、以角色为授权聚合中心、以 <code>menuCodes</code> / <code>permissionCodes</code> / <code>dataScopes</code> 作为运行时下发结果；<code>Module</code> 负责定义业务域和归属命名空间，但不直接参与运行时放行判断。</p>
+      <p class="footer">文档定位：当前实现说明。若后续把模块授权、更多业务系统接入或更细粒度数据范围消费补齐，应另行更新此页。</p>
+    </section>
+  </div>
+</body>
+</html>
